@@ -99,28 +99,36 @@ Content generation uses factories to create different types of learning material
 
 ## API Design
 
-### REST Endpoints Structure
+### REST Endpoints Structure (Current Implementation)
 ```
 /api/v1/
-├── config/           # Configuration endpoints
-│   ├── user         # User settings
-│   └── ai           # AI provider settings
-├── learning/         # Learning management
-│   ├── plan         # Learning plans
-│   ├── goals        # Learning goals
-│   └── progress     # Progress tracking
-├── content/          # Content management
-│   ├── lessons      # Lessons
-│   ├── cards        # Learning cards
-│   ├── vocabulary   # Vocabulary lists
-│   └── scenarios    # Roleplay scenarios
-├── exercises/        # Exercise endpoints
-│   ├── completion   # Text completion
-│   ├── dragdrop     # Drag-and-drop
-│   └── speaking     # Speaking exercises
-└── speech/           # Speech endpoints
-    ├── transcribe   # Speech-to-text
-    └── synthesize   # Text-to-speech
+├── users/            # User management
+│   └── me           # Current user profile (GET, PUT)
+├── goals/            # Learning goals
+│   ├── /            # List/create goals (GET, POST)
+│   ├── daily/active # Active daily goals (GET)
+│   └── {goalId}/    # Goal operations (PATCH progress, POST complete, DELETE)
+├── content/          # Content generation
+│   ├── lessons/generate      # Generate lessons (POST)
+│   ├── vocabulary/generate   # Generate vocabulary (POST)
+│   ├── flashcards/generate   # Generate flashcards (POST)
+│   ├── scenarios/generate    # Generate roleplay scenarios (POST)
+│   └── learning-plan/generate # Generate learning plan (POST)
+└── exercises/        # Exercise endpoints
+    ├── text-completion  # Fill-in-blank exercises (POST)
+    ├── drag-drop        # Word-order exercises (POST)
+    ├── translation      # Translation exercises (POST)
+    └── evaluate         # Evaluate responses (POST)
+```
+
+### Planned Endpoints (Not Yet Implemented)
+```
+/api/v1/
+├── speech/           # Speech endpoints
+│   ├── transcribe   # Speech-to-text
+│   └── synthesize   # Text-to-speech
+└── images/           # Image generation
+    └── generate     # Generate learning images
 ```
 
 ## Data Storage Strategy

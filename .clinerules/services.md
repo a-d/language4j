@@ -23,9 +23,11 @@ Located in `backend/learning-service/`
 | Method | Description |
 |--------|-------------|
 | `getCurrentUser()` | Gets or creates the current user based on language configuration |
+| `findById(id)` | Finds a user by ID |
 | `createUser(displayName, nativeLanguage, targetLanguage)` | Creates a new user |
 | `updateSkillLevel(userId, skillLevel)` | Updates CEFR skill level (A1-C2) |
 | `completeAssessment(userId)` | Marks initial assessment as complete |
+| `updateDisplayName(userId, displayName)` | Updates user display name |
 
 #### GoalService
 **Interface**: `dev.languagelearning.learning.service.GoalService`

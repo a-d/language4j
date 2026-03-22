@@ -16,13 +16,13 @@ git clone <repository-url>
 cd language-learning
 
 # Start infrastructure (PostgreSQL)
-docker-compose -f docker/docker-compose.dev.yml up -d postgres
+docker-compose -f docker/docker-compose.yml up -d postgres
 
 # Build all modules
-mvn clean install
+cd backend && mvn clean install
 
 # Run the application
-mvn -pl backend/api-module spring-boot:run
+cd backend && mvn -pl api-module spring-boot:run
 ```
 
 ## Development Process
@@ -143,7 +143,7 @@ created: 2024-01-15
 ```
 
 ### Content Templates
-Templates are stored in `content/templates/` and used by content generation services.
+Templates for generated content are managed by the content-service module and stored as resources or generated dynamically by the LLM.
 
 ## Database Management
 

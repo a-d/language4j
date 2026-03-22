@@ -49,8 +49,7 @@ language-learning/
 │   ├── speech-service/
 │   └── image-service/
 ├── frontend/                 # Vanilla JS web application
-├── mcp-server/              # MCP server for tool integration
-├── docker/                  # Docker configurations
+├── docker/                  # Docker configurations (production)
+├── local-deployment/        # Local AI deployment (Piper TTS, Whisper, SD)
 ├── docs/                    # Documentation
-├── content/                 # Markdown content templates
-└── scripts/                 # Utility scripts
+└── README.md                # Project readme
