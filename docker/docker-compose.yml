@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: language-learning-db
+    environment:
+      POSTGRES_DB: language_learning
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: language-learning-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: jdbc:postgresql://postgres:5432/language_learning
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      
+      # Language Settings
+      NATIVE_LANGUAGE: ${NATIVE_LANGUAGE:-de}
+      TARGET_LANGUAGE: ${TARGET_LANGUAGE:-fr}
+      
+      # AI Provider Settings
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4-turbo-preview}
+      
+      # Optional AI Services
+      STT_API_KEY: ${STT_API_KEY:-${LLM_API_KEY:-}}
+      TTS_API_KEY: ${TTS_API_KEY:-${LLM_API_KEY:-}}
+      IMAGE_API_KEY: ${IMAGE_API_KEY:-${LLM_API_KEY:-}}
+      
+      # Storage
+      CONTENT_PATH: /app/content
+      MEDIA_PATH: /app/media
+      
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+    ports:
+      - "8080:8080"
+    volumes:
+      - content_data:/app/content
+      - media_data:/app/media
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (Nginx serving static files)
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: language-learning-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    environment:
+      API_URL: http://backend:8080
+
+volumes:
+  postgres_data:
+  content_data:
+  media_data:
+
+networks:
+  default:
+    name: language-learning-network

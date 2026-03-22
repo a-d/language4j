@@ -1,0 +1,27 @@
+# Test profile configuration
+# Disables JPA, datasource, and Spring AI auto-configuration for controller tests
+
+spring:
+  autoconfigure:
+    exclude:
+      # Database
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+      # Spring AI - Disable all providers to avoid bean conflicts
+      - org.springframework.ai.autoconfigure.openai.OpenAiAutoConfiguration
+      - org.springframework.ai.autoconfigure.anthropic.AnthropicAutoConfiguration
+      - org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration
+      - org.springframework.ai.autoconfigure.mistralai.MistralAiAutoConfiguration
+      - org.springframework.ai.autoconfigure.azure.openai.AzureOpenAiAutoConfiguration
+
+# Language configuration for tests
+language:
+  native: de
+  target: fr
+
+# Disable storage validation for tests
+storage:
+  content-path: ./test-content

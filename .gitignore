@@ -1,0 +1,23 @@
+# Build outputs
+**/target/
+
+# IDE
+/.idea/
+*.iml
+
+# Environment files
+.env
+.env.local
+
+# Local deployment personal configuration
+# Note: local-deployment/ contains personal local AI setup
+# The .env.example template is tracked, but actual .env is not
+local-deployment/.env
+
+# Content and media directories
+/content/
+/media/
+
+# Logs
+*.log
+logs/

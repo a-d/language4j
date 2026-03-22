@@ -1,0 +1,48 @@
+# Piper Text-to-Speech Server Dockerfile
+# Lightweight CPU-based TTS for French language
+
+FROM python:3.11-slim
+
+LABEL maintainer="Language Learning Platform"
+LABEL description="OpenAI-compatible Piper TTS server for French language"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install \
+    piper-tts \
+    fastapi \
+    uvicorn \
+    python-multipart
+
+# Create voices directory
+RUN mkdir -p /app/voices
+
+# Download French voice model (medium quality - good balance of speed/quality)
+RUN cd /app/voices && \
+    wget -q https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx && \
+    wget -q https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json
+
+# Copy server script
+COPY piper-server.py /app/
+
+# Environment variables
+ENV PIPER_VOICE=/app/voices/fr_FR-siwis-medium.onnx
+ENV PIPER_SPEAKER=0
+ENV PORT=9001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:9001/health || exit 1
+
+EXPOSE 9001
+
+CMD ["python", "piper-server.py"]

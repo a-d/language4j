@@ -1,0 +1,56 @@
+# Stable Diffusion Image Generation Server Dockerfile
+# Uses ROCm for AMD GPU acceleration
+
+FROM rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1
+
+LABEL maintainer="Language Learning Platform"
+LABEL description="OpenAI-compatible Stable Diffusion server with ROCm support"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install \
+    diffusers \
+    transformers \
+    accelerate \
+    safetensors \
+    fastapi \
+    uvicorn \
+    pillow
+
+# Try to install xformers for memory efficiency (may not work on all ROCm versions)
+RUN pip install xformers || echo "xformers not available, continuing without it"
+
+# Copy server script
+COPY sd-server.py /app/
+
+# Environment variables
+ENV SD_MODEL=stabilityai/sdxl-turbo
+ENV SD_DEVICE=cuda
+ENV SD_FLOAT16=true
+ENV PORT=7860
+
+# ROCm environment for RX 7900 XTX
+ENV HSA_OVERRIDE_GFX_VERSION=11.0.0
+ENV PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
+ENV HIP_VISIBLE_DEVICES=0
+
+# Huggingface cache directory (for persistent model storage)
+ENV HF_HOME=/app/.cache/huggingface
+RUN mkdir -p /app/.cache/huggingface
+
+# Health check (longer timeout for model loading)
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:7860/health || exit 1
+
+EXPOSE 7860
+
+CMD ["python", "sd-server.py"]

@@ -1,0 +1,23 @@
+# Frontend Dockerfile - Nginx serving vanilla JS
+FROM nginx:alpine
+
+# Copy custom nginx configuration
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+# Copy frontend files
+COPY frontend/ /usr/share/nginx/html/
+
+# Create config.js from environment variables at runtime
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# Start nginx
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

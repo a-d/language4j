@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>dev.languagelearning</groupId>
+        <artifactId>language-learning-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>content-service</artifactId>
+    <name>Content Service</name>
+    <description>Learning content generation and management service</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.languagelearning</groupId>
+            <artifactId>config-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.languagelearning</groupId>
+            <artifactId>core-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.languagelearning</groupId>
+            <artifactId>llm-module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.languagelearning</groupId>
+            <artifactId>learning-service</artifactId>
+        </dependency>
+
+        <!-- Markdown processing -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-yaml-front-matter</artifactId>
+        </dependency>
+
+        <!-- Utilities -->
+        <dependency>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+        </dependency>
+
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+</project>

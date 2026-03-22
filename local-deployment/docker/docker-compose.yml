@@ -1,0 +1,217 @@
+# Docker Compose configuration for local AI services
+# Designed for AMD RX 7900 XTX with ROCm support
+#
+# Usage:
+#   cd local-deployment/docker
+#   docker-compose up -d
+#
+# After starting, pull the LLM model:
+#   docker exec -it language-learning-ollama ollama pull qwen2.5:32b-instruct-q5_K_M
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # LLM Service (Ollama with ROCm)
+  # ===========================================
+  # Ollama provides OpenAI-compatible API for text generation
+  # Endpoint: http://localhost:11434
+  ollama:
+    image: ollama/ollama:rocm
+    container_name: language-learning-ollama
+    restart: unless-stopped
+    
+    # GPU access for ROCm
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - render
+    
+    environment:
+      # ROCm settings for RX 7900 XTX (gfx1100)
+      - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      
+      # Ollama configuration
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODELS=/models
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+      
+      # Memory management (reserve VRAM for other services)
+      # Uncomment to limit VRAM usage:
+      # - OLLAMA_MAX_VRAM=18G
+    
+    volumes:
+      - ollama_models:/models
+    
+    ports:
+      - "11434:11434"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    networks:
+      - ai-network
+
+  # ===========================================
+  # Speech-to-Text (Whisper with ROCm)
+  # ===========================================
+  # Faster-Whisper provides OpenAI-compatible transcription API
+  # Endpoint: http://localhost:9000
+  whisper:
+    build:
+      context: .
+      dockerfile: Dockerfile.whisper
+    container_name: language-learning-whisper
+    restart: unless-stopped
+    
+    # GPU access for ROCm
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - render
+    
+    environment:
+      # ROCm settings
+      - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
+      
+      # Whisper configuration
+      - WHISPER_MODEL=large-v3
+      - WHISPER_DEVICE=cuda
+      - WHISPER_COMPUTE_TYPE=float16
+    
+    volumes:
+      # Persist downloaded models
+      - whisper_cache:/root/.cache/huggingface
+    
+    ports:
+      - "9000:9000"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    networks:
+      - ai-network
+
+  # ===========================================
+  # Text-to-Speech (Piper - CPU only)
+  # ===========================================
+  # Piper provides fast, high-quality TTS for French
+  # Endpoint: http://localhost:9001
+  piper:
+    build:
+      context: .
+      dockerfile: Dockerfile.piper
+    container_name: language-learning-piper
+    restart: unless-stopped
+    
+    environment:
+      # Voice model configuration
+      - PIPER_VOICE=/app/voices/fr_FR-siwis-medium.onnx
+      - PIPER_SPEAKER=0
+    
+    volumes:
+      # Persist voice models
+      - piper_voices:/app/voices
+    
+    ports:
+      - "9001:9001"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    networks:
+      - ai-network
+
+  # ===========================================
+  # Image Generation (Stable Diffusion with ROCm)
+  # ===========================================
+  # Stable Diffusion provides OpenAI-compatible image generation API
+  # Endpoint: http://localhost:7860
+  stable-diffusion:
+    build:
+      context: .
+      dockerfile: Dockerfile.sd
+    container_name: language-learning-sd
+    restart: unless-stopped
+    
+    # GPU access for ROCm
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - render
+    
+    environment:
+      # ROCm settings
+      - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
+      - HIP_VISIBLE_DEVICES=0
+      
+      # Stable Diffusion configuration
+      - SD_MODEL=stabilityai/sdxl-turbo
+      - SD_DEVICE=cuda
+      - SD_FLOAT16=true
+    
+    volumes:
+      # Persist downloaded models
+      - sd_cache:/app/.cache/huggingface
+    
+    ports:
+      - "7860:7860"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+    
+    networks:
+      - ai-network
+
+# ===========================================
+# Volumes for persistent storage
+# ===========================================
+volumes:
+  # Ollama model storage (~40-50GB for large models)
+  ollama_models:
+    name: language-learning-ollama-models
+  
+  # Whisper model cache (~3GB for large-v3)
+  whisper_cache:
+    name: language-learning-whisper-cache
+  
+  # Piper voice models (~100MB for French voice)
+  piper_voices:
+    name: language-learning-piper-voices
+  
+  # Stable Diffusion model cache (~6-10GB for SDXL Turbo)
+  sd_cache:
+    name: language-learning-sd-cache
+
+# ===========================================
+# Network configuration
+# ===========================================
+networks:
+  ai-network:
+    name: language-learning-ai-network
+    driver: bridge
