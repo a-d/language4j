@@ -47,7 +47,7 @@ This configuration is excellent for local AI deployment:
    - Enable "Use WSL 2 based engine"
 
 3. **AMD GPU Driver** (Windows)
-   - Install latest Adrenalin drivers from [AMD](https://www.amd.com/en/support)
+   - Install Adrenalin drivers **26.3.1** or later from [AMD](https://www.amd.com/en/support)
    - Ensure DirectML and ROCm support are enabled
 
 ---
@@ -61,48 +61,102 @@ ROCm (Radeon Open Compute) is AMD's platform for GPU computing, required for AI 
 ```bash
 # In WSL2 Ubuntu terminal
 
-# 1. Add ROCm repository
-sudo mkdir --parents --mode=0755 /etc/apt/keyrings
-wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
-    gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
+# 1. Clean up any previous ROCm installation (if applicable)
+sudo amdgpu-install --uninstall -y
+sudo apt purge amdgpu-install -y && sudo apt autoremove -y
+sudo apt clean && sudo apt update
 
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.0 jammy main" | \
-    sudo tee /etc/apt/sources.list.d/rocm.list
-
-# 2. Update and install ROCm
-sudo apt update
-sudo apt install -y rocm-dev rocm-libs
+# 2. Install ROCm 7.2 for Ubuntu 22.04
+wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/jammy/amdgpu-install_7.2.70200-1_all.deb
+sudo apt install ./amdgpu-install_7.2.70200-1_all.deb
+sudo amdgpu-install --usecase=wsl,rocm --no-dkms -y
 
 # 3. Add user to render and video groups
 sudo usermod -a -G render,video $USER
 
 # 4. Set environment variables (add to ~/.bashrc)
-echo 'export PATH=$PATH:/opt/rocm/bin' >> ~/.bashrc
-echo 'export HSA_OVERRIDE_GFX_VERSION=11.0.0' >> ~/.bashrc  # For RX 7900 XTX (gfx1100)
+# Add the following block at the end of ~/.bashrc:
+cat >> ~/.bashrc << 'EOF'
+
+# --- ROCm CONFIG ---
+export LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64:$LD_LIBRARY_PATH
+export PATH=$PATH:/opt/rocm/bin
+
+# Force RDNA3 compatibility (7900 XTX = gfx1100)
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
+
+# Stability fix for WSL2
+export HSA_ENABLE_SDMA=0
+
+# CRITICAL: force system HIP lib, prevents PyTorch using its broken bundled one
+export LD_PRELOAD=/opt/rocm/lib/libamdhip64.so
+EOF
+
 source ~/.bashrc
 
 # 5. Verify installation
 rocminfo
-rocm-smi
+# Note: rocm-smi does NOT work in WSL2 - this is expected
 ```
 
 ### Verify GPU Access
 
 ```bash
-# Should show your RX 7900 XTX
-rocm-smi --showproductname
-
-# Check compute capability
-rocminfo | grep -i "gfx"
+# Check compute capability - verify gfx1100 detection
+rocminfo | grep -A2 "gfx1100"
 ```
 
-**Expected output for RX 7900 XTX**: `gfx1100`
+**Expected output for RX 7900 XTX**: You should see `gfx1100` in the output, indicating your RDNA3 GPU is properly detected.
+
+> **Note**: `rocm-smi` does **not** work in WSL2 - this is expected behavior. Use `rocminfo` for verification instead.
 
 ---
 
 ## LLM Deployment (Ollama)
 
 Ollama is recommended for its simplicity, excellent ROCm support, and OpenAI-compatible API.
+
+### Installation Options
+
+Ollama can be deployed in two ways:
+
+#### Option A: Docker (Recommended for this project)
+
+The `docker-compose.yml` includes Ollama with ROCm support. No separate installation needed—just start the containers:
+
+```bash
+cd local-deployment/docker
+docker-compose up -d ollama
+```
+
+The image `ollama/ollama:rocm` is pre-configured for AMD GPUs.
+
+#### Option B: Native Installation (Alternative)
+
+If you prefer running Ollama natively on WSL2:
+
+```bash
+# In WSL2 Ubuntu terminal
+
+# 1. Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 2. Verify installation
+ollama --version
+
+# 3. Start Ollama server with ROCm support
+# Add to ~/.bashrc for persistence:
+echo 'export HSA_OVERRIDE_GFX_VERSION=11.0.0' >> ~/.bashrc
+source ~/.bashrc
+
+# 4. Start the Ollama service
+ollama serve
+
+# In another terminal, test GPU detection:
+ollama run qwen2.5:1.5b "Hello"
+```
+
+**Note**: If using native installation, comment out the `ollama` service in `docker-compose.yml` to avoid port conflicts.
 
 ### Why Ollama over vLLM?
 
@@ -345,25 +399,27 @@ export HIP_VISIBLE_DEVICES=0
 
 ### Common Issues
 
+> **WSL2 Note**: `rocm-smi` does **not** work in WSL2. Use `rocminfo` for GPU verification instead.
+
 #### 1. ROCm Not Detecting GPU
 
 ```bash
-# Check if GPU is visible
-rocm-smi
+# Check if GPU is visible using rocminfo
+rocminfo | grep -A2 "gfx1100"
 
-# If not, check permissions
-ls -la /dev/kfd /dev/dri
+# If not found, check device permissions
+ls -la /dev/dxg /dev/dri
 
 # Add user to groups
 sudo usermod -a -G video,render $USER
-# Log out and back in
+# Log out and back in (or restart WSL)
 ```
 
 #### 2. VRAM Out of Memory
 
 ```bash
-# Check current VRAM usage
-rocm-smi --showmeminfo vram
+# Monitor GPU memory via Ollama logs or task manager on Windows
+# In WSL2, rocm-smi memory commands don't work
 
 # Reduce model size or use quantization
 ollama pull llama3.1:70b-instruct-q4_K_M  # q4 instead of q5
@@ -375,23 +431,24 @@ ollama pull qwen2.5:14b-instruct-q5_K_M
 #### 3. Slow Generation
 
 ```bash
-# Check if GPU is being used
-watch -n 1 rocm-smi
+# Verify GPU is detected
+rocminfo | grep -A2 "gfx1100"
 
-# If GPU utilization is low, check:
+# If GPU utilization seems low, check:
 # 1. ROCm version compatibility
-# 2. HSA_OVERRIDE_GFX_VERSION setting
-# 3. Model is actually loaded on GPU
+# 2. HSA_OVERRIDE_GFX_VERSION setting (should be 11.0.0)
+# 3. LD_PRELOAD is set correctly
+# 4. Model is actually loaded on GPU (check Ollama logs)
 ```
 
 #### 4. Docker GPU Access Issues
 
 ```bash
-# Verify Docker can see GPU
-docker run --rm -it --device=/dev/kfd --device=/dev/dri rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 rocm-smi
+# Verify Docker can see GPU using rocminfo
+docker run --rm -it --device=/dev/dxg --device=/dev/dri rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 rocminfo | grep gfx
 
 # If permission denied, check group membership in container
-docker run --rm -it --device=/dev/kfd --device=/dev/dri --group-add video --group-add render rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 rocm-smi
+docker run --rm -it --device=/dev/dxg --device=/dev/dri --group-add video --group-add render rocm/pytorch:rocm6.0_ubuntu22.04_py3.10_pytorch_2.1.1 rocminfo | grep gfx
 ```
 
 #### 5. Model Download Failures

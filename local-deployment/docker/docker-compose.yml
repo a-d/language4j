@@ -8,8 +8,6 @@
 # After starting, pull the LLM model:
 #   docker exec -it language-learning-ollama ollama pull qwen2.5:32b-instruct-q5_K_M
 
-version: '3.8'
-
 services:
   # ===========================================
   # LLM Service (Ollama with ROCm)
@@ -21,13 +19,15 @@ services:
     container_name: language-learning-ollama
     restart: unless-stopped
     
-    # GPU access for ROCm
+    # GPU access for WSL2
+    # Note: /dev/dxg is the DirectX Graphics device for WSL2 GPU access
+    # The 'render' group doesn't exist in WSL2, so we use 'video' only
     devices:
-      - /dev/kfd:/dev/kfd
-      - /dev/dri:/dev/dri
+      - /dev/dxg:/dev/dxg
     group_add:
       - video
-      - render
+    security_opt:
+      - seccomp:unconfined
     
     environment:
       # ROCm settings for RX 7900 XTX (gfx1100)
@@ -71,13 +71,13 @@ services:
     container_name: language-learning-whisper
     restart: unless-stopped
     
-    # GPU access for ROCm
+    # GPU access for WSL2
     devices:
-      - /dev/kfd:/dev/kfd
-      - /dev/dri:/dev/dri
+      - /dev/dxg:/dev/dxg
     group_add:
       - video
-      - render
+    security_opt:
+      - seccomp:unconfined
     
     environment:
       # ROCm settings
@@ -152,13 +152,13 @@ services:
     container_name: language-learning-sd
     restart: unless-stopped
     
-    # GPU access for ROCm
+    # GPU access for WSL2
     devices:
-      - /dev/kfd:/dev/kfd
-      - /dev/dri:/dev/dri
+      - /dev/dxg:/dev/dxg
     group_add:
       - video
-      - render
+    security_opt:
+      - seccomp:unconfined
     
     environment:
       # ROCm settings
