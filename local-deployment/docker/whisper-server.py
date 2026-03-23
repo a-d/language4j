@@ -4,12 +4,16 @@ OpenAI-compatible Whisper API server for speech-to-text.
 
 This server provides an OpenAI-compatible transcription endpoint using
 the official openai-whisper library with PyTorch for ROCm acceleration.
+
+Features fully lazy loading - PyTorch is only imported when transcribing
+to avoid high CPU usage from ROCm polling when idle.
 """
 
 import os
+import gc
 import tempfile
-import torch
-import whisper
+import time
+import threading
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
@@ -25,15 +29,33 @@ app = FastAPI(
 # Configuration from environment
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "large-v3")
 DEVICE = os.getenv("WHISPER_DEVICE", "cuda")
+IDLE_TIMEOUT = int(os.getenv("WHISPER_IDLE_TIMEOUT", "300"))  # Unload after 5 min idle
 
-# Global model instance
-model: Optional[whisper.Whisper] = None
+# Global state - PyTorch and model are loaded lazily
+_torch_imported = False
+_model = None
+_model_lock = threading.Lock()
+_last_used = 0.0
+_unload_timer = None
 
 
-@app.on_event("startup")
-async def load_model():
-    """Load Whisper model on server startup."""
-    global model
+def _import_torch():
+    """Import torch lazily to avoid CPU usage when idle."""
+    global _torch_imported
+    if not _torch_imported:
+        import torch
+        _torch_imported = True
+        return torch
+    import torch
+    return torch
+
+
+def _load_model():
+    """Load Whisper model (called lazily on first request)."""
+    global _model, _last_used
+    
+    # Import torch lazily
+    torch = _import_torch()
     
     # Check device availability
     if DEVICE == "cuda" and not torch.cuda.is_available():
@@ -49,9 +71,88 @@ async def load_model():
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
     
-    # Load model to specified device
-    model = whisper.load_model(MODEL_SIZE, device=device)
-    print("Model loaded successfully")
+    try:
+        # Import whisper lazily
+        import whisper
+        
+        # Load model to specified device
+        _model = whisper.load_model(MODEL_SIZE, device=device)
+        _last_used = time.time()
+        print("Model loaded successfully")
+        return True
+    except Exception as e:
+        print(f"Failed to load model: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def _unload_model():
+    """Unload model from GPU to free resources and stop CPU polling."""
+    global _model, _unload_timer
+    
+    with _model_lock:
+        if _model is not None:
+            print("Unloading Whisper model due to idle timeout...")
+            
+            # Import torch only if we have a model to unload
+            torch = _import_torch()
+            
+            # Move to CPU first, then delete
+            try:
+                _model.to("cpu")
+            except Exception:
+                pass
+            
+            del _model
+            _model = None
+            
+            # Force garbage collection and clear CUDA cache
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+            
+            print("Model unloaded successfully")
+        
+        _unload_timer = None
+
+
+def _schedule_unload():
+    """Schedule model unload after idle timeout."""
+    global _unload_timer
+    
+    # Cancel existing timer
+    if _unload_timer is not None:
+        _unload_timer.cancel()
+    
+    if IDLE_TIMEOUT > 0:
+        _unload_timer = threading.Timer(IDLE_TIMEOUT, _unload_model)
+        _unload_timer.daemon = True
+        _unload_timer.start()
+
+
+def _ensure_model_loaded():
+    """Ensure model is loaded, loading it if necessary. Returns True if ready."""
+    global _model, _last_used
+    
+    with _model_lock:
+        if _model is None:
+            if not _load_model():
+                return False
+        
+        _last_used = time.time()
+        _schedule_unload()
+        return True
+
+
+@app.on_event("startup")
+async def startup():
+    """Server startup - model is loaded lazily on first request."""
+    print(f"Whisper server started (lazy loading enabled)")
+    print(f"Model will be loaded on first request and unloaded after {IDLE_TIMEOUT}s idle")
+    print(f"Configured model: {MODEL_SIZE}")
+    print("NOTE: PyTorch is NOT imported at startup to avoid CPU polling")
 
 
 @app.post("/v1/audio/transcriptions")
@@ -67,9 +168,11 @@ async def transcribe(
     OpenAI-compatible transcription endpoint.
     
     Transcribes audio to text using the Whisper model.
+    Model is loaded lazily on first request.
     """
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    # Ensure model is loaded (lazy loading)
+    if not _ensure_model_loaded():
+        raise HTTPException(status_code=503, detail="Failed to load model")
     
     # Save uploaded file temporarily
     suffix = os.path.splitext(file.filename)[1] if file.filename else ".wav"
@@ -91,8 +194,9 @@ async def transcribe(
         if prompt:
             options["initial_prompt"] = prompt
         
-        # Transcribe with openai-whisper
-        result = model.transcribe(tmp_path, **options)
+        # Transcribe with openai-whisper (with lock to prevent concurrent access issues)
+        with _model_lock:
+            result = _model.transcribe(tmp_path, **options)
         
         text = result["text"].strip()
         detected_language = result.get("language", language or "unknown")
@@ -144,12 +248,17 @@ async def transcribe(
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    model_status = "loaded" if _model is not None else "unloaded"
+    idle_time = time.time() - _last_used if _last_used > 0 else 0
+    
     return {
-        "status": "healthy" if model is not None else "loading",
+        "status": "healthy",
+        "model_status": model_status,
+        "torch_imported": _torch_imported,
         "model": MODEL_SIZE,
         "device": DEVICE,
-        "cuda_available": torch.cuda.is_available(),
-        "cuda_device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "idle_timeout": IDLE_TIMEOUT,
+        "idle_seconds": int(idle_time) if model_status == "loaded" else None,
     }
 
 
@@ -160,11 +269,15 @@ async def root():
         "name": "Whisper STT Server",
         "version": "1.0.0",
         "model": MODEL_SIZE,
+        "model_loaded": _model is not None,
+        "torch_imported": _torch_imported,
+        "idle_timeout": IDLE_TIMEOUT,
         "backend": "openai-whisper (PyTorch)",
         "endpoints": {
             "transcribe": "POST /v1/audio/transcriptions",
             "health": "GET /health"
-        }
+        },
+        "notes": "Model AND PyTorch load lazily on first request and unload after idle timeout"
     }
 
 

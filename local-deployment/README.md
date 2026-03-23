@@ -35,6 +35,10 @@ local-deployment/
 1. WSL2 with Ubuntu 22.04+
 2. Docker Desktop with WSL2 backend
 3. ROCm installed in WSL2 (see SETUP.md)
+4. Required CLI tools in WSL2:
+   ```bash
+   sudo apt-get install -y jq curl bc
+   ```
 
 ### Start AI Services
 
@@ -73,7 +77,17 @@ docker-compose up -d
 | Ollama | 11434 | Yes | LLM for content generation |
 | Whisper | 9000 | Yes | Speech-to-text |
 | Piper | 9001 | No | Text-to-speech (French) |
-| Stable Diffusion | 7860 | Yes | Flashcard images |
+| Stable Diffusion | 7860 | Yes | Flashcard images (lazy loading) |
+
+### Lazy Loading (Whisper & Stable Diffusion)
+
+Both Whisper and Stable Diffusion services use **lazy loading** to avoid high CPU usage when idle:
+- Models are **not loaded at startup** - containers start quickly with minimal resource use
+- Models load on **first request** (~10-30s load time depending on model size)
+- Models **unload after 5 minutes of inactivity** (configurable via `WHISPER_IDLE_TIMEOUT` / `SD_IDLE_TIMEOUT`)
+- Health endpoints show `model_status: loaded/unloaded`
+
+This prevents PyTorch/ROCm from busy-polling the GPU when no work is being done.
 
 ## Resource Usage
 

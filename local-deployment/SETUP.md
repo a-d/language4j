@@ -50,6 +50,15 @@ This configuration is excellent for local AI deployment:
    - Install Adrenalin drivers **26.3.1** or later from [AMD](https://www.amd.com/en/support)
    - Ensure DirectML and ROCm support are enabled
 
+4. **Required CLI Tools** (in WSL2)
+   ```bash
+   # Install jq for JSON parsing (required by test-services.sh)
+   sudo apt-get update && sudo apt-get install -y jq curl bc
+   
+   # Verify installation
+   jq --version
+   ```
+
 ---
 
 ## ROCm Setup for AMD GPUs
@@ -183,16 +192,24 @@ Given your 24GB VRAM and French language focus:
 | `mixtral:8x7b-instruct-v0.1-q5_K_M` | ~30GB disk | ~16GB VRAM | Good balance, fast inference |
 | `command-r:35b-v01-q4_K_M` | ~20GB disk | ~14GB VRAM | Designed for multilingual/RAG |
 
-**Recommended primary model**: `qwen2.5:32b-instruct-q5_K_M` or `llama3.1:70b-instruct-q4_K_M`
+**Recommended models by Docker memory limit**:
+- **Default Docker (16-20GB)**: `qwen2.5:7b-instruct-q5_K_M` (~10GB RAM)
+- **Increased Docker memory (32GB+)**: `qwen2.5:14b-instruct-q5_K_M` (~21GB RAM)
+- **Max Docker memory (40GB+)**: `qwen2.5:32b-instruct-q5_K_M` (~37GB RAM)
+
+> **Note**: Docker Desktop defaults to limited memory. To use larger models, increase Docker memory in Settings → Resources → Memory, or configure WSL memory in `~/.wslconfig`.
 
 ### Pull and Test Models
 
 ```bash
-# Pull recommended model
-ollama pull qwen2.5:32b-instruct-q5_K_M
+# Pull recommended model for default Docker settings
+ollama pull qwen2.5:7b-instruct-q5_K_M
 
-# Alternative: Llama 3.1 70B (quantized)
-ollama pull llama3.1:70b-instruct-q4_K_M
+# For systems with increased Docker memory (32GB+)
+ollama pull qwen2.5:14b-instruct-q5_K_M
+
+# For systems with max Docker memory (40GB+)
+ollama pull qwen2.5:32b-instruct-q5_K_M
 
 # Test the model
 ollama run qwen2.5:32b-instruct-q5_K_M "Translate 'Hello, how are you?' to French"
@@ -476,7 +493,7 @@ curl http://localhost:11434/api/generate -d '{
 
 # Test Whisper (upload an audio file)
 curl -X POST http://localhost:9000/v1/audio/transcriptions \
-  -F "file=@test.wav" \
+  -F "file=@piper_test.wav" \
   -F "language=fr"
 
 # Test Piper TTS

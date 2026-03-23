@@ -34,6 +34,38 @@ TEST_MODE="${1:-standard}"
 OUTPUT_DIR="./test-output"
 
 # =============================================================================
+# Dependency Check
+# =============================================================================
+
+check_dependencies() {
+    local missing=()
+    
+    if ! command -v curl &> /dev/null; then
+        missing+=("curl")
+    fi
+    
+    if ! command -v jq &> /dev/null; then
+        missing+=("jq")
+    fi
+    
+    if ! command -v bc &> /dev/null; then
+        missing+=("bc")
+    fi
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${RED}Error: Missing required dependencies: ${missing[*]}${NC}"
+        echo ""
+        echo "Install them with:"
+        echo "  sudo apt-get update && sudo apt-get install -y ${missing[*]}"
+        echo ""
+        exit 1
+    fi
+}
+
+# Check dependencies before running
+check_dependencies
+
+# =============================================================================
 # Helper Functions
 # =============================================================================
 

@@ -108,11 +108,8 @@ async def synthesize(request: TTSRequest):
         raise HTTPException(status_code=400, detail="Input text too long (max 4096 characters)")
     
     try:
-        # Calculate length scale from speed (inverse relationship)
-        # speed=1.0 -> length_scale=1.0
-        # speed=2.0 -> length_scale=0.5 (faster)
-        # speed=0.5 -> length_scale=2.0 (slower)
-        length_scale = 1.0 / max(0.25, min(4.0, request.speed))
+        # Note: speed parameter is ignored as piper-tts doesn't support it directly
+        # Would need post-processing to change playback speed
         
         # Generate audio
         audio_buffer = io.BytesIO()
@@ -122,12 +119,10 @@ async def synthesize(request: TTSRequest):
             wav_file.setsampwidth(2)  # 16-bit
             wav_file.setframerate(voice.config.sample_rate)
             
-            # Synthesize audio
-            for audio_bytes in voice.synthesize_stream_raw(
-                request.input,
-                length_scale=length_scale
-            ):
-                wav_file.writeframes(audio_bytes)
+            # Synthesize audio using piper-tts API
+            # synthesize() returns AudioChunk objects with audio_int16_bytes property
+            for audio_chunk in voice.synthesize(request.input):
+                wav_file.writeframes(audio_chunk.audio_int16_bytes)
         
         audio_buffer.seek(0)
         wav_data = audio_buffer.read()

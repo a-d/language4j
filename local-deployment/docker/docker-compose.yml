@@ -100,6 +100,7 @@ services:
     environment:
       # ROCm settings for RX 7900 XTX (gfx1100)
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      - HSA_ENABLE_SDMA=0
       - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
       
       # Preload WSL2 HSA runtime for GPU access
@@ -108,14 +109,15 @@ services:
       # Whisper configuration
       - WHISPER_MODEL=large-v3
       - WHISPER_DEVICE=cuda
+      - WHISPER_IDLE_TIMEOUT=300
     
     volumes:
       # WSL2 DirectX core library - mount to /usr/lib for ROCm to find it
       - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so:ro
       # WSL2 ROCm HSA runtime - mount actual file to separate location to avoid conflict
       - /opt/rocm-7.2.0/lib/libhsa-runtime64.so.1.18.70200:/usr/lib/wsl-rocm/libhsa-runtime64.so.1:ro
-      # Persist downloaded models
-      - whisper_cache:/root/.cache/huggingface
+      # Persist downloaded Whisper models (~3GB for large-v3)
+      - whisper_cache:/root/.cache/whisper
     
     ports:
       - "9000:9000"
@@ -191,6 +193,7 @@ services:
     environment:
       # ROCm settings for RX 7900 XTX (gfx1100)
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      - HSA_ENABLE_SDMA=0
       - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
       - HIP_VISIBLE_DEVICES=0
       
@@ -201,6 +204,7 @@ services:
       - SD_MODEL=stabilityai/sdxl-turbo
       - SD_DEVICE=cuda
       - SD_FLOAT16=true
+      - SD_IDLE_TIMEOUT=300
     
     volumes:
       # WSL2 DirectX core library - mount to /usr/lib for ROCm to find it
