@@ -32,15 +32,72 @@ USE_FLOAT16 = os.getenv("SD_FLOAT16", "true").lower() == "true"
 pipe = None
 
 
+def diagnose_gpu():
+    """Print GPU diagnostic information."""
+    import torch
+    import os
+    
+    print("=" * 60)
+    print("GPU DIAGNOSTIC INFORMATION")
+    print("=" * 60)
+    
+    # Environment variables
+    print("\n--- Environment Variables ---")
+    env_vars = [
+        "HSA_OVERRIDE_GFX_VERSION",
+        "HSA_ENABLE_SDMA", 
+        "HIP_VISIBLE_DEVICES",
+        "PYTORCH_HIP_ALLOC_CONF",
+        "LD_PRELOAD",
+        "ROCM_PATH",
+    ]
+    for var in env_vars:
+        print(f"  {var}: {os.getenv(var, 'NOT SET')}")
+    
+    # PyTorch info
+    print("\n--- PyTorch Info ---")
+    print(f"  PyTorch version: {torch.__version__}")
+    print(f"  CUDA available: {torch.cuda.is_available()}")
+    print(f"  CUDA version: {torch.version.cuda if hasattr(torch.version, 'cuda') else 'N/A'}")
+    print(f"  HIP version: {torch.version.hip if hasattr(torch.version, 'hip') else 'N/A'}")
+    
+    # Device info
+    print("\n--- Device Info ---")
+    if torch.cuda.is_available():
+        print(f"  Device count: {torch.cuda.device_count()}")
+        for i in range(torch.cuda.device_count()):
+            print(f"  Device {i}: {torch.cuda.get_device_name(i)}")
+            props = torch.cuda.get_device_properties(i)
+            print(f"    Total memory: {props.total_memory / 1024**3:.1f} GB")
+    else:
+        print("  No CUDA/HIP devices available!")
+        print("\n--- Possible causes ---")
+        print("  1. ROCm not properly installed in container")
+        print("  2. /dev/dxg not mounted (check docker-compose devices)")
+        print("  3. LD_PRELOAD not set correctly")
+        print("  4. HSA_OVERRIDE_GFX_VERSION mismatch with your GPU")
+    
+    print("=" * 60)
+    return torch.cuda.is_available()
+
+
 def load_model():
     """Load Stable Diffusion model."""
     global pipe
+    
+    # Run diagnostics first
+    gpu_available = diagnose_gpu()
+    
     try:
         import torch
         from diffusers import AutoPipelineForText2Image
         
-        print(f"Loading Stable Diffusion model: {MODEL_ID}")
+        print(f"\nLoading Stable Diffusion model: {MODEL_ID}")
         print(f"Device: {DEVICE}, Float16: {USE_FLOAT16}")
+        
+        if not gpu_available and DEVICE == "cuda":
+            print("WARNING: CUDA/HIP not available but DEVICE is set to 'cuda'")
+            print("Model loading may fail. Consider setting SD_DEVICE=cpu as fallback.")
         
         # Determine torch dtype
         dtype = torch.float16 if USE_FLOAT16 else torch.float32

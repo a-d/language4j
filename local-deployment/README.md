@@ -84,6 +84,34 @@ With all services loaded:
 
 ## Testing
 
+### Automated Test Script
+
+The `test-services.sh` script provides comprehensive testing of all AI services:
+
+```bash
+# Standard test (health checks + functional tests, skips slow image generation)
+./test-services.sh
+
+# Quick test (health checks only)
+./test-services.sh --quick
+
+# Full test (includes image generation - can be slow on first run)
+./test-services.sh --full
+```
+
+**What the script tests:**
+
+| Service | Health Check | Functional Test |
+|---------|--------------|-----------------|
+| **Ollama** | API reachable, models listed | Text generation |
+| **Whisper** | Model loaded, GPU status | Audio transcription |
+| **Piper** | Voice loaded | Text-to-speech |
+| **Stable Diffusion** | Model loaded | Image generation (--full only) |
+
+Generated test files are saved to `test-output/`.
+
+### Manual Testing
+
 ```bash
 # Test Ollama
 curl http://localhost:11434/api/tags

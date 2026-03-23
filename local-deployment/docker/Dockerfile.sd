@@ -32,16 +32,11 @@ RUN pip install xformers || echo "xformers not available, continuing without it"
 # Copy server script
 COPY sd-server.py /app/
 
-# Environment variables
+# Default environment variables (can be overridden by docker-compose)
 ENV SD_MODEL=stabilityai/sdxl-turbo
 ENV SD_DEVICE=cuda
 ENV SD_FLOAT16=true
 ENV PORT=7860
-
-# ROCm environment for RX 7900 XTX
-ENV HSA_OVERRIDE_GFX_VERSION=11.0.0
-ENV PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
-ENV HIP_VISIBLE_DEVICES=0
 
 # Huggingface cache directory (for persistent model storage)
 ENV HF_HOME=/app/.cache/huggingface

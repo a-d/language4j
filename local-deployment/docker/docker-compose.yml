@@ -1,9 +1,12 @@
 # Docker Compose configuration for local AI services
 # Designed for AMD RX 7900 XTX with ROCm support
 #
-# Usage:
-#   cd local-deployment/docker
-#   docker-compose up -d
+# IMPORTANT: For AMD GPU (ROCm) support, run docker-compose from WSL2 terminal:
+#   1. Open WSL2 terminal (not Windows cmd/PowerShell)
+#   2. Navigate to this directory
+#   3. Run: docker-compose up -d
+#
+# Running from Windows will fail to mount ROCm libraries.
 #
 # After starting, pull the LLM model:
 #   docker exec -it language-learning-ollama ollama pull qwen2.5:32b-instruct-q5_K_M
@@ -20,18 +23,23 @@ services:
     restart: unless-stopped
     
     # GPU access for WSL2
-    # Note: /dev/dxg is the DirectX Graphics device for WSL2 GPU access
-    # The 'render' group doesn't exist in WSL2, so we use 'video' only
     devices:
       - /dev/dxg:/dev/dxg
-    group_add:
-      - video
+    
+    # Required for ROCm GPU access in WSL2 Docker
+    cap_add:
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
+    ipc: host
+    shm_size: '8gb'
     
     environment:
       # ROCm settings for RX 7900 XTX (gfx1100)
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
+      
+      # Preload WSL2 HSA runtime for GPU access
+      - LD_PRELOAD=/usr/lib/wsl-rocm/libhsa-runtime64.so.1
       
       # Ollama configuration
       - OLLAMA_HOST=0.0.0.0
@@ -44,6 +52,11 @@ services:
       # - OLLAMA_MAX_VRAM=18G
     
     volumes:
+      # WSL2 DirectX core library - mount to /usr/lib for ROCm to find it
+      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so:ro
+      # WSL2 ROCm HSA runtime - mount actual file to separate location to avoid conflict
+      - /opt/rocm-7.2.0/lib/libhsa-runtime64.so.1.18.70200:/usr/lib/wsl-rocm/libhsa-runtime64.so.1:ro
+      # Ollama models storage
       - ollama_models:/models
     
     ports:
@@ -62,7 +75,8 @@ services:
   # ===========================================
   # Speech-to-Text (Whisper with ROCm)
   # ===========================================
-  # Faster-Whisper provides OpenAI-compatible transcription API
+  # OpenAI Whisper provides OpenAI-compatible transcription API
+  # Uses PyTorch with ROCm for AMD GPU acceleration
   # Endpoint: http://localhost:9000
   whisper:
     build:
@@ -74,22 +88,32 @@ services:
     # GPU access for WSL2
     devices:
       - /dev/dxg:/dev/dxg
-    group_add:
-      - video
+    
+    # Required for ROCm GPU access in WSL2 Docker
+    cap_add:
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
+    ipc: host
+    shm_size: '8gb'
     
     environment:
-      # ROCm settings
+      # ROCm settings for RX 7900 XTX (gfx1100)
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
       - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
+      
+      # Preload WSL2 HSA runtime for GPU access
+      - LD_PRELOAD=/usr/lib/wsl-rocm/libhsa-runtime64.so.1
       
       # Whisper configuration
       - WHISPER_MODEL=large-v3
       - WHISPER_DEVICE=cuda
-      - WHISPER_COMPUTE_TYPE=float16
     
     volumes:
+      # WSL2 DirectX core library - mount to /usr/lib for ROCm to find it
+      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so:ro
+      # WSL2 ROCm HSA runtime - mount actual file to separate location to avoid conflict
+      - /opt/rocm-7.2.0/lib/libhsa-runtime64.so.1.18.70200:/usr/lib/wsl-rocm/libhsa-runtime64.so.1:ro
       # Persist downloaded models
       - whisper_cache:/root/.cache/huggingface
     
@@ -155,16 +179,23 @@ services:
     # GPU access for WSL2
     devices:
       - /dev/dxg:/dev/dxg
-    group_add:
-      - video
+    
+    # Required for ROCm GPU access in WSL2 Docker
+    cap_add:
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
+    ipc: host
+    shm_size: '8gb'
     
     environment:
-      # ROCm settings
+      # ROCm settings for RX 7900 XTX (gfx1100)
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
       - PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
       - HIP_VISIBLE_DEVICES=0
+      
+      # Preload WSL2 HSA runtime for GPU access
+      - LD_PRELOAD=/usr/lib/wsl-rocm/libhsa-runtime64.so.1
       
       # Stable Diffusion configuration
       - SD_MODEL=stabilityai/sdxl-turbo
@@ -172,6 +203,10 @@ services:
       - SD_FLOAT16=true
     
     volumes:
+      # WSL2 DirectX core library - mount to /usr/lib for ROCm to find it
+      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so:ro
+      # WSL2 ROCm HSA runtime - mount actual file to separate location to avoid conflict
+      - /opt/rocm-7.2.0/lib/libhsa-runtime64.so.1.18.70200:/usr/lib/wsl-rocm/libhsa-runtime64.so.1:ro
       # Persist downloaded models
       - sd_cache:/app/.cache/huggingface
     

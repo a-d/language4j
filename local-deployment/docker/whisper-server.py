@@ -3,45 +3,54 @@
 OpenAI-compatible Whisper API server for speech-to-text.
 
 This server provides an OpenAI-compatible transcription endpoint using
-faster-whisper for efficient inference with ROCm/CUDA acceleration.
+the official openai-whisper library with PyTorch for ROCm acceleration.
 """
 
 import os
 import tempfile
+import torch
+import whisper
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
-from faster_whisper import WhisperModel
 import uvicorn
 
 app = FastAPI(
     title="Whisper STT Server",
-    description="OpenAI-compatible speech-to-text API using faster-whisper",
+    description="OpenAI-compatible speech-to-text API using openai-whisper with ROCm",
     version="1.0.0"
 )
 
 # Configuration from environment
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "large-v3")
-DEVICE = os.getenv("WHISPER_DEVICE", "cuda")  # ROCm uses cuda interface
-COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "float16")
+DEVICE = os.getenv("WHISPER_DEVICE", "cuda")
 
 # Global model instance
-model: Optional[WhisperModel] = None
+model: Optional[whisper.Whisper] = None
 
 
 @app.on_event("startup")
 async def load_model():
     """Load Whisper model on server startup."""
     global model
-    print(f"Loading Whisper model: {MODEL_SIZE}")
-    print(f"Device: {DEVICE}, Compute type: {COMPUTE_TYPE}")
     
-    model = WhisperModel(
-        MODEL_SIZE,
-        device=DEVICE,
-        compute_type=COMPUTE_TYPE
-    )
+    # Check device availability
+    if DEVICE == "cuda" and not torch.cuda.is_available():
+        print("WARNING: CUDA requested but not available, falling back to CPU")
+        device = "cpu"
+    else:
+        device = DEVICE
+    
+    print(f"Loading Whisper model: {MODEL_SIZE}")
+    print(f"Device: {device}")
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"CUDA device: {torch.cuda.get_device_name(0)}")
+    
+    # Load model to specified device
+    model = whisper.load_model(MODEL_SIZE, device=device)
     print("Model loaded successfully")
 
 
@@ -70,46 +79,56 @@ async def transcribe(
         tmp_path = tmp.name
     
     try:
-        # Transcribe with faster-whisper
-        segments, info = model.transcribe(
-            tmp_path,
-            language=language,
-            temperature=temperature,
-            beam_size=5,
-            vad_filter=True,
-            initial_prompt=prompt,
-        )
+        # Build transcription options
+        options = {
+            "temperature": temperature,
+            "beam_size": 5,
+        }
         
-        # Collect all segments
-        segment_list = list(segments)
-        text = " ".join([segment.text.strip() for segment in segment_list])
+        if language:
+            options["language"] = language
+        
+        if prompt:
+            options["initial_prompt"] = prompt
+        
+        # Transcribe with openai-whisper
+        result = model.transcribe(tmp_path, **options)
+        
+        text = result["text"].strip()
+        detected_language = result.get("language", language or "unknown")
+        
+        # Calculate duration from segments if available
+        duration = 0.0
+        if result.get("segments"):
+            last_segment = result["segments"][-1]
+            duration = last_segment.get("end", 0.0)
         
         if response_format == "text":
             return text
         elif response_format == "verbose_json":
             return JSONResponse({
                 "task": "transcribe",
-                "language": info.language,
-                "duration": info.duration,
+                "language": detected_language,
+                "duration": duration,
                 "text": text,
                 "segments": [
                     {
                         "id": i,
-                        "start": seg.start,
-                        "end": seg.end,
-                        "text": seg.text.strip(),
-                        "tokens": list(seg.tokens) if seg.tokens else [],
-                        "avg_logprob": seg.avg_logprob,
-                        "no_speech_prob": seg.no_speech_prob,
+                        "start": seg.get("start", 0.0),
+                        "end": seg.get("end", 0.0),
+                        "text": seg.get("text", "").strip(),
+                        "tokens": seg.get("tokens", []),
+                        "avg_logprob": seg.get("avg_logprob", 0.0),
+                        "no_speech_prob": seg.get("no_speech_prob", 0.0),
                     }
-                    for i, seg in enumerate(segment_list)
+                    for i, seg in enumerate(result.get("segments", []))
                 ]
             })
         else:  # json (default)
             return JSONResponse({
                 "text": text,
-                "language": info.language,
-                "duration": info.duration,
+                "language": detected_language,
+                "duration": duration,
             })
             
     except Exception as e:
@@ -129,7 +148,8 @@ async def health():
         "status": "healthy" if model is not None else "loading",
         "model": MODEL_SIZE,
         "device": DEVICE,
-        "compute_type": COMPUTE_TYPE
+        "cuda_available": torch.cuda.is_available(),
+        "cuda_device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
     }
 
 
@@ -140,6 +160,7 @@ async def root():
         "name": "Whisper STT Server",
         "version": "1.0.0",
         "model": MODEL_SIZE,
+        "backend": "openai-whisper (PyTorch)",
         "endpoints": {
             "transcribe": "POST /v1/audio/transcriptions",
             "health": "GET /health"
