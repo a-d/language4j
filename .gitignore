@@ -13,6 +13,7 @@
 # Note: local-deployment/ contains personal local AI setup
 # The .env.example template is tracked, but actual .env is not
 local-deployment/.env
+local-deployment/test-output/
 
 # Content and media directories
 /content/
