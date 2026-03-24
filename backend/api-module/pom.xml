@@ -84,6 +84,13 @@
             <artifactId>vavr</artifactId>
         </dependency>
         
+        <!-- OpenAPI / Swagger UI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+        
         <!-- Dotenv support for loading .env files -->
         <dependency>
             <groupId>me.paulschwarz</groupId>
@@ -120,6 +127,75 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            
+            <!-- OpenAPI Spec Generation Plugin -->
+            <!-- Generates openapi.yaml at build time during integration-test phase -->
+            <!-- Run with: mvn verify -DskipTests=false or mvn integration-test -->
+            <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>generate-openapi</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <apiDocsUrl>http://localhost:8080/api-docs.yaml</apiDocsUrl>
+                    <outputFileName>openapi.yaml</outputFileName>
+                    <outputDir>${project.basedir}/../../docs</outputDir>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
+            
+            <!-- Spring Boot Plugin must start the app before OpenAPI generation -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipITs}</skip>
+                            <profiles>
+                                <profile>openapi-gen</profile>
+                            </profiles>
+                            <arguments>
+                                <argument>--spring.datasource.url=jdbc:h2:mem:openapi</argument>
+                                <argument>--spring.datasource.driver-class-name=org.h2.Driver</argument>
+                                <argument>--spring.jpa.database-platform=org.hibernate.dialect.H2Dialect</argument>
+                                <argument>--spring.jpa.hibernate.ddl-auto=create-drop</argument>
+                                <argument>--spring.flyway.enabled=false</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipITs}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+    
+    <profiles>
+        <!-- Profile for OpenAPI generation - uses H2 in-memory database -->
+        <profile>
+            <id>generate-openapi</id>
+            <properties>
+                <skipITs>false</skipITs>
+            </properties>
+        </profile>
+    </profiles>
 </project>

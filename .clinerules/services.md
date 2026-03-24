@@ -4,6 +4,29 @@
 
 This document describes the service layer implementations in the Language Learning Platform.
 
+## API Specification
+
+The OpenAPI specification is **auto-generated** from code annotations using springdoc-openapi.
+
+### Access Points
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html` (when running)
+- **OpenAPI JSON**: `http://localhost:8080/api-docs` (when running)
+- **OpenAPI YAML**: `http://localhost:8080/api-docs.yaml` (when running)
+
+### Generate Static File
+To generate a static spec file for documentation or CI/CD:
+```bash
+cd backend
+mvn verify -Pgenerate-openapi -DskipTests
+# Output: docs/openapi.yaml
+```
+
+### Use Cases
+- API documentation and communication
+- Client code generation (openapi-generator)
+- Feature testing and smoke tests (Postman, Insomnia)
+- Contract-first development
+
 ## Service Modules
 
 ### learning-service
@@ -190,6 +213,14 @@ Located in `backend/api-module/src/main/java/dev/languagelearning/api/controller
 | `/drag-drop` | POST | Generate word-order exercises |
 | `/translation` | POST | Generate translation exercises |
 | `/evaluate` | POST | Evaluate user response |
+
+### SpeechController
+**Path**: `/api/v1/speech`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/synthesize` | POST | Convert text to speech (returns MP3) |
+| `/transcribe` | POST | Convert audio to text (multipart) |
 
 ---
 
