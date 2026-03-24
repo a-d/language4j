@@ -218,18 +218,42 @@ Set and track goals at multiple levels:
 
 ## 🔧 API Reference
 
-### Endpoints
+### OpenAPI Specification
+
+The API specification is auto-generated from the code using springdoc-openapi.
+
+When the application is running, you can access:
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8080/api-docs`
+- **OpenAPI YAML**: `http://localhost:8080/api-docs.yaml`
+
+To generate a static spec file:
+```bash
+cd backend
+mvn verify -Pgenerate-openapi -DskipTests
+# Output: docs/openapi.yaml
+```
+
+### Main Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/users/me` | Get current user |
+| PUT | `/api/v1/users/me` | Update current user |
 | GET | `/api/v1/goals` | List learning goals |
-| POST | `/api/v1/lessons/generate` | Generate new lesson |
-| POST | `/api/v1/exercises/text-completion` | Get fill-in-blank exercise |
-| POST | `/api/v1/speech/synthesize` | Text to speech |
-| POST | `/api/v1/speech/transcribe` | Speech to text |
+| POST | `/api/v1/goals` | Create a new goal |
+| GET | `/api/v1/goals/daily/active` | Get active daily goals |
+| PATCH | `/api/v1/goals/{id}/progress` | Update goal progress |
+| POST | `/api/v1/content/lessons/generate` | Generate a lesson |
+| POST | `/api/v1/content/vocabulary/generate` | Generate vocabulary |
+| POST | `/api/v1/content/flashcards/generate` | Generate flashcards |
+| POST | `/api/v1/content/scenarios/generate` | Generate roleplay scenario |
+| POST | `/api/v1/exercises/text-completion` | Generate fill-in-blank exercises |
+| POST | `/api/v1/exercises/drag-drop` | Generate word-order exercises |
+| POST | `/api/v1/exercises/translation` | Generate translation exercises |
+| POST | `/api/v1/exercises/evaluate` | Evaluate user response |
 
-See full API documentation at `/api/docs` when running.
+See full API documentation at Swagger UI when running.
 
 ## 🐳 Docker Commands
 

@@ -36,7 +36,11 @@ async function request(endpoint, options = {}) {
             );
         }
         
-        // Handle empty responses
+        // Handle empty responses (204 No Content)
+        if (response.status === 204) {
+            return null;
+        }
+        
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch (error) {
@@ -61,150 +65,169 @@ class ApiError extends Error {
 
 /**
  * API client with organized endpoints
+ * 
+ * Backend API structure:
+ * - /api/v1/users      - User management
+ * - /api/v1/goals      - Learning goals
+ * - /api/v1/content    - Content generation (lessons, vocabulary, flashcards, scenarios, learning-plan)
+ * - /api/v1/exercises  - Exercise generation and evaluation
  */
 export const api = {
     // ==================== Users ====================
     users: {
+        /** Get current user profile */
         getCurrent: () => request('/v1/users/me'),
-        update: (data) => request('/v1/users/me', { method: 'PUT', body: data }),
-        getProgress: () => request('/v1/users/me/progress')
+        
+        /** Update current user profile */
+        update: (data) => request('/v1/users/me', { method: 'PUT', body: data })
     },
     
     // ==================== Learning Goals ====================
     goals: {
+        /** List all goals, optionally filtered by type (DAILY, WEEKLY, MONTHLY, YEARLY) */
         list: (type) => request(`/v1/goals${type ? `?type=${type}` : ''}`),
-        get: (id) => request(`/v1/goals/${id}`),
+        
+        /** Create a new goal */
         create: (data) => request('/v1/goals', { method: 'POST', body: data }),
-        update: (id, data) => request(`/v1/goals/${id}`, { method: 'PUT', body: data }),
-        delete: (id) => request(`/v1/goals/${id}`, { method: 'DELETE' }),
-        updateProgress: (id, progress) => request(`/v1/goals/${id}/progress`, { 
+        
+        /** Get active daily goals (incomplete) */
+        getActiveDailyGoals: () => request('/v1/goals/daily/active'),
+        
+        /** Update goal progress (set value) */
+        updateProgress: (id, currentValue) => request(`/v1/goals/${id}/progress`, { 
             method: 'PATCH', 
-            body: { currentValue: progress } 
-        })
+            body: { currentValue } 
+        }),
+        
+        /** Increment goal progress by amount */
+        incrementProgress: (id, amount = 1) => request(`/v1/goals/${id}/increment?amount=${amount}`, { 
+            method: 'PATCH'
+        }),
+        
+        /** Mark goal as complete */
+        complete: (id) => request(`/v1/goals/${id}/complete`, { method: 'POST' }),
+        
+        /** Delete a goal */
+        delete: (id) => request(`/v1/goals/${id}`, { method: 'DELETE' })
     },
     
-    // ==================== Lessons ====================
-    lessons: {
-        list: () => request('/v1/lessons'),
-        get: (id) => request(`/v1/lessons/${id}`),
-        generate: (topic) => request('/v1/lessons/generate', { 
+    // ==================== Content Generation ====================
+    content: {
+        /** Generate a lesson on a topic */
+        generateLesson: (topic) => request('/v1/content/lessons/generate', { 
             method: 'POST', 
             body: { topic } 
         }),
-        complete: (id, data) => request(`/v1/lessons/${id}/complete`, { 
+        
+        /** Generate vocabulary for a topic */
+        generateVocabulary: (topic, wordCount = 10) => request('/v1/content/vocabulary/generate', { 
             method: 'POST', 
-            body: data 
-        })
-    },
-    
-    // ==================== Vocabulary ====================
-    vocabulary: {
-        list: () => request('/v1/vocabulary'),
-        get: (id) => request(`/v1/vocabulary/${id}`),
-        generate: (topic, count = 10) => request('/v1/vocabulary/generate', { 
-            method: 'POST', 
-            body: { topic, wordCount: count } 
+            body: { topic, wordCount } 
         }),
-        addWords: (words) => request('/v1/vocabulary', { method: 'POST', body: { words } }),
-        getFlashcards: () => request('/v1/vocabulary/flashcards')
+        
+        /** Generate flashcards for a topic */
+        generateFlashcards: (topic, cardCount = 10) => request('/v1/content/flashcards/generate', { 
+            method: 'POST', 
+            body: { topic, cardCount } 
+        }),
+        
+        /** Generate a roleplay scenario */
+        generateScenario: (scenario) => request('/v1/content/scenarios/generate', { 
+            method: 'POST', 
+            body: { scenario } 
+        }),
+        
+        /** Generate a personalized learning plan */
+        generateLearningPlan: (dailyGoal, weeklyGoal, monthlyGoal) => request('/v1/content/learning-plan/generate', { 
+            method: 'POST', 
+            body: { dailyGoal, weeklyGoal, monthlyGoal } 
+        })
     },
     
     // ==================== Exercises ====================
     exercises: {
-        // Text completion
-        getTextCompletion: (topic) => request('/v1/exercises/text-completion', { 
+        /** Generate text completion (fill-in-the-blank) exercises */
+        generateTextCompletion: (topic, questionCount = 5) => request('/v1/exercises/text-completion', { 
             method: 'POST', 
-            body: { topic } 
+            body: { topic, questionCount } 
         }),
         
-        // Drag and drop
-        getDragDrop: (topic) => request('/v1/exercises/drag-drop', { 
+        /** Generate drag-and-drop (word order) exercises */
+        generateDragDrop: (topic, questionCount = 5) => request('/v1/exercises/drag-drop', { 
             method: 'POST', 
-            body: { topic } 
+            body: { topic, questionCount } 
         }),
         
-        // Translation
-        getTranslation: (topic) => request('/v1/exercises/translation', { 
+        /** Generate translation exercises */
+        generateTranslation: (topic, questionCount = 5) => request('/v1/exercises/translation', { 
             method: 'POST', 
-            body: { topic } 
+            body: { topic, questionCount } 
         }),
         
-        // Submit result
-        submitResult: (data) => request('/v1/exercises/results', { 
+        /** Evaluate a user's exercise response */
+        evaluate: (exercise, userResponse, expectedAnswer) => request('/v1/exercises/evaluate', { 
             method: 'POST', 
-            body: data 
-        }),
-        
-        // Get history
-        getHistory: (type) => request(`/v1/exercises/history${type ? `?type=${type}` : ''}`)
+            body: { exercise, userResponse, expectedAnswer } 
+        })
     },
     
     // ==================== Speech ====================
     speech: {
-        // Text to speech
-        synthesize: (text, language) => request('/v1/speech/synthesize', { 
-            method: 'POST', 
-            body: { text, language } 
-        }),
-        
-        // Speech to text
-        transcribe: async (audioBlob, language) => {
-            const formData = new FormData();
-            formData.append('audio', audioBlob);
-            formData.append('language', language);
+        /** 
+         * Convert text to speech audio
+         * @returns {Promise<Blob>} MP3 audio blob
+         */
+        synthesize: async (text, languageCode, slow = false, voice = null) => {
+            const url = `${API_BASE}/v1/speech/synthesize`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, languageCode, slow, voice })
+            });
             
-            const response = await fetch(`${API_BASE}/v1/speech/transcribe`, {
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new ApiError(error.message || `HTTP ${response.status}`, response.status, error);
+            }
+            
+            return response.blob();
+        },
+        
+        /** 
+         * Transcribe audio to text
+         * @param {Blob|File} audioFile - Audio file to transcribe
+         * @param {string} languageHint - Language hint for better accuracy
+         * @returns {Promise<{transcription: string}>}
+         */
+        transcribe: async (audioFile, languageHint = null) => {
+            const url = `${API_BASE}/v1/speech/transcribe`;
+            const formData = new FormData();
+            formData.append('audio', audioFile);
+            if (languageHint) {
+                formData.append('languageHint', languageHint);
+            }
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 body: formData
             });
             
             if (!response.ok) {
-                throw new ApiError('Transcription failed', response.status);
+                const error = await response.json().catch(() => ({}));
+                throw new ApiError(error.message || `HTTP ${response.status}`, response.status, error);
             }
             
             return response.json();
-        },
-        
-        // Evaluate pronunciation
-        evaluatePronunciation: (expected, transcription) => request('/v1/speech/evaluate', { 
-            method: 'POST', 
-            body: { expected, transcription } 
-        })
-    },
-    
-    // ==================== Learning Plan ====================
-    learningPlan: {
-        get: () => request('/v1/learning-plan'),
-        generate: (preferences) => request('/v1/learning-plan/generate', { 
-            method: 'POST', 
-            body: preferences 
-        }),
-        assessLevel: (responses) => request('/v1/learning-plan/assess', { 
-            method: 'POST', 
-            body: { responses } 
-        })
-    },
-    
-    // ==================== Scenarios ====================
-    scenarios: {
-        list: () => request('/v1/scenarios'),
-        get: (id) => request(`/v1/scenarios/${id}`),
-        generate: (type) => request('/v1/scenarios/generate', { 
-            method: 'POST', 
-            body: { type } 
-        }),
-        chat: (scenarioId, message) => request(`/v1/scenarios/${scenarioId}/chat`, { 
-            method: 'POST', 
-            body: { message } 
-        })
-    },
-    
-    // ==================== Configuration ====================
-    config: {
-        get: () => request('/v1/config'),
-        update: (data) => request('/v1/config', { method: 'PUT', body: data }),
-        getLanguages: () => request('/v1/config/languages')
+        }
     }
+    
+    // Note: Image endpoints are not yet implemented in the backend controllers.
+    // When ImageController is added, uncomment and update these:
+    
+    // ==================== Images (Not Yet Implemented) ====================
+    // images: {
+    //     generate: (prompt) => ...
+    // }
 };
 
 export { ApiError };
