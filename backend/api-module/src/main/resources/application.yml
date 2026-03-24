@@ -91,11 +91,39 @@ language-learning:
 
 # Spring AI Configuration
 spring.ai:
+  # OpenAI configuration (only used when LLM_PROVIDER=openai)
   openai:
-    api-key: ${OPENAI_API_KEY:${LLM_API_KEY:}}
+    api-key: ${OPENAI_API_KEY:${LLM_API_KEY:placeholder-key-not-used}}
+    base-url: ${OPENAI_BASE_URL:${LLM_BASE_URL:https://api.openai.com}}
     chat:
+      enabled: ${OPENAI_CHAT_ENABLED:false}
       options:
         model: ${LLM_MODEL:gpt-4-turbo-preview}
+        temperature: ${LLM_TEMPERATURE:0.7}
+    image:
+      enabled: ${OPENAI_IMAGE_ENABLED:false}
+    audio:
+      speech:
+        enabled: ${OPENAI_SPEECH_ENABLED:false}
+      transcription:
+        enabled: ${OPENAI_TRANSCRIPTION_ENABLED:false}
+
+  # Anthropic configuration (only used when LLM_PROVIDER=anthropic)
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:placeholder-key-not-used}
+    chat:
+      enabled: ${ANTHROPIC_CHAT_ENABLED:false}
+      options:
+        model: ${ANTHROPIC_MODEL:claude-3-sonnet-20240229}
+        temperature: ${LLM_TEMPERATURE:0.7}
+
+  # Ollama configuration (default local provider)
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:${LLM_BASE_URL:http://localhost:11434}}
+    chat:
+      enabled: ${OLLAMA_CHAT_ENABLED:true}
+      options:
+        model: ${LLM_MODEL:qwen2.5:7b-instruct-q5_K_M}
         temperature: ${LLM_TEMPERATURE:0.7}
 
 # Actuator Configuration
