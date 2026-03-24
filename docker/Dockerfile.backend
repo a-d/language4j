@@ -13,14 +13,14 @@ COPY backend/speech-service/pom.xml ./backend/speech-service/
 COPY backend/image-service/pom.xml ./backend/image-service/
 COPY backend/api-module/pom.xml ./backend/api-module/
 
-# Download dependencies
-RUN cd backend && mvn dependency:go-offline -B
+# Download dependencies (--no-transfer-progress hides download logs)
+RUN cd backend && mvn dependency:go-offline -B --no-transfer-progress
 
 # Copy source code
 COPY backend/ ./backend/
 
 # Build the application
-RUN cd backend && mvn clean package -DskipTests -B
+RUN cd backend && mvn clean package -DskipTests -B --no-transfer-progress
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
