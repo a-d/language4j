@@ -1,15 +1,21 @@
 # Language Learning Platform Configuration
 # =========================================
 
+# Dotenv Configuration - look for .env in project root (parent of backend folder)
+env:
+  directory: ../..
+  filename: .env
+  ignore-missing: true
+
 spring:
   application:
     name: language-learning
 
   # Database Configuration
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/language_learning}
-    username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:postgres}
+    url: ${env.DATABASE_URL:jdbc:postgresql://localhost:5433/language_learning}
+    username: ${env.DATABASE_USERNAME:postgres}
+    password: ${env.DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -64,11 +70,13 @@ language-learning:
     speech-to-text:
       provider: ${STT_PROVIDER:openai}
       api-key: ${STT_API_KEY:${LLM_API_KEY:}}
+      base-url: ${STT_BASE_URL:}
       model: ${STT_MODEL:whisper-1}
 
     text-to-speech:
       provider: ${TTS_PROVIDER:openai}
       api-key: ${TTS_API_KEY:${LLM_API_KEY:}}
+      base-url: ${TTS_BASE_URL:}
       model: ${TTS_MODEL:tts-1}
       voice: ${TTS_VOICE:alloy}
       speed: ${TTS_SPEED:1.0}
@@ -76,6 +84,7 @@ language-learning:
     image:
       provider: ${IMAGE_PROVIDER:openai}
       api-key: ${IMAGE_API_KEY:${LLM_API_KEY:}}
+      base-url: ${IMAGE_BASE_URL:}
       model: ${IMAGE_MODEL:dall-e-3}
       size: ${IMAGE_SIZE:1024x1024}
       quality: ${IMAGE_QUALITY:standard}
