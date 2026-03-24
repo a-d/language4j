@@ -87,13 +87,16 @@ def _load_model():
         return False
 
 
-def _unload_model():
-    """Unload model from GPU to free resources and stop CPU polling."""
+def _unload_and_exit():
+    """Unload model and exit process to stop ROCm CPU polling."""
     global _model, _unload_timer
     
     with _model_lock:
         if _model is not None:
-            print("Unloading Whisper model due to idle timeout...")
+            print("=" * 60)
+            print("IDLE TIMEOUT REACHED - Shutting down to free resources")
+            print("=" * 60)
+            print("Unloading Whisper model...")
             
             # Import torch only if we have a model to unload
             torch = _import_torch()
@@ -116,10 +119,21 @@ def _unload_model():
             print("Model unloaded successfully")
         
         _unload_timer = None
+        
+        # Exit the process - Docker will restart the container
+        # This is necessary because PyTorch/ROCm continues CPU polling
+        # even after model unload. Only a process restart stops it.
+        print("Exiting process (Docker will restart container)...")
+        print("=" * 60)
+        
+        # Use os._exit to immediately terminate without cleanup handlers
+        # that might hang. Exit code 0 so Docker sees clean shutdown.
+        import os as os_module
+        os_module._exit(0)
 
 
 def _schedule_unload():
-    """Schedule model unload after idle timeout."""
+    """Schedule model unload and container exit after idle timeout."""
     global _unload_timer
     
     # Cancel existing timer
@@ -127,7 +141,7 @@ def _schedule_unload():
         _unload_timer.cancel()
     
     if IDLE_TIMEOUT > 0:
-        _unload_timer = threading.Timer(IDLE_TIMEOUT, _unload_model)
+        _unload_timer = threading.Timer(IDLE_TIMEOUT, _unload_and_exit)
         _unload_timer.daemon = True
         _unload_timer.start()
 

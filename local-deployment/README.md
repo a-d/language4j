@@ -79,15 +79,28 @@ docker-compose up -d
 | Piper | 9001 | No | Text-to-speech (French) |
 | Stable Diffusion | 7860 | Yes | Flashcard images (lazy loading) |
 
-### Lazy Loading (Whisper & Stable Diffusion)
+### Lazy Loading & Auto-Restart (Whisper & Stable Diffusion)
 
-Both Whisper and Stable Diffusion services use **lazy loading** to avoid high CPU usage when idle:
-- Models are **not loaded at startup** - containers start quickly with minimal resource use
-- Models load on **first request** (~10-30s load time depending on model size)
-- Models **unload after 5 minutes of inactivity** (configurable via `WHISPER_IDLE_TIMEOUT` / `SD_IDLE_TIMEOUT`)
-- Health endpoints show `model_status: loaded/unloaded`
+Both Whisper and Stable Diffusion services use **lazy loading with auto-restart** to avoid high CPU usage when idle:
 
-This prevents PyTorch/ROCm from busy-polling the GPU when no work is being done.
+**Startup:**
+- Containers start with **~0% CPU** (PyTorch not imported)
+- Models load on **first request** (~10-30s cold start)
+
+**After use:**
+- After **5 minutes of inactivity** (configurable via `WHISPER_IDLE_TIMEOUT` / `SD_IDLE_TIMEOUT`):
+  1. Model is unloaded from GPU
+  2. **Container automatically exits**
+  3. Docker restarts the container fresh
+  4. Back to ~0% CPU usage
+
+**Why auto-restart?**
+PyTorch/ROCm creates background threads that poll the GPU even after model unload. The only way to stop this CPU usage is to restart the process. Docker's `restart: unless-stopped` policy handles this automatically.
+
+**Health endpoint fields:**
+- `model_status`: `loaded` or `unloaded`
+- `torch_imported`: `true` or `false` (false = 0% CPU)
+- `idle_seconds`: seconds since last use (when loaded)
 
 ## Resource Usage
 
