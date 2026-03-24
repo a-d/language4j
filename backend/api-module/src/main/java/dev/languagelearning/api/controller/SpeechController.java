@@ -2,7 +2,8 @@ package dev.languagelearning.api.controller;
 
 import dev.languagelearning.api.dto.ErrorResponse;
 import dev.languagelearning.speech.service.SpeechService;
-import dev.languagelearning.speech.service.SpeechOptions;
+import dev.languagelearning.speech.service.SpeechService.SpeechOptions;
+import dev.languagelearning.speech.service.SpeechService.Voice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,10 +12,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
@@ -23,6 +27,10 @@ import java.io.IOException;
  * <p>
  * Provides text-to-speech (TTS) and speech-to-text (STT) functionality
  * for pronunciation practice and listening exercises.
+ * <p>
+ * This controller requires speech services to be configured
+ * (requires OpenAI API key with audio access). If speech services
+ * are not configured, endpoints will return HTTP 503 (Service Unavailable).
  */
 @RestController
 @RequestMapping("/api/v1/speech")
@@ -30,7 +38,19 @@ import java.io.IOException;
 @Tag(name = "Speech", description = "Text-to-speech and speech-to-text services")
 public class SpeechController {
 
-    private final SpeechService speechService;
+    private final ObjectProvider<SpeechService> speechServiceProvider;
+
+    private SpeechService getSpeechService() {
+        SpeechService service = speechServiceProvider.getIfAvailable();
+        if (service == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Speech service is not available. " +
+                            "Please configure speech models (e.g., OpenAI TTS/STT) to use this feature."
+            );
+        }
+        return service;
+    }
 
     /**
      * Synthesize text to speech audio.
@@ -60,15 +80,18 @@ public class SpeechController {
     public ResponseEntity<byte[]> synthesize(
             @RequestBody SynthesizeRequest request
     ) {
-        SpeechOptions options = request.slow()
-                ? SpeechOptions.slow(request.languageCode())
-                : SpeechOptions.defaults(request.languageCode());
+        SpeechOptions options;
         
-        if (request.voice() != null) {
-            options = SpeechOptions.withVoice(request.languageCode(), request.voice());
+        if (request.voice() != null && !request.voice().isBlank()) {
+            Voice voice = Voice.valueOf(request.voice().toUpperCase());
+            options = SpeechOptions.withVoice(request.languageCode(), voice);
+        } else if (request.slow()) {
+            options = SpeechOptions.slow(request.languageCode());
+        } else {
+            options = SpeechOptions.defaults(request.languageCode());
         }
         
-        byte[] audio = speechService.textToSpeech(request.text(), options);
+        byte[] audio = getSpeechService().textToSpeech(request.text(), options);
         
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("audio/mpeg"))
@@ -106,8 +129,8 @@ public class SpeechController {
             @Parameter(description = "ISO 639-1 language code hint for better accuracy")
             @RequestParam(value = "languageHint", required = false) String languageHint
     ) throws IOException {
-        String transcription = speechService.speechToText(audioFile.getBytes(), languageHint);
-        return ResponseEntity.ok(new TranscriptionResponse(transcription));
+        var result = getSpeechService().speechToText(audioFile.getBytes(), languageHint);
+        return ResponseEntity.ok(new TranscriptionResponse(result.text()));
     }
 
     // ==================== Request/Response DTOs ====================

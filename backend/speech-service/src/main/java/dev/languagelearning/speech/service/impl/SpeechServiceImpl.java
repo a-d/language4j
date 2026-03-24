@@ -14,10 +14,8 @@ import org.springframework.ai.openai.OpenAiAudioTranscriptionOptions;
 import org.springframework.ai.openai.api.OpenAiAudioApi;
 import org.springframework.ai.openai.audio.speech.SpeechPrompt;
 import org.springframework.ai.openai.audio.speech.SpeechResponse;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,11 +24,12 @@ import java.io.InputStream;
  * Implementation of {@link SpeechService} using Spring AI.
  * <p>
  * Provides text-to-speech and speech-to-text functionality via OpenAI APIs.
+ * <p>
+ * This class is registered as a bean by {@link dev.languagelearning.speech.config.SpeechServiceAutoConfiguration}
+ * when the required audio models are available.
  */
-@Service
 @Slf4j
 @RequiredArgsConstructor
-@ConditionalOnBean(OpenAiAudioSpeechModel.class)
 public class SpeechServiceImpl implements SpeechService {
 
     private final OpenAiAudioSpeechModel speechModel;

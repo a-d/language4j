@@ -11,6 +11,13 @@ spring:
   application:
     name: language-learning
 
+  # Exclude Spring AI auto-configurations that require API keys when using local models
+  # These will be enabled conditionally based on provider configuration
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.openai.OpenAiAutoConfiguration
+      - org.springframework.ai.autoconfigure.anthropic.AnthropicAutoConfiguration
+
   # Database Configuration
   datasource:
     url: ${env.DATABASE_URL:jdbc:postgresql://localhost:5433/language_learning}

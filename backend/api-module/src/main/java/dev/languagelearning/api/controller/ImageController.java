@@ -14,9 +14,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -26,19 +28,31 @@ import java.util.Optional;
  * Provides endpoints for generating educational images for flashcards,
  * vocabulary learning, and other visual learning materials.
  * <p>
- * This controller is only available when an ImageModel bean is configured
- * (requires OpenAI API key with DALL-E access).
+ * This controller requires an ImageModel bean to be configured
+ * (requires OpenAI API key with DALL-E access). If image generation
+ * is not configured, endpoints will return HTTP 503 (Service Unavailable).
  */
 @RestController
 @RequestMapping("/api/v1/images")
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnBean(ImageService.class)
 @Tag(name = "Images", description = "AI-generated images for learning content")
 public class ImageController {
 
-    private final ImageService imageService;
+    private final ObjectProvider<ImageService> imageServiceProvider;
     private final LanguageConfig languageConfig;
+
+    private ImageService getImageService() {
+        ImageService service = imageServiceProvider.getIfAvailable();
+        if (service == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Image generation service is not available. " +
+                            "Please configure an image model (e.g., OpenAI DALL-E) to use this feature."
+            );
+        }
+        return service;
+    }
 
     /**
      * Generates an image from a text prompt.
@@ -70,7 +84,7 @@ public class ImageController {
         log.debug("Generating image for prompt: {}", truncate(request.prompt()));
 
         ImageGenerationOptions options = buildOptions(request.size(), request.quality(), request.style());
-        GeneratedImage result = imageService.generate(request.prompt(), options);
+        GeneratedImage result = getImageService().generate(request.prompt(), options);
 
         return ResponseEntity.ok(toResponse(result));
     }
@@ -106,8 +120,8 @@ public class ImageController {
             @RequestBody GenerateFlashcardImageRequest request) {
         log.debug("Generating flashcard image for word: {}", request.word());
 
-        String targetLang = languageConfig.getTargetLanguage();
-        GeneratedImage result = imageService.generateFlashcardImage(
+        String targetLang = languageConfig.getTargetCode();
+        GeneratedImage result = getImageService().generateFlashcardImage(
                 request.word(),
                 targetLang,
                 request.context()
@@ -149,9 +163,10 @@ public class ImageController {
 
         log.debug("Generating batch of {} flashcard images", requests.length);
 
-        String targetLang = languageConfig.getTargetLanguage();
+        String targetLang = languageConfig.getTargetCode();
         GeneratedImageResponse[] responses = new GeneratedImageResponse[requests.length];
 
+        ImageService imageService = getImageService();
         for (int i = 0; i < requests.length; i++) {
             GenerateFlashcardImageRequest req = requests[i];
             GeneratedImage result = imageService.generateFlashcardImage(
