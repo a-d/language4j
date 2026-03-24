@@ -1,0 +1,1599 @@
+openapi: 3.0.1
+info:
+  title: Language Learning Platform API
+  description: |
+    AI-powered language learning platform REST API.
+
+    This API provides endpoints for:
+    - **User management** and profile configuration
+    - **Learning goals** (daily, weekly, monthly, yearly)
+    - **AI-generated content** (lessons, vocabulary, flashcards, scenarios)
+    - **Interactive exercises** (text completion, drag-drop, translation)
+
+    ## Authentication
+    Currently, the API operates in single-user mode. Future versions will support
+    multi-user authentication via JWT tokens.
+
+    ## Content Generation
+    Content generation endpoints use AI (LLM) to create personalized learning materials.
+    Response times may vary based on the AI provider configuration.
+
+    ## Static Specification
+    The full OpenAPI specification is available in `docs/openapi.yaml`.
+  contact:
+    name: Language Learning Platform
+    url: https://github.com/a-d/language4j
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Local development server
+- url: http://localhost:8080
+  description: Docker development server
+tags:
+- name: Content
+  description: AI-generated learning content
+- name: Users
+  description: User profile and settings management
+- name: Images
+  description: AI-generated images for learning content
+- name: Exercises
+  description: Interactive exercises and evaluation
+- name: Speech
+  description: Text-to-speech and speech-to-text services
+- name: Goals
+  description: Learning goals and progress tracking
+paths:
+  /api/v1/users/me:
+    get:
+      tags:
+      - Users
+      summary: Get current user
+      description: "Retrieves the current user's profile information. In single-user\
+        \ mode, this creates a default user if none exists."
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - Users
+      summary: Update current user
+      description: Updates the current user's profile information. All fields are
+        optional - only provided fields will be updated.
+      operationId: updateCurrentUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        "400":
+          description: "Invalid request (e.g., invalid skill level)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+  /api/v1/speech/transcribe:
+    post:
+      tags:
+      - Speech
+      summary: Speech to text
+      description: "Transcribes audio to text. Accepts audio files (MP3, WAV, WebM,\
+        \ etc.). The language hint improves transcription accuracy."
+      operationId: transcribe
+      parameters:
+      - name: languageHint
+        in: query
+        description: ISO 639-1 language code hint for better accuracy
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - audio
+              type: object
+              properties:
+                audio:
+                  type: string
+                  description: Audio file to transcribe
+                  format: binary
+      responses:
+        "200":
+          description: Audio transcribed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionResponse'
+        "500":
+          description: Transcription failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid audio file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/speech/synthesize:
+    post:
+      tags:
+      - Speech
+      summary: Text to speech
+      description: Converts text to speech audio. Returns MP3 audio data. Use the
+        'slow' parameter for learning-friendly slower speech.
+      operationId: synthesize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynthesizeRequest'
+        required: true
+      responses:
+        "500":
+          description: Speech synthesis failed
+          content:
+            audio/mpeg:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            audio/mpeg:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Audio generated successfully
+          content:
+            audio/mpeg: {}
+  /api/v1/images/generate:
+    post:
+      tags:
+      - Images
+      summary: Generate an image
+      description: Generates an image from a text prompt using AI (DALL-E). Response
+        time may take 10-30 seconds depending on size and quality.
+      operationId: generateImage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateImageRequest'
+        required: true
+      responses:
+        "500":
+          description: Image generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Image generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedImageResponse'
+  /api/v1/images/flashcard:
+    post:
+      tags:
+      - Images
+      summary: Generate a flashcard image
+      description: "Generates an educational illustration for a vocabulary word. The\
+        \ image is optimized for flashcard display (512x512) with a clean, minimalist\
+        \ style suitable for language learning."
+      operationId: generateFlashcardImage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateFlashcardImageRequest'
+        required: true
+      responses:
+        "200":
+          description: Flashcard image generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedImageResponse'
+        "500":
+          description: Image generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/images/flashcard/batch:
+    post:
+      tags:
+      - Images
+      summary: Generate multiple flashcard images
+      description: Generates educational illustrations for multiple vocabulary words.
+        Returns an array of generated images. Limited to 5 words per request.
+      operationId: generateFlashcardImagesBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/GenerateFlashcardImageRequest'
+        required: true
+      responses:
+        "200":
+          description: Flashcard images generated successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneratedImageResponse'
+        "400":
+          description: Invalid request (too many words)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Image generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/goals:
+    get:
+      tags:
+      - Goals
+      summary: Get all goals
+      description: "Retrieves all learning goals for the current user. Optionally\
+        \ filter by goal type (DAILY, WEEKLY, MONTHLY, YEARLY)."
+      operationId: getGoals
+      parameters:
+      - name: type
+        in: query
+        description: Filter goals by type
+        required: false
+        schema:
+          type: string
+          enum:
+          - DAILY
+          - WEEKLY
+          - MONTHLY
+          - YEARLY
+      responses:
+        "400":
+          description: Invalid goal type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Goals retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoalDto'
+    post:
+      tags:
+      - Goals
+      summary: Create a new goal
+      description: Creates a new learning goal for the current user. The goal's start
+        and end dates are automatically calculated based on the goal type.
+      operationId: createGoal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoalRequest'
+        required: true
+      responses:
+        "200":
+          description: Goal created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDto'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/goals/{goalId}/complete:
+    post:
+      tags:
+      - Goals
+      summary: Mark goal as complete
+      description: "Manually marks a goal as complete, regardless of current progress.\
+        \ Sets the completed timestamp to the current time."
+      operationId: completeGoal
+      parameters:
+      - name: goalId
+        in: path
+        description: The goal's unique identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Goal marked as complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDto'
+        "404":
+          description: Goal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/translation:
+    post:
+      tags:
+      - Exercises
+      summary: Generate translation exercises
+      description: "Generates translation exercises from native language to target\
+        \ language. Includes the source sentence, expected translation, and key vocabulary."
+      operationId: getTranslationExercises
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+        required: true
+      responses:
+        "500":
+          description: Exercise generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Exercises generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/text-completion:
+    post:
+      tags:
+      - Exercises
+      summary: Generate text completion exercises
+      description: Generates fill-in-the-blank exercises for the specified topic.
+        Each exercise includes a sentence with a blank and the expected answer.
+      operationId: getTextCompletionExercises
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+        required: true
+      responses:
+        "500":
+          description: Exercise generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Exercises generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/speaking:
+    post:
+      tags:
+      - Exercises
+      summary: Generate speaking exercises
+      description: "Generates speaking and pronunciation exercises where users speak\
+        \ phrases and get feedback. Each exercise includes text to speak, pronunciation\
+        \ tips, and common mistakes to avoid."
+      operationId: getSpeakingExercises
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+        required: true
+      responses:
+        "500":
+          description: Exercise generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Exercises generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/results:
+    get:
+      tags:
+      - Exercises
+      summary: Get exercise history
+      description: "Returns paginated exercise results for the current user, optionally\
+        \ filtered by type."
+      operationId: getHistory
+      parameters:
+      - name: type
+        in: query
+        description: Filter by exercise type
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Page number (0-based)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        description: Page size
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: History retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageExerciseResultDto'
+    post:
+      tags:
+      - Exercises
+      summary: Save exercise result
+      description: "Saves the result of a completed exercise including score, time\
+        \ spent, and answers."
+      operationId: saveResult
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveExerciseResultRequest'
+        required: true
+      responses:
+        "200":
+          description: Result saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResultDto'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/listening:
+    post:
+      tags:
+      - Exercises
+      summary: Generate listening exercises
+      description: "Generates listening comprehension exercises where users listen\
+        \ to audio and type what they hear. Each exercise includes text for TTS, translation,\
+        \ and hints."
+      operationId: getListeningExercises
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+        required: true
+      responses:
+        "500":
+          description: Exercise generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Exercises generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/evaluate:
+    post:
+      tags:
+      - Exercises
+      summary: Evaluate user response
+      description: "Evaluates a user's answer to an exercise using AI. Provides feedback\
+        \ on correctness, grammar, and suggestions for improvement."
+      operationId: evaluateResponse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateResponseRequest'
+        required: true
+      responses:
+        "200":
+          description: Evaluation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Evaluation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/evaluate-pronunciation:
+    post:
+      tags:
+      - Exercises
+      summary: Evaluate pronunciation
+      description: Evaluates a user's pronunciation by comparing the expected text
+        with the transcribed speech. Provides accuracy score and specific feedback.
+      operationId: evaluatePronunciation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluatePronunciationRequest'
+        required: true
+      responses:
+        "200":
+          description: Evaluation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Evaluation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/drag-drop:
+    post:
+      tags:
+      - Exercises
+      summary: Generate drag-and-drop exercises
+      description: Generates word-ordering exercises where users arrange words to
+        form sentences. Includes shuffled words and the correct sentence order.
+      operationId: getDragDropExercises
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+        required: true
+      responses:
+        "500":
+          description: Exercise generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Exercises generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/content/vocabulary/generate:
+    post:
+      tags:
+      - Content
+      summary: Generate vocabulary
+      description: "Generates a vocabulary list for the specified topic. Includes\
+        \ translations, example sentences, and usage notes."
+      operationId: generateVocabulary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateVocabularyRequest'
+        required: true
+      responses:
+        "500":
+          description: Content generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Vocabulary generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/content/scenarios/generate:
+    post:
+      tags:
+      - Content
+      summary: Generate roleplay scenario
+      description: "Generates a roleplay dialogue scenario for conversational practice.\
+        \ Includes character descriptions, dialogue lines, and cultural notes."
+      operationId: generateScenario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateScenarioRequest'
+        required: true
+      responses:
+        "200":
+          description: Scenario generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "500":
+          description: Content generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/content/lessons/generate:
+    post:
+      tags:
+      - Content
+      summary: Generate a lesson
+      description: Generates a new lesson on the specified topic using AI. The lesson
+        is tailored to the user's skill level and language pair. Response time may
+        take 5-30 seconds depending on AI provider.
+      operationId: generateLesson
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateContentRequest'
+        required: true
+      responses:
+        "200":
+          description: Lesson generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+        "500":
+          description: Content generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/content/learning-plan/generate:
+    post:
+      tags:
+      - Content
+      summary: Generate learning plan
+      description: "Generates a personalized learning plan based on user goals. Creates\
+        \ a structured roadmap with daily, weekly, and monthly milestones."
+      operationId: generateLearningPlan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLearningPlanRequest'
+        required: true
+      responses:
+        "500":
+          description: Content generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Learning plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+  /api/v1/content/flashcards/generate:
+    post:
+      tags:
+      - Content
+      summary: Generate flashcards
+      description: Generates flashcard data for the specified topic. Each flashcard
+        includes front (target language) and back (native language) content.
+      operationId: generateFlashcards
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateFlashcardsRequest'
+        required: true
+      responses:
+        "500":
+          description: Content generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Flashcards generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedContentResponse'
+  /api/v1/goals/{goalId}/progress:
+    patch:
+      tags:
+      - Goals
+      summary: Update goal progress
+      description: "Sets the current progress value for a goal. If the new value reaches\
+        \ or exceeds the target, the goal is automatically marked as complete."
+      operationId: updateProgress
+      parameters:
+      - name: goalId
+        in: path
+        description: The goal's unique identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGoalProgressRequest'
+        required: true
+      responses:
+        "404":
+          description: Goal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDto'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/goals/{goalId}/increment:
+    patch:
+      tags:
+      - Goals
+      summary: Increment goal progress
+      description: "Increments the current progress value by a specified amount. Useful\
+        \ for tracking incremental progress (e.g., after completing a lesson)."
+      operationId: incrementProgress
+      parameters:
+      - name: goalId
+        in: path
+        description: The goal's unique identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: amount
+        in: query
+        description: Amount to increment by (default is 1)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      responses:
+        "404":
+          description: Goal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: Progress incremented successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDto'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/goals/daily/active:
+    get:
+      tags:
+      - Goals
+      summary: Get active daily goals
+      description: Retrieves all active (incomplete) daily goals for the current user.
+        Useful for displaying current day's learning objectives.
+      operationId: getActiveDailyGoals
+      responses:
+        "200":
+          description: Active daily goals retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoalDto'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/exercises/statistics:
+    get:
+      tags:
+      - Exercises
+      summary: Get exercise statistics
+      description: "Returns summary statistics including total exercises, average\
+        \ score, time spent, and pass rate."
+      operationId: getStatistics
+      responses:
+        "200":
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseStatisticsDto'
+  /api/v1/exercises/results/recent:
+    get:
+      tags:
+      - Exercises
+      summary: Get recent exercise results
+      description: Returns exercise results from the last N days.
+      operationId: getRecentResults
+      parameters:
+      - name: days
+        in: query
+        description: Number of days to look back
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 7
+      responses:
+        "200":
+          description: Recent results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExerciseResultDto'
+  /api/v1/goals/{goalId}:
+    delete:
+      tags:
+      - Goals
+      summary: Delete a goal
+      description: Permanently deletes a learning goal.
+      operationId: deleteGoal
+      parameters:
+      - name: goalId
+        in: path
+        description: The goal's unique identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "404":
+          description: Goal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "204":
+          description: Goal deleted successfully
+components:
+  schemas:
+    UpdateUserRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: New display name
+          nullable: true
+          example: John Doe
+        skillLevel:
+          type: string
+          description: "New CEFR skill level (A1, A2, B1, B2, C1, C2)"
+          nullable: true
+          example: B1
+      description: Request to update user profile
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: Timestamp when the error occurred
+          format: date-time
+          example: 2024-01-15T10:30:00Z
+        status:
+          type: integer
+          description: HTTP status code
+          format: int32
+          example: 400
+        error:
+          type: string
+          description: Error type/category
+          example: Validation Error
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid language code
+        path:
+          type: string
+          description: Request path that caused the error
+          example: /api/v1/users/me
+        details:
+          type: object
+          additionalProperties:
+            type: string
+            description: "Additional error details (e.g., field validation errors)"
+            nullable: true
+          description: "Additional error details (e.g., field validation errors)"
+          nullable: true
+      description: Standard error response format
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        displayName:
+          type: string
+          description: User's display name
+          example: John Doe
+        nativeLanguage:
+          type: string
+          description: ISO 639-1 language code for native language
+          example: en
+        targetLanguage:
+          type: string
+          description: ISO 639-1 language code for target language
+          example: de
+        skillLevel:
+          type: string
+          description: "CEFR skill level (A1, A2, B1, B2, C1, C2)"
+          example: A1
+        assessmentCompleted:
+          type: boolean
+          description: Whether the user has completed the initial skill assessment
+          example: false
+        createdAt:
+          type: string
+          description: Account creation timestamp
+          format: date-time
+          example: 2024-01-15T10:30:00Z
+      description: User profile information
+    TranscriptionResponse:
+      type: object
+      properties:
+        transcription:
+          type: string
+          description: Transcribed text from audio
+          example: "Bonjour, comment allez-vous?"
+      description: Transcription result
+    SynthesizeRequest:
+      required:
+      - languageCode
+      - text
+      type: object
+      properties:
+        text:
+          type: string
+          description: Text to convert to speech
+          example: "Bonjour, comment allez-vous?"
+        languageCode:
+          type: string
+          description: ISO 639-1 language code
+          example: fr
+        slow:
+          type: boolean
+          description: Use slower speech speed for learning
+          example: true
+          default: false
+        voice:
+          type: string
+          description: "Voice selection (ALLOY, ECHO, FABLE, ONYX, NOVA, SHIMMER)"
+          nullable: true
+          example: NOVA
+      description: Request to synthesize text to speech
+    GenerateImageRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+        size:
+          type: string
+        quality:
+          type: string
+        style:
+          type: string
+    GeneratedImageResponse:
+      type: object
+      properties:
+        url:
+          type: string
+        revisedPrompt:
+          type: string
+        size:
+          type: string
+    GenerateFlashcardImageRequest:
+      type: object
+      properties:
+        word:
+          type: string
+        context:
+          type: string
+    CreateGoalRequest:
+      required:
+      - title
+      - type
+      - unit
+      type: object
+      properties:
+        title:
+          type: string
+          description: Goal title
+          example: Learn new words
+        description:
+          type: string
+          description: Detailed goal description
+          nullable: true
+          example: Learn 10 new vocabulary words each day
+        type:
+          type: string
+          description: "Goal type (DAILY, WEEKLY, MONTHLY, YEARLY)"
+          example: DAILY
+        targetValue:
+          minimum: 1
+          type: integer
+          description: Target value to achieve
+          format: int32
+          example: 10
+        unit:
+          type: string
+          description: Unit of measurement
+          example: words
+      description: Request to create a new goal
+    GoalDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique goal identifier
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        type:
+          type: string
+          description: "Goal type (DAILY, WEEKLY, MONTHLY, YEARLY)"
+          example: DAILY
+        title:
+          type: string
+          description: Goal title
+          example: Learn new words
+        description:
+          type: string
+          description: Detailed goal description
+          nullable: true
+          example: Learn 10 new vocabulary words each day
+        targetValue:
+          type: integer
+          description: Target value to achieve
+          format: int32
+          example: 10
+        currentValue:
+          type: integer
+          description: Current progress value
+          format: int32
+          example: 5
+        unit:
+          type: string
+          description: Unit of measurement
+          example: words
+        startDate:
+          type: string
+          description: Goal start date
+          format: date
+          example: 2024-01-15
+        endDate:
+          type: string
+          description: Goal end date (null for ongoing goals)
+          format: date
+          nullable: true
+          example: 2024-01-15
+        completed:
+          type: boolean
+          description: Whether the goal is completed
+          example: false
+        completedAt:
+          type: string
+          description: Completion timestamp (null if not completed)
+          format: date-time
+          nullable: true
+          example: 2024-01-15T18:30:00Z
+        progressPercent:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Progress percentage (0-100)
+          format: int32
+          example: 50
+      description: Learning goal information
+    GenerateExerciseRequest:
+      required:
+      - topic
+      type: object
+      properties:
+        topic:
+          type: string
+          description: Topic for exercise generation
+          example: past tense verbs
+        questionCount:
+          maximum: 20
+          minimum: 1
+          type: integer
+          description: Number of questions to generate (default 5)
+          format: int32
+          example: 5
+          default: 5
+      description: Request to generate exercises
+    GeneratedContentResponse:
+      type: object
+      properties:
+        content:
+          type: string
+          description: "Generated content (format depends on type: Markdown for lessons/vocabulary/scenarios,\
+            \ JSON for exercises/flashcards)"
+          example: |-
+            # Lesson Title
+
+            ## Introduction
+            ...
+        type:
+          type: string
+          description: Content type identifier
+          example: lesson
+          enum:
+          - lesson
+          - vocabulary
+          - flashcards
+          - scenario
+          - learning-plan
+          - text-completion
+          - drag-drop
+          - translation
+          - evaluation
+      description: Response containing generated content
+    SaveExerciseResultRequest:
+      required:
+      - correctAnswers
+      - exerciseType
+      - score
+      - timeSpentSeconds
+      - totalQuestions
+      type: object
+      properties:
+        exerciseType:
+          type: string
+          description: Type of exercise
+          example: TEXT_COMPLETION
+          enum:
+          - TEXT_COMPLETION
+          - DRAG_DROP
+          - TRANSLATION
+          - MULTIPLE_CHOICE
+          - LISTENING
+          - SPEAKING
+          - FLASHCARD
+          - ROLEPLAY
+          - DICTATION
+        exerciseReference:
+          type: string
+          description: "Reference to the exercise content (e.g., topic or ID)"
+          example: basic-greetings
+        score:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Score achieved (0-100)
+          format: int32
+          example: 80
+        correctAnswers:
+          minimum: 0
+          type: integer
+          description: Number of correct answers
+          format: int32
+          example: 4
+        totalQuestions:
+          minimum: 0
+          type: integer
+          description: Total number of questions
+          format: int32
+          example: 5
+        timeSpentSeconds:
+          minimum: 0
+          type: integer
+          description: Time spent in seconds
+          format: int64
+          example: 120
+        userResponse:
+          type: string
+          description: The user's responses (JSON array or text)
+        correctResponse:
+          type: string
+          description: The correct responses (JSON array or text)
+        feedback:
+          type: string
+          description: Optional AI-generated feedback
+      description: Request to save an exercise result
+    ExerciseResultDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+          format: uuid
+        exerciseType:
+          type: string
+          description: Type of exercise
+          example: TEXT_COMPLETION
+        exerciseReference:
+          type: string
+          description: Reference to the exercise content
+          example: basic-greetings
+        score:
+          type: integer
+          description: Score achieved (0-100)
+          format: int32
+          example: 80
+        maxScore:
+          type: integer
+          description: Maximum possible score
+          format: int32
+          example: 100
+        correctAnswers:
+          type: integer
+          description: Number of correct answers
+          format: int32
+          example: 4
+        totalQuestions:
+          type: integer
+          description: Total number of questions
+          format: int32
+          example: 5
+        timeSpentSeconds:
+          type: integer
+          description: Time spent in seconds
+          format: int64
+          example: 120
+        passed:
+          type: boolean
+          description: Whether the exercise was passed (score >= 70)
+        skillLevel:
+          type: string
+          description: Skill level at the time of exercise
+          example: A1
+        feedback:
+          type: string
+          description: Feedback on the exercise
+        createdAt:
+          type: string
+          description: When the result was recorded
+          format: date-time
+      description: Exercise result data
+    EvaluateResponseRequest:
+      type: object
+      properties:
+        exercise:
+          type: string
+        userResponse:
+          type: string
+        expectedAnswer:
+          type: string
+    EvaluatePronunciationRequest:
+      required:
+      - expectedText
+      - transcription
+      type: object
+      properties:
+        expectedText:
+          type: string
+          description: The text the user was supposed to say
+          example: "Bonjour, comment allez-vous?"
+        transcription:
+          type: string
+          description: The transcribed text from the user's speech
+          example: "Bonjour, comment allez vous"
+      description: Request to evaluate pronunciation
+    GenerateVocabularyRequest:
+      type: object
+      properties:
+        topic:
+          type: string
+        wordCount:
+          type: integer
+          format: int32
+    GenerateScenarioRequest:
+      type: object
+      properties:
+        scenario:
+          type: string
+    GenerateContentRequest:
+      type: object
+      properties:
+        topic:
+          type: string
+    GenerateLearningPlanRequest:
+      type: object
+      properties:
+        dailyGoal:
+          type: string
+        weeklyGoal:
+          type: string
+        monthlyGoal:
+          type: string
+    GenerateFlashcardsRequest:
+      type: object
+      properties:
+        topic:
+          type: string
+        cardCount:
+          type: integer
+          format: int32
+    UpdateGoalProgressRequest:
+      type: object
+      properties:
+        currentValue:
+          type: integer
+          format: int32
+    ExerciseStatisticsDto:
+      type: object
+      properties:
+        totalExercises:
+          type: integer
+          description: Total number of exercises completed
+          format: int64
+          example: 150
+        exercisesToday:
+          type: integer
+          description: Exercises completed today
+          format: int64
+          example: 5
+        averageScore:
+          type: number
+          description: Overall average score (0-100)
+          format: double
+          example: 78.5
+        totalTimeSeconds:
+          type: integer
+          description: Total time spent in seconds
+          format: int64
+          example: 7200
+        passRate:
+          type: number
+          description: Percentage of exercises passed (last 30 days)
+          format: double
+          example: 85.0
+        countsByType:
+          type: object
+          additionalProperties:
+            type: integer
+            description: Exercise counts grouped by type
+            format: int64
+          description: Exercise counts grouped by type
+      description: Exercise statistics summary
+    PageExerciseResultDto:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExerciseResultDto'
+        number:
+          type: integer
+          format: int32
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/SortObject'
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/SortObject'
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        direction:
+          type: string
+        nullHandling:
+          type: string
+        ascending:
+          type: boolean
+        property:
+          type: string
+        ignoreCase:
+          type: boolean

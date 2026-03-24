@@ -220,18 +220,22 @@ Set and track goals at multiple levels:
 
 ### OpenAPI Specification
 
-The API specification is auto-generated from the code using springdoc-openapi.
+📄 **[docs/openapi.yaml](docs/openapi.yaml)** - Complete REST API specification with all endpoints, request/response schemas, and validation rules.
 
-When the application is running, you can access:
+The specification is auto-generated from the code using springdoc-openapi. Use this file for:
+- API documentation and reference
+- Client code generation (openapi-generator)
+- Testing tools integration (Postman, Insomnia)
+
+When the application is running, you can also access:
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 - **OpenAPI JSON**: `http://localhost:8080/api-docs`
 - **OpenAPI YAML**: `http://localhost:8080/api-docs.yaml`
 
-To generate a static spec file:
+To regenerate the spec file after API changes:
 ```bash
-cd backend
-mvn verify -Pgenerate-openapi -DskipTests
-# Output: docs/openapi.yaml
+./scripts/update-openapi-spec.sh
+# Or: cd backend && mvn verify -Pgenerate-openapi -DskipTests
 ```
 
 ### Main Endpoints

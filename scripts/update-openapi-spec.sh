@@ -46,7 +46,6 @@ echo -e "${BLUE}================================================${NC}"
 echo ""
 
 echo -e "${YELLOW}Generating OpenAPI spec using Maven...${NC}"
-echo "This will start a temporary backend instance with H2 database."
 echo ""
 
 cd "$PROJECT_ROOT/backend"

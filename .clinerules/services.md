@@ -6,16 +6,26 @@ This document describes the service layer implementations in the Language Learni
 
 ## API Specification
 
-The OpenAPI specification is **auto-generated** from code annotations using springdoc-openapi.
+The complete REST API is documented in the **OpenAPI specification file**:
 
-### Access Points
+📄 **[docs/openapi.yaml](../docs/openapi.yaml)** - Full API specification with all endpoints, request/response schemas, and examples.
+
+This specification is **auto-generated** from code annotations using springdoc-openapi.
+
+### Static Spec File
+- **Location**: `docs/openapi.yaml`
+- **Format**: OpenAPI 3.0 YAML
+- **Contents**: All REST endpoints, DTOs, request/response schemas, validation rules
+- **Use for**: API reference, client code generation, testing tools integration
+
+### Runtime Access Points
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html` (when running)
 - **OpenAPI JSON**: `http://localhost:8080/api-docs` (when running)
 - **OpenAPI YAML**: `http://localhost:8080/api-docs.yaml` (when running)
 
 ### Generate/Update Spec File
 
-Use the provided script to keep `docs/openapi.yaml` up-to-date:
+Use the provided script to keep `docs/openapi.yaml` up-to-date after API changes:
 
 ```bash
 # Run from project root - starts temp H2 backend, downloads spec, stops
