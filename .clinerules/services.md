@@ -13,13 +13,19 @@ The OpenAPI specification is **auto-generated** from code annotations using spri
 - **OpenAPI JSON**: `http://localhost:8080/api-docs` (when running)
 - **OpenAPI YAML**: `http://localhost:8080/api-docs.yaml` (when running)
 
-### Generate Static File
-To generate a static spec file for documentation or CI/CD:
+### Generate/Update Spec File
+
+Use the provided script to keep `docs/openapi.yaml` up-to-date:
+
 ```bash
-cd backend
-mvn verify -Pgenerate-openapi -DskipTests
-# Output: docs/openapi.yaml
+# Run from project root - starts temp H2 backend, downloads spec, stops
+./scripts/update-openapi-spec.sh
+
+# Or directly with Maven
+cd backend && mvn verify -Pgenerate-openapi -DskipTests -pl api-module -am
 ```
+
+See [development-workflow.md](development-workflow.md#openapi-specification-management) for complete documentation.
 
 ### Use Cases
 - API documentation and communication

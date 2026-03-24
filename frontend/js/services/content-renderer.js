@@ -106,11 +106,18 @@ function renderJsonContent(content, type) {
 // ==================== Flashcards Renderer ====================
 
 /**
- * Renders flashcards as interactive cards.
- * Expected data format:
+ * Renders flashcards as interactive cards with flip effect.
+ * 
+ * Supports multiple data formats from the backend:
+ * 
+ * Format 1 (Backend LLM response):
+ * { flashcards: [{ front: string, back: { translation, pronunciation, example, exampleTranslation }, mnemonic?, imagePrompt? }] }
+ * 
+ * Format 2 (Simple format):
  * { cards: [{ front: string, back: string, example?: string }] }
- * or
- * [{ front: string, back: string, example?: string }]
+ * 
+ * Format 3 (Array only):
+ * [{ front: string, back: string|object, ... }]
  */
 function renderFlashcards(data) {
     const cards = Array.isArray(data) ? data : (data.cards || data.flashcards || []);
@@ -125,27 +132,70 @@ function renderFlashcards(data) {
                 <span class="flashcard-counter">1 / ${cards.length}</span>
             </div>
             <div class="flashcards-container">
-                ${cards.map((card, index) => `
-                    <div class="flashcard ${index === 0 ? 'active' : ''}" data-index="${index}">
-                        <div class="flashcard-inner">
-                            <div class="flashcard-front">
-                                <span class="flashcard-label">Front</span>
-                                <p class="flashcard-text">${escapeHtml(card.front || card.word || card.term || '')}</p>
-                                ${card.pronunciation ? `<p class="flashcard-pronunciation">${escapeHtml(card.pronunciation)}</p>` : ''}
-                            </div>
-                            <div class="flashcard-back">
-                                <span class="flashcard-label">Back</span>
-                                <p class="flashcard-text">${escapeHtml(card.back || card.translation || card.definition || '')}</p>
-                                ${card.example ? `<p class="flashcard-example"><em>${escapeHtml(card.example)}</em></p>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
+                ${cards.map((card, index) => renderSingleFlashcard(card, index)).join('')}
             </div>
             <div class="flashcards-controls">
                 <button class="btn btn-secondary flashcard-prev" onclick="window.flashcardPrev(this)" disabled>← Previous</button>
-                <button class="btn btn-primary flashcard-flip" onclick="window.flashcardFlip(this)">Flip Card</button>
+                <button class="btn btn-primary flashcard-flip" onclick="window.flashcardFlip(this)">🔄 Flip Card</button>
                 <button class="btn btn-secondary flashcard-next" onclick="window.flashcardNext(this)" ${cards.length <= 1 ? 'disabled' : ''}>Next →</button>
+            </div>
+            <div class="flashcard-hint">
+                <span>💡 Click on the card or press the Flip button to reveal the answer</span>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders a single flashcard, handling nested back object structure.
+ * @param {Object} card - The flashcard data
+ * @param {number} index - The card index
+ * @returns {string} HTML string for the card
+ */
+function renderSingleFlashcard(card, index) {
+    // Extract front text (target language word/phrase)
+    const frontText = card.front || card.word || card.term || '';
+    
+    // Handle nested back object or simple string
+    let backTranslation = '';
+    let backPronunciation = '';
+    let backExample = '';
+    let backExampleTranslation = '';
+    let mnemonic = card.mnemonic || '';
+    
+    if (card.back && typeof card.back === 'object') {
+        // Nested structure from LLM: { translation, pronunciation, example, exampleTranslation }
+        backTranslation = card.back.translation || '';
+        backPronunciation = card.back.pronunciation || card.pronunciation || '';
+        backExample = card.back.example || '';
+        backExampleTranslation = card.back.exampleTranslation || '';
+    } else {
+        // Simple string format
+        backTranslation = card.back || card.translation || card.definition || '';
+        backPronunciation = card.pronunciation || '';
+        backExample = card.example || '';
+        backExampleTranslation = card.exampleTranslation || '';
+    }
+    
+    return `
+        <div class="flashcard ${index === 0 ? 'active' : ''}" data-index="${index}" onclick="window.flashcardFlipCard(this)">
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <span class="flashcard-label">🎯 Target Language</span>
+                    <p class="flashcard-text">${escapeHtml(frontText)}</p>
+                    ${backPronunciation ? `<p class="flashcard-pronunciation">🔊 ${escapeHtml(backPronunciation)}</p>` : ''}
+                </div>
+                <div class="flashcard-back">
+                    <span class="flashcard-label">📖 Translation</span>
+                    <p class="flashcard-text">${escapeHtml(backTranslation)}</p>
+                    ${backExample ? `
+                        <div class="flashcard-example-section">
+                            <p class="flashcard-example"><strong>Example:</strong> <em>${escapeHtml(backExample)}</em></p>
+                            ${backExampleTranslation ? `<p class="flashcard-example-translation">${escapeHtml(backExampleTranslation)}</p>` : ''}
+                        </div>
+                    ` : ''}
+                    ${mnemonic ? `<p class="flashcard-mnemonic">💡 <em>${escapeHtml(mnemonic)}</em></p>` : ''}
+                </div>
             </div>
         </div>
     `;
@@ -201,11 +251,12 @@ function renderTextCompletionExercises(data) {
 // ==================== Drag & Drop (Word Order) Renderer ====================
 
 /**
- * Renders word-ordering exercises.
- * Expected data format:
- * { exercises: [{ words: string[], correctOrder: string[], translation?: string }] }
- * or
- * [{ shuffled: string[], correct: string }]
+ * Renders word-ordering exercises with improved visualization.
+ * 
+ * Expected data formats:
+ * Format 1: { exercises: [{ scrambledWords: string[], correctOrder: string[], translation: string, explanation: string }] }
+ * Format 2: { exercises: [{ words: string[], correctOrder: string[], translation?: string }] }
+ * Format 3: [{ shuffled: string[], correct: string }]
  */
 function renderDragDropExercises(data) {
     const exercises = Array.isArray(data) ? data : (data.exercises || data.sentences || []);
@@ -215,46 +266,101 @@ function renderDragDropExercises(data) {
     }
     
     return `
-        <div class="exercises-list drag-drop-exercises">
-            ${exercises.map((ex, index) => {
-                // Handle different data formats
-                let words = ex.words || ex.shuffled || [];
-                let correctSentence = '';
-                
-                if (ex.correctOrder) {
-                    correctSentence = Array.isArray(ex.correctOrder) ? ex.correctOrder.join(' ') : ex.correctOrder;
-                } else if (ex.correct) {
-                    correctSentence = ex.correct;
-                } else if (ex.sentence) {
-                    correctSentence = ex.sentence;
-                }
-                
-                // If words aren't provided but correct is, shuffle the correct answer
-                if (words.length === 0 && correctSentence) {
-                    words = shuffleArray(correctSentence.split(/\s+/));
-                }
-                
-                const translation = ex.translation || ex.hint || '';
-                
-                return `
-                    <div class="exercise-item drag-drop-item" data-index="${index}" data-correct="${escapeHtml(correctSentence)}">
-                        <div class="exercise-number">${index + 1}</div>
-                        <div class="exercise-content">
-                            ${translation ? `<p class="exercise-translation">📝 ${escapeHtml(translation)}</p>` : ''}
-                            <div class="word-bank">
-                                ${words.map((word, wordIndex) => `
-                                    <span class="draggable-word" draggable="true" data-word="${escapeHtml(word)}" onclick="window.toggleWordSelection(this)">${escapeHtml(word)}</span>
-                                `).join('')}
-                            </div>
-                            <div class="drop-zone" onclick="window.handleDropZoneClick(this)">
-                                <span class="drop-placeholder">Click words above to build the sentence...</span>
-                            </div>
-                            <div class="exercise-feedback hidden"></div>
+        <div class="drag-drop-container">
+            <div class="drag-drop-instructions">
+                <span class="instruction-icon">💡</span>
+                <span>Click on words to add them to the sentence. Click on words in the sentence to remove them.</span>
+            </div>
+            <div class="exercises-list drag-drop-exercises">
+                ${exercises.map((ex, index) => renderSingleDragDropExercise(ex, index)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders a single drag-drop exercise with proper data extraction.
+ */
+function renderSingleDragDropExercise(ex, index) {
+    // Handle different data formats for words
+    let words = ex.scrambledWords || ex.words || ex.shuffled || [];
+    let correctSentence = '';
+    
+    // Extract correct sentence
+    if (ex.correctOrder) {
+        correctSentence = Array.isArray(ex.correctOrder) ? ex.correctOrder.join(' ') : ex.correctOrder;
+    } else if (ex.correct) {
+        correctSentence = ex.correct;
+    } else if (ex.sentence) {
+        correctSentence = ex.sentence;
+    }
+    
+    // If scrambledWords is an array, use it; otherwise shuffle from correct
+    if (words.length === 0 && correctSentence) {
+        words = shuffleArray(correctSentence.split(/\s+/));
+    }
+    
+    // Extract translation (must be in native language)
+    const translation = ex.translation || ex.hint || '';
+    
+    // Extract explanation (grammar tip)
+    const explanation = ex.explanation || ex.grammarNote || '';
+    
+    return `
+        <div class="exercise-item drag-drop-item" data-index="${index}" data-correct="${escapeHtml(correctSentence)}">
+            <div class="exercise-number">${index + 1}</div>
+            <div class="exercise-content">
+                <div class="drag-drop-header">
+                    ${translation ? `
+                        <div class="drag-drop-translation">
+                            <span class="translation-label">🎯 Translate this:</span>
+                            <p class="translation-text">${escapeHtml(translation)}</p>
                         </div>
-                        <button class="btn btn-sm btn-primary exercise-check" onclick="window.checkDragDropAnswer(this)">Check</button>
+                    ` : `
+                        <div class="drag-drop-instruction">
+                            <span class="instruction-label">📝 Arrange the words to form a correct sentence</span>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="word-bank-section">
+                    <div class="word-bank-label">Available words:</div>
+                    <div class="word-bank" id="word-bank-${index}">
+                        ${words.map((word, wordIndex) => `
+                            <span class="draggable-word" 
+                                  data-word="${escapeHtml(word)}" 
+                                  data-original-index="${wordIndex}"
+                                  onclick="window.toggleWordSelection(this)">
+                                ${escapeHtml(word)}
+                            </span>
+                        `).join('')}
                     </div>
-                `;
-            }).join('')}
+                </div>
+                
+                <div class="sentence-builder-section">
+                    <div class="sentence-builder-label">
+                        <span>Your sentence:</span>
+                        <button class="btn btn-sm btn-secondary clear-sentence-btn" onclick="window.clearSentence(this)" title="Clear all words">
+                            🔄 Clear
+                        </button>
+                    </div>
+                    <div class="drop-zone" id="drop-zone-${index}">
+                        <span class="drop-placeholder">👆 Click words above to build the sentence...</span>
+                    </div>
+                </div>
+                
+                ${explanation ? `
+                    <div class="grammar-hint hidden" id="grammar-hint-${index}">
+                        <span class="grammar-icon">📚</span>
+                        <span class="grammar-text">${escapeHtml(explanation)}</span>
+                    </div>
+                ` : ''}
+                
+                <div class="exercise-feedback hidden"></div>
+            </div>
+            <div class="exercise-actions">
+                <button class="btn btn-sm btn-primary exercise-check" onclick="window.checkDragDropAnswer(this)">✓ Check Answer</button>
+            </div>
         </div>
     `;
 }
@@ -382,6 +488,15 @@ window.flashcardFlip = function(btn) {
     }
 };
 
+/**
+ * Flip a specific flashcard when clicked.
+ */
+window.flashcardFlipCard = function(cardElement) {
+    if (cardElement && cardElement.classList.contains('active')) {
+        cardElement.classList.toggle('flipped');
+    }
+};
+
 window.flashcardNext = function(btn) {
     const deck = btn.closest('.flashcards-deck');
     const cards = deck.querySelectorAll('.flashcard');
@@ -503,7 +618,31 @@ function updateDropZonePlaceholder(dropZone) {
 }
 
 /**
- * Drag-drop exercise check.
+ * Clear all words from the sentence builder in drag-drop exercise.
+ */
+window.clearSentence = function(btn) {
+    const item = btn.closest('.drag-drop-item');
+    const dropZone = item.querySelector('.drop-zone');
+    const wordBank = item.querySelector('.word-bank');
+    
+    // Remove all dropped words
+    const droppedWords = dropZone.querySelectorAll('.dropped-word');
+    droppedWords.forEach(droppedWord => {
+        droppedWord.remove();
+    });
+    
+    // Reset all word bank words
+    const allWords = wordBank.querySelectorAll('.draggable-word');
+    allWords.forEach(word => {
+        word.classList.remove('selected');
+    });
+    
+    // Restore placeholder
+    updateDropZonePlaceholder(dropZone);
+};
+
+/**
+ * Drag-drop exercise check with grammar hint support.
  */
 window.checkDragDropAnswer = function(btn) {
     const item = btn.closest('.drag-drop-item');
@@ -512,6 +651,7 @@ window.checkDragDropAnswer = function(btn) {
     const correctAnswer = item.dataset.correct.toLowerCase().trim();
     const index = parseInt(item.dataset.index) || 0;
     
+    // Get user's answer
     const droppedWords = Array.from(dropZone.querySelectorAll('.dropped-word'))
         .map(w => w.dataset.word)
         .join(' ')
@@ -528,15 +668,24 @@ window.checkDragDropAnswer = function(btn) {
     
     if (isCorrect) {
         feedback.className = 'exercise-feedback correct';
-        feedback.innerHTML = '✅ Correct!';
+        feedback.innerHTML = '✅ Correct! Well done!';
         dropZone.classList.add('correct');
     } else {
         feedback.className = 'exercise-feedback incorrect';
-        feedback.innerHTML = `❌ The correct sentence is: <strong>${escapeHtml(item.dataset.correct)}</strong>`;
+        feedback.innerHTML = `❌ Not quite. The correct sentence is: <strong>${escapeHtml(item.dataset.correct)}</strong>`;
         dropZone.classList.add('incorrect');
     }
     
+    // Show grammar hint if available (after checking)
+    const grammarHint = item.querySelector('.grammar-hint');
+    if (grammarHint) {
+        grammarHint.classList.remove('hidden');
+    }
+    
+    // Disable check button and clear button
     btn.disabled = true;
+    const clearBtn = item.querySelector('.clear-sentence-btn');
+    if (clearBtn) clearBtn.disabled = true;
     
     // Record the answer for score tracking
     if (window.recordExerciseAnswer) {
@@ -596,20 +745,6 @@ function calculateSimilarity(str1, str2) {
     const intersection = new Set([...words1].filter(x => words2.has(x)));
     const union = new Set([...words1, ...words2]);
     return intersection.size / union.size;
-}
-
-// Helper function to escape HTML in window scope
-function escapeHtml(text) {
-    if (!text) return '';
-    const str = String(text);
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return str.replace(/[&<>"']/g, m => map[m]);
 }
 
 export default {

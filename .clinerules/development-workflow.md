@@ -272,6 +272,45 @@ How was this tested?
 - Cache user preferences locally
 - Invalidate on content updates
 
+## OpenAPI Specification Management
+
+The OpenAPI specification is auto-generated from code annotations using springdoc-openapi.
+
+### Accessing API Documentation (Runtime)
+When the backend is running:
+- **Swagger UI**: `http://localhost:{port}/swagger-ui.html`
+- **OpenAPI YAML**: `http://localhost:{port}/api-docs.yaml`
+- **OpenAPI JSON**: `http://localhost:{port}/api-docs`
+
+### Updating the OpenAPI Spec File
+
+The `docs/openapi.yaml` file should be kept up-to-date after any API changes (new endpoints, modified DTOs, changed responses).
+
+```bash
+# Run from project root - starts temp H2 backend, downloads spec, stops
+./scripts/update-openapi-spec.sh
+
+# Or directly with Maven
+cd backend && mvn verify -Pgenerate-openapi -DskipTests -pl api-module -am
+```
+
+This method:
+- Uses Java's HttpURLConnection internally (no curl/wget needed)
+- Works on Windows, Linux, and macOS
+- Works in WSL without network issues
+- Suitable for CI/CD pipelines
+
+### When to Update
+Update the OpenAPI spec when:
+- Adding new REST endpoints
+- Modifying request/response DTOs
+- Changing endpoint paths or HTTP methods
+- Adding or modifying API documentation annotations
+- Before creating a pull request with API changes
+
+### Output Location
+- YAML: `docs/openapi.yaml`
+
 ## Security Guidelines
 
 ### Credential Management

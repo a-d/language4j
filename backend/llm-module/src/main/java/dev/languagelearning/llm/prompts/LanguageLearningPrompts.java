@@ -134,25 +134,31 @@ public final class LanguageLearningPrompts {
             """);
 
     public static final PromptTemplate GENERATE_DRAG_DROP = PromptTemplate.of("""
-            Create word-ordering exercises for {targetLanguage} learners ({nativeLanguage} speakers) at {skillLevel} level.
+            Create word-ordering exercises for learning {targetLanguage}.
+            The learner's native language is {nativeLanguage} and their level is {skillLevel}.
             
             Topic: {topic}
             Number of sentences: {sentenceCount}
             
-            For each exercise:
-            1. Provide the scrambled words
-            2. The correct sentence order
-            3. Translation in {nativeLanguage}
-            4. Grammar explanation (briefly)
+            IMPORTANT:
+            - The "scrambledWords" and "correctOrder" MUST be in {targetLanguage} (the language being learned)
+            - The "translation" field MUST be in {nativeLanguage} (the learner's native language) - this shows what the user needs to build in {targetLanguage}
+            - The "explanation" field MUST be in {nativeLanguage} to explain grammar rules
             
-            Return as JSON:
+            For each exercise provide:
+            1. scrambledWords: An array of words from the sentence in {targetLanguage}, shuffled randomly
+            2. correctOrder: An array of words in the correct order forming a valid {targetLanguage} sentence
+            3. translation: The sentence's meaning in {nativeLanguage} (this helps the user understand what to construct)
+            4. explanation: A brief grammar explanation in {nativeLanguage} (e.g., word order rules, verb placement)
+            
+            Return ONLY valid JSON with no additional text:
             {{
               "exercises": [
                 {{
-                  "scrambledWords": ["..."],
-                  "correctOrder": ["..."],
-                  "translation": "...",
-                  "explanation": "..."
+                  "scrambledWords": ["word1 in {targetLanguage}", "word2", "..."],
+                  "correctOrder": ["correct", "word", "order", "in {targetLanguage}"],
+                  "translation": "translation in {nativeLanguage}",
+                  "explanation": "grammar explanation in {nativeLanguage}"
                 }}
               ]
             }}
@@ -321,30 +327,40 @@ public final class LanguageLearningPrompts {
     // ==================== Flashcard Prompts ====================
 
     public static final PromptTemplate GENERATE_FLASHCARDS = PromptTemplate.of("""
-            Create flashcards for {targetLanguage} vocabulary for {nativeLanguage} speakers at {skillLevel} level.
+            Create vocabulary flashcards for learning {targetLanguage}.
+            The learner's native language is {nativeLanguage} and their level is {skillLevel}.
             
             Topic: {topic}
             Number of cards: {cardCount}
             
-            For each flashcard include:
-            1. Front: Word/phrase in {targetLanguage}
-            2. Back: Translation, pronunciation, example sentence
-            3. Mnemonic or memory tip (optional but helpful)
-            4. Image description (for potential image generation)
+            IMPORTANT: 
+            - The "front" field MUST be in {targetLanguage} (the language being learned)
+            - The "translation" field MUST be in {nativeLanguage} (the learner's native language)
+            - The "exampleTranslation" field MUST be in {nativeLanguage}
+            - All translations must be accurate and natural in {nativeLanguage}
             
-            Return as JSON:
+            For each flashcard include:
+            1. front: A word or phrase in {targetLanguage}
+            2. back.translation: The translation in {nativeLanguage}
+            3. back.pronunciation: IPA or phonetic pronunciation guide
+            4. back.example: An example sentence using the word in {targetLanguage}
+            5. back.exampleTranslation: Translation of the example in {nativeLanguage}
+            6. mnemonic: A memory tip to help remember the word (in {nativeLanguage})
+            7. imagePrompt: A brief description for image generation (in English)
+            
+            Return ONLY valid JSON with no additional text:
             {{
               "flashcards": [
                 {{
-                  "front": "...",
+                  "front": "word in {targetLanguage}",
                   "back": {{
-                    "translation": "...",
-                    "pronunciation": "...",
-                    "example": "...",
-                    "exampleTranslation": "..."
+                    "translation": "translation in {nativeLanguage}",
+                    "pronunciation": "phonetic guide",
+                    "example": "example sentence in {targetLanguage}",
+                    "exampleTranslation": "example translation in {nativeLanguage}"
                   }},
-                  "mnemonic": "...",
-                  "imagePrompt": "..."
+                  "mnemonic": "memory tip in {nativeLanguage}",
+                  "imagePrompt": "image description in English"
                 }}
               ]
             }}

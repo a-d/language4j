@@ -2,6 +2,7 @@ package dev.languagelearning.content.service.impl;
 
 import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
+import dev.languagelearning.content.util.JsonExtractor;
 import dev.languagelearning.core.domain.User;
 import dev.languagelearning.llm.LlmService;
 import dev.languagelearning.llm.prompts.LanguageLearningPrompts;
@@ -74,7 +75,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "questionCount", questionCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -91,7 +93,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "sentenceCount", sentenceCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_DRAG_DROP, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_DRAG_DROP, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -108,7 +111,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "sentenceCount", sentenceCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -125,7 +129,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "cardCount", cardCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_FLASHCARDS, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_FLASHCARDS, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -177,7 +182,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "expected", expectedAnswer
         );
 
-        return llmService.generate(LanguageLearningPrompts.EVALUATE_RESPONSE, variables);
+        String response = llmService.generate(LanguageLearningPrompts.EVALUATE_RESPONSE, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -195,7 +201,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "exerciseCount", exerciseCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -213,7 +220,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "exerciseCount", exerciseCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
+        return JsonExtractor.extractJson(response);
     }
 
     @Override
@@ -230,6 +238,7 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "transcription", transcription
         );
 
-        return llmService.generate(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
+        String response = llmService.generate(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
+        return JsonExtractor.extractJson(response);
     }
 }

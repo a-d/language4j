@@ -93,14 +93,14 @@ language-learning:
 
     speech-to-text:
       provider: ${STT_PROVIDER:openai}
-      api-key: ${STT_API_KEY:${LLM_API_KEY:}}
-      base-url: ${STT_BASE_URL:}
+      api-key: ${STT_API_KEY:${LLM_API_KEY:local-service}}
+      base-url: ${STT_BASE_URL:https://api.openai.com}
       model: ${STT_MODEL:whisper-1}
 
     text-to-speech:
       provider: ${TTS_PROVIDER:openai}
-      api-key: ${TTS_API_KEY:${LLM_API_KEY:}}
-      base-url: ${TTS_BASE_URL:}
+      api-key: ${TTS_API_KEY:${LLM_API_KEY:local-service}}
+      base-url: ${TTS_BASE_URL:https://api.openai.com}
       model: ${TTS_MODEL:tts-1}
       voice: ${TTS_VOICE:alloy}
       speed: ${TTS_SPEED:1.0}

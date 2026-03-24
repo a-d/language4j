@@ -1,0 +1,126 @@
+# Integration Test Configuration
+# ================================
+# Uses Testcontainers PostgreSQL - datasource URL is set dynamically
+
+spring:
+  application:
+    name: language-learning-integration-test
+
+  # Database - URL injected by Testcontainers
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
+
+  # Flyway Database Migrations
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # Jackson JSON Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  # Disable Spring AI auto-configurations for tests
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.openai.OpenAiAutoConfiguration
+      - org.springframework.ai.autoconfigure.anthropic.AnthropicAutoConfiguration
+      - org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration
+      - org.springframework.ai.autoconfigure.mistralai.MistralAiAutoConfiguration
+      - org.springframework.ai.autoconfigure.azure.openai.AzureOpenAiAutoConfiguration
+
+# Server Configuration
+server:
+  port: 0  # Random port for tests
+
+# Disable OpenAPI docs for tests
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Language Learning Configuration
+language-learning:
+  language:
+    native-code: de
+    target-code: fr
+
+  storage:
+    content-path: ./test-content
+    media-path: ./test-media
+    templates-path: ./test-content/templates
+
+  ai:
+    llm:
+      provider: mock
+      api-key: test-key
+      base-url: http://localhost:8888
+      model: test-model
+      temperature: 0.7
+      max-tokens: 1024
+      timeout: 10s
+      max-retries: 1
+
+    speech-to-text:
+      provider: mock
+      api-key: test-key
+      base-url: http://localhost:8888
+      model: test-stt
+
+    text-to-speech:
+      provider: mock
+      api-key: test-key
+      base-url: http://localhost:8888
+      model: test-tts
+      voice: alloy
+      speed: 1.0
+
+    image:
+      provider: mock
+      api-key: test-key
+      base-url: http://localhost:8888
+      model: test-image
+      size: 512x512
+      quality: standard
+
+# Spring AI - disabled for tests
+spring.ai:
+  openai:
+    api-key: placeholder-key-not-used
+    chat:
+      enabled: false
+    image:
+      enabled: false
+    audio:
+      speech:
+        enabled: false
+      transcription:
+        enabled: false
+
+  ollama:
+    base-url: http://localhost:11434
+    chat:
+      enabled: false
+
+# Logging Configuration
+logging:
+  level:
+    root: WARN
+    dev.languagelearning: DEBUG
+    org.springframework.test: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+    org.hibernate.SQL: DEBUG

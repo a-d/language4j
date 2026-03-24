@@ -123,79 +123,138 @@
 
     <build>
         <plugins>
+            <!-- Maven Surefire Plugin - Unit Tests -->
+            <!-- Run with: mvn test -->
+            <!-- Excludes tests tagged with 'integration' -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
             </plugin>
             
-            <!-- OpenAPI Spec Generation Plugin -->
-            <!-- Generates openapi.yaml at build time during integration-test phase -->
-            <!-- Run with: mvn verify -DskipTests=false or mvn integration-test -->
+            <!-- Maven Failsafe Plugin - Integration Tests -->
+            <!-- Run with: mvn verify -Dgroups=integration -->
+            <!-- Only runs tests tagged with 'integration' -->
             <plugin>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-maven-plugin</artifactId>
-                <version>1.4</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
                 <executions>
                     <execution>
-                        <id>generate-openapi</id>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <apiDocsUrl>http://localhost:8080/api-docs.yaml</apiDocsUrl>
-                    <outputFileName>openapi.yaml</outputFileName>
-                    <outputDir>${project.basedir}/../../docs</outputDir>
-                    <skip>false</skip>
+                    <groups>integration</groups>
+                    <includes>
+                        <include>**/*IT.java</include>
+                    </includes>
                 </configuration>
             </plugin>
             
-            <!-- Spring Boot Plugin must start the app before OpenAPI generation -->
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>pre-integration-test</id>
-                        <goals>
-                            <goal>start</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipITs}</skip>
-                            <profiles>
-                                <profile>openapi-gen</profile>
-                            </profiles>
-                            <arguments>
-                                <argument>--spring.datasource.url=jdbc:h2:mem:openapi</argument>
-                                <argument>--spring.datasource.driver-class-name=org.h2.Driver</argument>
-                                <argument>--spring.jpa.database-platform=org.hibernate.dialect.H2Dialect</argument>
-                                <argument>--spring.jpa.hibernate.ddl-auto=create-drop</argument>
-                                <argument>--spring.flyway.enabled=false</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>post-integration-test</id>
-                        <goals>
-                            <goal>stop</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipITs}</skip>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
     
     <profiles>
-        <!-- Profile for OpenAPI generation - uses H2 in-memory database -->
+        <!-- Profile for OpenAPI specification generation -->
+        <!-- Usage: mvn verify -Pgenerate-openapi -DskipTests -->
+        <!-- This starts the app with H2, downloads the spec, and stops the app -->
         <profile>
             <id>generate-openapi</id>
-            <properties>
-                <skipITs>false</skipITs>
-            </properties>
+            <dependencies>
+                <!-- H2 needs to be runtime-scoped for the spring-boot:start goal -->
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <!-- Start Spring Boot app with H2 before integration-test phase -->
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <!-- Use a different JMX port to avoid conflicts (default is 9001) -->
+                            <jmxPort>9099</jmxPort>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>start-for-openapi</id>
+                                <goals>
+                                    <goal>start</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <arguments>
+                                        <argument>--spring.profiles.active=openapi</argument>
+                                        <argument>--spring.datasource.url=jdbc:h2:mem:openapi;DB_CLOSE_DELAY=-1</argument>
+                                        <argument>--spring.datasource.driver-class-name=org.h2.Driver</argument>
+                                        <argument>--spring.datasource.username=sa</argument>
+                                        <argument>--spring.datasource.password=</argument>
+                                        <argument>--spring.jpa.database-platform=org.hibernate.dialect.H2Dialect</argument>
+                                        <argument>--spring.jpa.hibernate.ddl-auto=create-drop</argument>
+                                        <argument>--spring.flyway.enabled=false</argument>
+                                        <argument>--server.port=8080</argument>
+                                    </arguments>
+                                    <wait>500</wait>
+                                    <maxAttempts>60</maxAttempts>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stop-for-openapi</id>
+                                <goals>
+                                    <goal>stop</goal>
+                                </goals>
+                                <phase>post-integration-test</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- Download OpenAPI spec from running app -->
+                    <plugin>
+                        <groupId>org.springdoc</groupId>
+                        <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <id>generate-openapi-spec</id>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <phase>integration-test</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <apiDocsUrl>http://localhost:8080/api-docs.yaml</apiDocsUrl>
+                            <outputFileName>openapi.yaml</outputFileName>
+                            <outputDir>${project.basedir}/../../docs</outputDir>
+                        </configuration>
+                    </plugin>
+                    
+                    <!-- Skip actual integration tests when generating OpenAPI -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
