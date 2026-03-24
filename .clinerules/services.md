@@ -222,6 +222,15 @@ Located in `backend/api-module/src/main/java/dev/languagelearning/api/controller
 | `/synthesize` | POST | Convert text to speech (returns MP3) |
 | `/transcribe` | POST | Convert audio to text (multipart) |
 
+### ImageController
+**Path**: `/api/v1/images`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/generate` | POST | Generate image from text prompt |
+| `/flashcard` | POST | Generate flashcard image for vocabulary word |
+| `/flashcard/batch` | POST | Generate multiple flashcard images (max 5) |
+
 ---
 
 ## DTO Naming Conventions

@@ -363,3 +363,249 @@
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
 }
+
+/* ==================== Exercise Header with Score ==================== */
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.exercise-header h3 {
+    margin: 0;
+}
+
+.exercise-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.exercise-score-display {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.exercise-score-display strong {
+    color: var(--primary-color);
+    font-size: var(--font-size-base);
+}
+
+/* ==================== Exercise Footer ==================== */
+
+.exercise-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-lg {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    font-size: var(--font-size-lg);
+}
+
+/* ==================== Exercise Completion Summary ==================== */
+
+.exercise-completion-summary {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
+}
+
+.exercise-completion-summary.passed {
+    border-color: var(--success-color);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.exercise-completion-summary.needs-practice {
+    border-color: var(--warning-color);
+    background: rgba(234, 179, 8, 0.05);
+}
+
+.completion-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.exercise-completion-summary h2 {
+    margin: 0 0 var(--spacing-xl) 0;
+    color: var(--text-primary);
+}
+
+.completion-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
+.completion-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.completion-stats .stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.completion-stats .stat-value {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+}
+
+.completion-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+}
+
+/* ==================== Exercise History Section ==================== */
+
+.exercise-history-section {
+    margin-top: var(--spacing-2xl);
+}
+
+.exercise-history-section h2 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.exercise-history {
+    max-width: 800px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.history-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.history-item.passed {
+    border-left: 4px solid var(--success-color);
+}
+
+.history-item.failed {
+    border-left: 4px solid var(--warning-color);
+}
+
+.history-item-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.history-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-item-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.history-item-details {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.history-item-details .topic {
+    color: var(--text-secondary);
+}
+
+.history-item-stats {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.history-item-stats .score {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+}
+
+.history-item-stats .details {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+/* Empty state for history */
+.exercise-history .empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+}
+
+/* ==================== Responsive Adjustments ==================== */
+
+@media (max-width: 768px) {
+    .exercise-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .exercise-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .completion-stats {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .completion-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .completion-actions .btn {
+        width: 100%;
+    }
+    
+    .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .history-item-stats {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: var(--spacing-sm);
+        padding-top: var(--spacing-sm);
+        border-top: 1px solid var(--border-color);
+    }
+}

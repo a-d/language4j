@@ -1,292 +1,357 @@
-/* Cards Component Styles */
+/**
+ * Visual Learning Cards Component Styles
+ * ======================================
+ * Styles for AI-generated image flashcards.
+ */
 
-/* Action Cards */
-.action-card {
-    background: var(--surface-color);
-    padding: var(--spacing-xl);
+/* Card Generator Form */
+.card-generator {
+    background: var(--bg-secondary);
     border-radius: var(--radius-lg);
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.action-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary-color);
-}
-
-.action-card .icon {
-    font-size: 2.5rem;
-    display: block;
-    margin-bottom: var(--spacing-md);
-}
-
-.action-card h3 {
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--spacing-xs);
+.card-generator h3 {
+    margin-bottom: 1rem;
     color: var(--text-primary);
 }
 
-.action-card p {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-/* Goal Cards */
-.goal-card {
-    background: var(--surface-color);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-}
-
-.goal-card-header {
+.card-generator .form-row {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-md);
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
-.goal-card-title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
+.card-generator .form-group {
+    flex: 1;
+    min-width: 200px;
 }
 
-.goal-card-type {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--bg-color);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
-    text-transform: uppercase;
+.card-generator .form-group.full-width {
+    flex-basis: 100%;
 }
 
-.goal-progress {
-    margin-bottom: var(--spacing-md);
-}
-
-.progress-bar {
-    height: 8px;
-    background: var(--bg-color);
-    border-radius: var(--radius-full);
-    overflow: hidden;
-    margin-bottom: var(--spacing-xs);
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--primary-color);
-    border-radius: var(--radius-full);
-    transition: width var(--transition-base);
-}
-
-.progress-fill.completed {
-    background: var(--success-color);
-}
-
-.progress-text {
+/* Visual Cards Container */
+.visual-cards-container {
     display: flex;
-    justify-content: space-between;
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
+    flex-direction: column;
+    gap: 2rem;
 }
 
-/* Lesson Cards */
-.lesson-card {
-    background: var(--surface-color);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    transition: all var(--transition-base);
-}
-
-.lesson-card:hover {
-    box-shadow: var(--shadow-md);
-}
-
-.lesson-card-header {
-    padding: var(--spacing-lg);
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-}
-
-.lesson-card-header h3 {
-    color: white;
-    margin-bottom: var(--spacing-xs);
-}
-
-.lesson-card-level {
-    font-size: var(--font-size-sm);
-    opacity: 0.9;
-}
-
-.lesson-card-body {
-    padding: var(--spacing-lg);
-}
-
-.lesson-card-description {
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
-}
-
-.lesson-card-footer {
+/* Single Card View */
+.visual-card-viewer {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    gap: 1.5rem;
 }
 
-.lesson-card-meta {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-}
-
-/* Vocabulary Cards (Flashcards) */
-.vocab-card {
-    background: var(--surface-color);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    padding: var(--spacing-lg);
-    transition: all var(--transition-base);
-}
-
-.vocab-card:hover {
-    box-shadow: var(--shadow-sm);
-}
-
-.vocab-word {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.vocab-pronunciation {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    font-style: italic;
-    margin-bottom: var(--spacing-sm);
-}
-
-.vocab-translation {
-    font-size: var(--font-size-base);
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
-}
-
-.vocab-example {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    padding: var(--spacing-sm);
-    background: var(--bg-color);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--primary-color);
-}
-
-/* Flashcard (Interactive) */
-.flashcard {
+.visual-card {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1;
     perspective: 1000px;
     cursor: pointer;
 }
 
-.flashcard-inner {
+.visual-card-inner {
     position: relative;
     width: 100%;
-    min-height: 200px;
+    height: 100%;
     transition: transform 0.6s;
     transform-style: preserve-3d;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
 }
 
-.flashcard.flipped .flashcard-inner {
+.visual-card.flipped .visual-card-inner {
     transform: rotateY(180deg);
 }
 
-.flashcard-front,
-.flashcard-back {
+.visual-card-front,
+.visual-card-back {
     position: absolute;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
+    border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xl);
-    background: var(--surface-color);
-    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    background: var(--bg-primary);
     border: 2px solid var(--border-color);
 }
 
-.flashcard-back {
-    transform: rotateY(180deg);
-    background: var(--bg-color);
+.visual-card-front {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
 }
 
-.flashcard-word {
-    font-size: var(--font-size-2xl);
+.visual-card-back {
+    transform: rotateY(180deg);
+    background: var(--bg-secondary);
+}
+
+/* Card Content */
+.visual-card-word {
+    font-size: 2rem;
     font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.visual-card-context {
+    font-size: 1rem;
+    opacity: 0.9;
+    text-align: center;
+    font-style: italic;
+}
+
+.visual-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+}
+
+.visual-card-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 4rem;
+}
+
+/* Card Navigation */
+.card-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-counter {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    min-width: 100px;
     text-align: center;
 }
 
-.flashcard-hint {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    margin-top: var(--spacing-md);
-}
-
-/* Drag and Drop Cards */
-.draggable-word {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    cursor: grab;
-    user-select: none;
-    transition: all var(--transition-fast);
-}
-
-.draggable-word:active {
-    cursor: grabbing;
-}
-
-.draggable-word.dragging {
-    opacity: 0.5;
-    transform: scale(1.05);
-}
-
-.draggable-word:hover {
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow-sm);
-}
-
-.drop-zone {
-    min-height: 60px;
-    padding: var(--spacing-md);
-    background: var(--bg-color);
-    border: 2px dashed var(--border-color);
-    border-radius: var(--radius-md);
+/* Card Actions */
+.card-actions {
     display: flex;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    gap: var(--spacing-sm);
-    transition: all var(--transition-fast);
+    justify-content: center;
 }
 
-.drop-zone.drag-over {
+.card-actions .btn {
+    min-width: 120px;
+}
+
+/* Card Grid View */
+.visual-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.visual-card-thumbnail {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    border: 2px solid var(--border-color);
+}
+
+.visual-card-thumbnail:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
     border-color: var(--primary-color);
-    background: rgba(79, 70, 229, 0.05);
 }
 
-.drop-zone.correct {
-    border-color: var(--success-color);
-    background: rgba(34, 197, 94, 0.1);
+.visual-card-thumbnail-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--bg-tertiary);
 }
 
-.drop-zone.incorrect {
-    border-color: var(--danger-color);
-    background: rgba(239, 68, 68, 0.1);
+.visual-card-thumbnail-info {
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.visual-card-thumbnail-word {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* Loading State */
+.visual-card-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.visual-card-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.visual-card-loading-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Empty State */
+.visual-cards-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.visual-cards-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.visual-cards-empty-text {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Batch Generation Section */
+.batch-generator {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px dashed var(--border-color);
+}
+
+.batch-generator h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.batch-generator textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    resize: vertical;
+}
+
+.batch-generator textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-color-alpha);
+}
+
+/* Progress Indicator */
+.batch-progress {
+    margin-top: 1rem;
+}
+
+.batch-progress-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.batch-progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.batch-progress-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .visual-card {
+        max-width: 300px;
+    }
+    
+    .visual-card-word {
+        font-size: 1.5rem;
+    }
+    
+    .card-navigation {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .visual-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .visual-card-front {
+        background: linear-gradient(135deg, var(--primary-dark), #1a1a2e);
+    }
+    
+    .visual-card-thumbnail {
+        background: var(--bg-tertiary);
+    }
+}
+
+/* Flip hint animation */
+.flip-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.flip-hint-icon {
+    animation: flipHint 2s ease-in-out infinite;
+}
+
+@keyframes flipHint {
+    0%, 100% { transform: rotateY(0deg); }
+    50% { transform: rotateY(180deg); }
 }

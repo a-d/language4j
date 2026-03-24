@@ -99,4 +99,38 @@ public interface ContentGenerationService {
      */
     @Nonnull
     String evaluateResponse(@Nonnull String exercise, @Nonnull String userResponse, @Nonnull String expectedAnswer);
+
+    /**
+     * Generates listening comprehension exercises.
+     * <p>
+     * Each exercise includes a sentence to be spoken via TTS, translation, and hint.
+     *
+     * @param topic the exercise topic
+     * @param exerciseCount number of exercises
+     * @return JSON string with exercises
+     */
+    @Nonnull
+    String generateListeningExercises(@Nonnull String topic, int exerciseCount);
+
+    /**
+     * Generates speaking/pronunciation exercises.
+     * <p>
+     * Each exercise includes text to speak, translation, pronunciation tips, and common mistakes.
+     *
+     * @param topic the exercise topic
+     * @param exerciseCount number of exercises
+     * @return JSON string with exercises
+     */
+    @Nonnull
+    String generateSpeakingExercises(@Nonnull String topic, int exerciseCount);
+
+    /**
+     * Evaluates pronunciation by comparing expected text with transcription.
+     *
+     * @param expectedText the text the student was supposed to say
+     * @param transcription the transcribed speech from the student
+     * @return JSON string with evaluation results including accuracy and tips
+     */
+    @Nonnull
+    String evaluatePronunciation(@Nonnull String expectedText, @Nonnull String transcription);
 }

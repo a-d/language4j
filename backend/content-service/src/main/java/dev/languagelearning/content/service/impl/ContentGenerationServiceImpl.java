@@ -179,4 +179,57 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
 
         return llmService.generate(LanguageLearningPrompts.EVALUATE_RESPONSE, variables);
     }
+
+    @Override
+    @Nonnull
+    public String generateListeningExercises(@Nonnull String topic, int exerciseCount) {
+        User user = userService.getCurrentUser();
+        log.info("Generating {} listening exercises on topic '{}' for level {}", 
+                exerciseCount, topic, user.getSkillLevel());
+
+        Map<String, Object> variables = Map.of(
+                "nativeLanguage", languageConfig.getNativeName(),
+                "targetLanguage", languageConfig.getTargetName(),
+                "skillLevel", user.getSkillLevel().name(),
+                "topic", topic,
+                "exerciseCount", exerciseCount
+        );
+
+        return llmService.generate(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
+    }
+
+    @Override
+    @Nonnull
+    public String generateSpeakingExercises(@Nonnull String topic, int exerciseCount) {
+        User user = userService.getCurrentUser();
+        log.info("Generating {} speaking exercises on topic '{}' for level {}", 
+                exerciseCount, topic, user.getSkillLevel());
+
+        Map<String, Object> variables = Map.of(
+                "nativeLanguage", languageConfig.getNativeName(),
+                "targetLanguage", languageConfig.getTargetName(),
+                "skillLevel", user.getSkillLevel().name(),
+                "topic", topic,
+                "exerciseCount", exerciseCount
+        );
+
+        return llmService.generate(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
+    }
+
+    @Override
+    @Nonnull
+    public String evaluatePronunciation(@Nonnull String expectedText, @Nonnull String transcription) {
+        User user = userService.getCurrentUser();
+        log.info("Evaluating pronunciation for user {}", user.getId());
+
+        Map<String, Object> variables = Map.of(
+                "nativeLanguage", languageConfig.getNativeName(),
+                "targetLanguage", languageConfig.getTargetName(),
+                "skillLevel", user.getSkillLevel().name(),
+                "expected", expectedText,
+                "transcription", transcription
+        );
+
+        return llmService.generate(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
+    }
 }

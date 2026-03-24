@@ -164,11 +164,75 @@ export const api = {
             body: { topic, questionCount } 
         }),
         
+        /** Generate listening comprehension exercises */
+        generateListening: (topic, questionCount = 5) => request('/v1/exercises/listening', { 
+            method: 'POST', 
+            body: { topic, questionCount } 
+        }),
+        
+        /** Generate speaking/pronunciation exercises */
+        generateSpeaking: (topic, questionCount = 5) => request('/v1/exercises/speaking', { 
+            method: 'POST', 
+            body: { topic, questionCount } 
+        }),
+        
         /** Evaluate a user's exercise response */
         evaluate: (exercise, userResponse, expectedAnswer) => request('/v1/exercises/evaluate', { 
             method: 'POST', 
             body: { exercise, userResponse, expectedAnswer } 
-        })
+        }),
+        
+        /** Evaluate pronunciation by comparing expected text with transcription */
+        evaluatePronunciation: (expectedText, transcription) => request('/v1/exercises/evaluate-pronunciation', { 
+            method: 'POST', 
+            body: { expectedText, transcription } 
+        }),
+        
+        /** 
+         * Save an exercise result
+         * @param {Object} result - The exercise result to save
+         * @param {string} result.exerciseType - Type (TEXT_COMPLETION, DRAG_DROP, TRANSLATION, etc.)
+         * @param {string} [result.exerciseReference] - Optional reference to exercise content
+         * @param {number} result.score - Score achieved (0-100)
+         * @param {number} result.correctAnswers - Number of correct answers
+         * @param {number} result.totalQuestions - Total number of questions
+         * @param {number} result.timeSpentSeconds - Time spent in seconds
+         * @param {string} [result.userResponse] - User's responses (JSON string)
+         * @param {string} [result.correctResponse] - Correct responses (JSON string)
+         * @param {string} [result.feedback] - Optional feedback
+         * @returns {Promise<Object>} Saved exercise result
+         */
+        saveResult: (result) => request('/v1/exercises/results', {
+            method: 'POST',
+            body: result
+        }),
+        
+        /**
+         * Get exercise history for the current user
+         * @param {Object} options - Query options
+         * @param {string} [options.type] - Filter by exercise type
+         * @param {number} [options.page=0] - Page number (0-based)
+         * @param {number} [options.size=20] - Page size
+         * @returns {Promise<Object>} Paginated exercise results
+         */
+        getHistory: ({ type, page = 0, size = 20 } = {}) => {
+            const params = new URLSearchParams({ page, size });
+            if (type) params.append('type', type);
+            return request(`/v1/exercises/results?${params}`);
+        },
+        
+        /**
+         * Get recent exercise results
+         * @param {number} [days=7] - Number of days to look back
+         * @returns {Promise<Array>} List of recent exercise results
+         */
+        getRecentResults: (days = 7) => request(`/v1/exercises/results/recent?days=${days}`),
+        
+        /**
+         * Get exercise statistics for the current user
+         * @returns {Promise<Object>} Exercise statistics summary
+         */
+        getStatistics: () => request('/v1/exercises/statistics')
     },
     
     // ==================== Speech ====================
@@ -219,15 +283,45 @@ export const api = {
             
             return response.json();
         }
+    },
+    
+    // ==================== Images ====================
+    images: {
+        /**
+         * Generate an image from a text prompt
+         * @param {string} prompt - Description of the image to generate
+         * @param {Object} options - Optional generation options
+         * @param {string} [options.size] - Image size (small, medium, large, wide, tall)
+         * @param {string} [options.quality] - Quality level (standard, hd)
+         * @param {string} [options.style] - Style (natural, vivid)
+         * @returns {Promise<{url: string, revisedPrompt: string, size: string}>}
+         */
+        generate: (prompt, { size, quality, style } = {}) => request('/v1/images/generate', {
+            method: 'POST',
+            body: { prompt, size, quality, style }
+        }),
+        
+        /**
+         * Generate a flashcard image for a vocabulary word
+         * @param {string} word - The vocabulary word
+         * @param {string} [context] - Optional context or sentence
+         * @returns {Promise<{url: string, revisedPrompt: string, size: string}>}
+         */
+        generateFlashcard: (word, context = null) => request('/v1/images/flashcard', {
+            method: 'POST',
+            body: { word, context }
+        }),
+        
+        /**
+         * Generate multiple flashcard images in batch
+         * @param {Array<{word: string, context?: string}>} requests - Array of word requests (max 5)
+         * @returns {Promise<Array<{url: string, revisedPrompt: string, size: string}>>}
+         */
+        generateFlashcardBatch: (requests) => request('/v1/images/flashcard/batch', {
+            method: 'POST',
+            body: requests
+        })
     }
-    
-    // Note: Image endpoints are not yet implemented in the backend controllers.
-    // When ImageController is added, uncomment and update these:
-    
-    // ==================== Images (Not Yet Implemented) ====================
-    // images: {
-    //     generate: (prompt) => ...
-    // }
 };
 
 export { ApiError };

@@ -183,6 +183,69 @@ public final class LanguageLearningPrompts {
             }}
             """);
 
+    public static final PromptTemplate GENERATE_LISTENING_EXERCISE = PromptTemplate.of("""
+            Create listening comprehension exercises in {targetLanguage} for {nativeLanguage} speakers at {skillLevel} level.
+            
+            Topic: {topic}
+            Number of exercises: {exerciseCount}
+            
+            For each exercise provide:
+            1. A sentence or phrase in {targetLanguage} (will be read aloud via TTS)
+            2. The correct transcription (what the student should type after listening)
+            3. Translation in {nativeLanguage} for reference
+            4. A hint that can help without giving away the answer
+            5. Difficulty rating (easy, medium, hard)
+            
+            Make sentences appropriate for the skill level:
+            - A1/A2: Simple, common phrases and short sentences
+            - B1/B2: Moderate complexity with some idioms
+            - C1/C2: Complex sentences, nuanced expressions
+            
+            Return as JSON:
+            {{
+              "exercises": [
+                {{
+                  "text": "...",
+                  "translation": "...",
+                  "hint": "...",
+                  "difficulty": "easy|medium|hard"
+                }}
+              ]
+            }}
+            """);
+
+    public static final PromptTemplate GENERATE_SPEAKING_EXERCISE = PromptTemplate.of("""
+            Create speaking/pronunciation exercises in {targetLanguage} for {nativeLanguage} speakers at {skillLevel} level.
+            
+            Topic: {topic}
+            Number of exercises: {exerciseCount}
+            
+            For each exercise provide:
+            1. A sentence or phrase in {targetLanguage} for the student to speak aloud
+            2. Translation in {nativeLanguage}
+            3. Phonetic guide or pronunciation tips (especially for sounds difficult for {nativeLanguage} speakers)
+            4. Common pronunciation mistakes to avoid
+            5. Difficulty rating (easy, medium, hard)
+            
+            Make sentences appropriate for the skill level:
+            - A1/A2: Focus on basic pronunciation, simple words and common phrases
+            - B1/B2: Include words with challenging sounds, longer sentences
+            - C1/C2: Complex intonation patterns, tongue twisters, nuanced expressions
+            
+            Return as JSON:
+            {{
+              "exercises": [
+                {{
+                  "text": "...",
+                  "translation": "...",
+                  "pronunciationTips": "...",
+                  "commonMistakes": ["..."],
+                  "difficulty": "easy|medium|hard"
+                }}
+              ]
+            }}
+            """);
+
     // ==================== Roleplay/Scenario Prompts ====================
 
     public static final PromptTemplate GENERATE_ROLEPLAY_SCENARIO = PromptTemplate.of("""

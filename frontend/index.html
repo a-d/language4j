@@ -19,15 +19,18 @@
                 <span class="title">Language Learning</span>
             </div>
             <div class="navbar-menu">
-                <a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a>
-                <a href="#lessons" class="nav-link" data-page="lessons">Lessons</a>
-                <a href="#vocabulary" class="nav-link" data-page="vocabulary">Vocabulary</a>
-                <a href="#exercises" class="nav-link" data-page="exercises">Exercises</a>
-                <a href="#progress" class="nav-link" data-page="progress">Progress</a>
+                <a href="#dashboard" class="nav-link active" data-page="dashboard" data-i18n="nav.dashboard">Dashboard</a>
+                <a href="#lessons" class="nav-link" data-page="lessons" data-i18n="nav.lessons">Lessons</a>
+                <a href="#vocabulary" class="nav-link" data-page="vocabulary" data-i18n="nav.vocabulary">Vocabulary</a>
+                <a href="#cards" class="nav-link" data-page="cards">🖼️</a>
+                <a href="#exercises" class="nav-link" data-page="exercises" data-i18n="nav.exercises">Exercises</a>
+                <a href="#progress" class="nav-link" data-page="progress" data-i18n="nav.progress">Progress</a>
+                <a href="#settings" class="nav-link" data-page="settings">⚙️</a>
             </div>
-            <div class="navbar-user">
+            <div class="navbar-user" id="navbar-user-btn" data-i18n-title="profile.editTitle">
                 <span id="user-level" class="user-level">A1</span>
                 <span id="user-name" class="user-name">Learner</span>
+                <span class="user-edit-icon">✏️</span>
             </div>
         </nav>
 
@@ -36,7 +39,7 @@
             <!-- Loading Indicator -->
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
-                <p>Loading...</p>
+                <p data-i18n="misc.loading">Loading...</p>
             </div>
 
             <!-- Page Container -->
@@ -44,13 +47,13 @@
                 <!-- Dashboard Page (default) -->
                 <section id="dashboard-page" class="page active">
                     <header class="page-header">
-                        <h1>Welcome Back!</h1>
-                        <p id="language-info">Learning <span id="target-lang">French</span> from <span id="native-lang">German</span></p>
+                        <h1 data-i18n="dashboard.welcome">Welcome Back!</h1>
+                        <p id="language-info"></p>
                     </header>
 
                     <!-- Daily Goals -->
                     <div class="goals-section">
-                        <h2>Today's Goals</h2>
+                        <h2 data-i18n="dashboard.todaysGoals">Today's Goals</h2>
                         <div id="daily-goals" class="goals-grid">
                             <!-- Goals loaded dynamically -->
                         </div>
@@ -58,34 +61,34 @@
 
                     <!-- Quick Actions -->
                     <div class="quick-actions">
-                        <h2>Continue Learning</h2>
+                        <h2 data-i18n="dashboard.continuelearning">Continue Learning</h2>
                         <div class="action-cards">
                             <div class="action-card" data-action="start-lesson">
                                 <span class="icon">📚</span>
-                                <h3>Start Lesson</h3>
-                                <p>Continue where you left off</p>
+                                <h3 data-i18n="action.startLesson">Start Lesson</h3>
+                                <p data-i18n="action.startLessonDesc">Continue where you left off</p>
                             </div>
                             <div class="action-card" data-action="practice-vocabulary">
                                 <span class="icon">🎴</span>
-                                <h3>Flashcards</h3>
-                                <p>Review vocabulary</p>
+                                <h3 data-i18n="action.flashcards">Flashcards</h3>
+                                <p data-i18n="action.flashcardsDesc">Review vocabulary</p>
                             </div>
                             <div class="action-card" data-action="speaking-practice">
                                 <span class="icon">🎤</span>
-                                <h3>Speaking</h3>
-                                <p>Pronunciation practice</p>
+                                <h3 data-i18n="action.speaking">Speaking</h3>
+                                <p data-i18n="action.speakingDesc">Pronunciation practice</p>
                             </div>
                             <div class="action-card" data-action="roleplay">
                                 <span class="icon">💬</span>
-                                <h3>Roleplay</h3>
-                                <p>Conversation scenarios</p>
+                                <h3 data-i18n="action.roleplay">Roleplay</h3>
+                                <p data-i18n="action.roleplayDesc">Conversation scenarios</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Recent Progress -->
                     <div class="progress-section">
-                        <h2>Recent Activity</h2>
+                        <h2 data-i18n="dashboard.recentActivity">Recent Activity</h2>
                         <div id="recent-activity" class="activity-list">
                             <!-- Activity loaded dynamically -->
                         </div>
@@ -95,8 +98,8 @@
                 <!-- Lessons Page -->
                 <section id="lessons-page" class="page hidden">
                     <header class="page-header">
-                        <h1>Lessons</h1>
-                        <button id="generate-lesson-btn" class="btn btn-primary">Generate New Lesson</button>
+                        <h1 data-i18n="lessons.title">Lessons</h1>
+                        <button id="generate-lesson-btn" class="btn btn-primary" data-i18n="lessons.generateNew">Generate New Lesson</button>
                     </header>
                     <div id="lessons-list" class="lessons-grid">
                         <!-- Lessons loaded dynamically -->
@@ -106,10 +109,10 @@
                 <!-- Vocabulary Page -->
                 <section id="vocabulary-page" class="page hidden">
                     <header class="page-header">
-                        <h1>Vocabulary</h1>
+                        <h1 data-i18n="vocabulary.title">Vocabulary</h1>
                         <div class="vocab-controls">
-                            <button id="add-vocab-btn" class="btn btn-secondary">Add Words</button>
-                            <button id="review-vocab-btn" class="btn btn-primary">Review Flashcards</button>
+                            <button id="add-vocab-btn" class="btn btn-secondary" data-i18n="vocabulary.addWords">Add Words</button>
+                            <button id="review-vocab-btn" class="btn btn-primary" data-i18n="vocabulary.reviewFlashcards">Review Flashcards</button>
                         </div>
                     </header>
                     <div id="vocabulary-list" class="vocabulary-grid">
@@ -117,36 +120,47 @@
                     </div>
                 </section>
 
+                <!-- Visual Cards Page -->
+                <section id="cards-page" class="page hidden">
+                    <header class="page-header">
+                        <h1 data-i18n="cards.title">Visual Learning Cards</h1>
+                        <p data-i18n="cards.visualFlashcardsDesc">Learn with AI-generated images</p>
+                    </header>
+                    <div id="cards-list">
+                        <!-- Cards loaded dynamically -->
+                    </div>
+                </section>
+
                 <!-- Exercises Page -->
                 <section id="exercises-page" class="page hidden">
                     <header class="page-header">
-                        <h1>Exercises</h1>
+                        <h1 data-i18n="exercises.title">Exercises</h1>
                     </header>
                     <div class="exercise-types">
                         <div class="exercise-type-card" data-type="text-completion">
                             <span class="icon">✏️</span>
-                            <h3>Fill in the Blanks</h3>
-                            <p>Complete sentences with the right words</p>
+                            <h3 data-i18n="exercises.fillBlanks">Fill in the Blanks</h3>
+                            <p data-i18n="exercises.fillBlanksDesc">Complete sentences with the right words</p>
                         </div>
                         <div class="exercise-type-card" data-type="drag-drop">
                             <span class="icon">🔀</span>
-                            <h3>Word Order</h3>
-                            <p>Arrange words to form sentences</p>
+                            <h3 data-i18n="exercises.wordOrder">Word Order</h3>
+                            <p data-i18n="exercises.wordOrderDesc">Arrange words to form sentences</p>
                         </div>
                         <div class="exercise-type-card" data-type="translation">
                             <span class="icon">🔄</span>
-                            <h3>Translation</h3>
-                            <p>Translate sentences</p>
+                            <h3 data-i18n="exercises.translation">Translation</h3>
+                            <p data-i18n="exercises.translationDesc">Translate sentences</p>
                         </div>
                         <div class="exercise-type-card" data-type="listening">
                             <span class="icon">👂</span>
-                            <h3>Listening</h3>
-                            <p>Listen and transcribe</p>
+                            <h3 data-i18n="exercises.listening">Listening</h3>
+                            <p data-i18n="exercises.listeningDesc">Listen and transcribe</p>
                         </div>
                         <div class="exercise-type-card" data-type="speaking">
                             <span class="icon">🎙️</span>
-                            <h3>Speaking</h3>
-                            <p>Pronounce words and sentences</p>
+                            <h3 data-i18n="exercises.speakingExercise">Speaking</h3>
+                            <p data-i18n="exercises.speakingDesc">Pronounce words and sentences</p>
                         </div>
                     </div>
                     
@@ -154,35 +168,118 @@
                     <div id="exercise-area" class="exercise-area hidden">
                         <!-- Exercises loaded dynamically -->
                     </div>
+
+                    <!-- Exercise History -->
+                    <div class="exercise-history-section">
+                        <h2 data-i18n="exercises.recentHistory">Recent History</h2>
+                        <div id="exercise-history" class="exercise-history">
+                            <!-- History loaded dynamically -->
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Progress Page -->
                 <section id="progress-page" class="page hidden">
                     <header class="page-header">
-                        <h1>Your Progress</h1>
+                        <h1 data-i18n="progress.title">Your Progress</h1>
                     </header>
                     <div class="progress-stats">
                         <div class="stat-card">
                             <span class="stat-value" id="total-exercises">0</span>
-                            <span class="stat-label">Exercises Completed</span>
+                            <span class="stat-label" data-i18n="progress.exercisesCompleted">Exercises Completed</span>
                         </div>
                         <div class="stat-card">
                             <span class="stat-value" id="avg-score">0%</span>
-                            <span class="stat-label">Average Score</span>
+                            <span class="stat-label" data-i18n="progress.averageScore">Average Score</span>
                         </div>
                         <div class="stat-card">
                             <span class="stat-value" id="time-spent">0h</span>
-                            <span class="stat-label">Time Spent</span>
+                            <span class="stat-label" data-i18n="progress.timeSpent">Time Spent</span>
                         </div>
                         <div class="stat-card">
                             <span class="stat-value" id="current-streak">0</span>
-                            <span class="stat-label">Day Streak</span>
+                            <span class="stat-label" data-i18n="progress.dayStreak">Day Streak</span>
                         </div>
                     </div>
                     <div class="goals-overview">
-                        <h2>Goals</h2>
+                        <h2 data-i18n="progress.goals">Goals</h2>
                         <div id="goals-list" class="goals-list">
                             <!-- Goals loaded dynamically -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Page -->
+                <section id="settings-page" class="page hidden">
+                    <header class="page-header">
+                        <h1 data-i18n="settings.title">Settings</h1>
+                        <p data-i18n="settings.subtitle">Manage your profile and preferences</p>
+                    </header>
+                    
+                    <!-- Profile Section -->
+                    <div class="settings-section">
+                        <h2 data-i18n="settings.profile">👤 Profile</h2>
+                        <div class="settings-card" id="settings-profile-card">
+                            <div class="profile-info">
+                                <div class="profile-avatar">
+                                    <span id="settings-avatar">👤</span>
+                                </div>
+                                <div class="profile-details">
+                                    <h3 id="settings-display-name">Learner</h3>
+                                    <p class="profile-languages">
+                                        <span id="settings-native-lang">German</span> → <span id="settings-target-lang">French</span>
+                                    </p>
+                                    <p class="profile-level">
+                                        <span data-i18n="settings.level">Level:</span> <span id="settings-skill-level" class="skill-badge">A1</span>
+                                    </p>
+                                    <p class="profile-member-since">
+                                        <span data-i18n="settings.memberSince">Member since:</span> <span id="settings-member-since">--</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="window.showEditProfileModal()" data-i18n="settings.editProfile">
+                                ✏️ Edit Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preferences Section (placeholder for future) -->
+                    <div class="settings-section">
+                        <h2 data-i18n="settings.preferences">⚙️ Preferences</h2>
+                        <div class="settings-card">
+                            <div class="settings-option">
+                                <div class="settings-option-info">
+                                    <h4 data-i18n="settings.darkMode">Dark Mode</h4>
+                                    <p data-i18n="settings.darkModeDesc">Switch between light and dark themes</p>
+                                </div>
+                                <span class="coming-soon-badge" data-i18n="settings.comingSoon">Coming Soon</span>
+                            </div>
+                            <div class="settings-option">
+                                <div class="settings-option-info">
+                                    <h4 data-i18n="settings.notifications">Notifications</h4>
+                                    <p data-i18n="settings.notificationsDesc">Daily reminders and goal notifications</p>
+                                </div>
+                                <span class="coming-soon-badge" data-i18n="settings.comingSoon">Coming Soon</span>
+                            </div>
+                            <div class="settings-option">
+                                <div class="settings-option-info">
+                                    <h4 data-i18n="settings.speechVoice">Speech Voice</h4>
+                                    <p data-i18n="settings.speechVoiceDesc">Choose your preferred TTS voice</p>
+                                </div>
+                                <span class="coming-soon-badge" data-i18n="settings.comingSoon">Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- About Section -->
+                    <div class="settings-section">
+                        <h2 data-i18n="settings.about">ℹ️ About</h2>
+                        <div class="settings-card">
+                            <div class="about-info">
+                                <p><strong data-i18n="settings.appName">Language Learning Platform</strong></p>
+                                <p data-i18n="settings.appDesc">An AI-powered language learning experience</p>
+                                <p class="text-muted" data-i18n="settings.version">Version 1.0.0</p>
+                            </div>
                         </div>
                     </div>
                 </section>
