@@ -14,6 +14,7 @@ import org.springframework.ai.openai.OpenAiAudioTranscriptionOptions;
 import org.springframework.ai.openai.api.OpenAiAudioApi;
 import org.springframework.ai.openai.audio.speech.SpeechPrompt;
 import org.springframework.ai.openai.audio.speech.SpeechResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnBean(OpenAiAudioSpeechModel.class)
 public class SpeechServiceImpl implements SpeechService {
 
     private final OpenAiAudioSpeechModel speechModel;

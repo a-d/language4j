@@ -10,6 +10,7 @@ import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.openai.OpenAiImageOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -22,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnBean(ImageModel.class)
 public class ImageServiceImpl implements ImageService {
 
     private final ImageModel imageModel;
