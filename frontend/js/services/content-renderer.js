@@ -30,7 +30,6 @@ export const ContentType = {
  */
 const MARKDOWN_TYPES = [
     ContentType.LESSON,
-    ContentType.VOCABULARY,
     ContentType.SCENARIO,
     ContentType.LEARNING_PLAN
 ];
@@ -39,6 +38,7 @@ const MARKDOWN_TYPES = [
  * JSON-based content types.
  */
 const JSON_TYPES = [
+    ContentType.VOCABULARY,
     ContentType.FLASHCARDS,
     ContentType.TEXT_COMPLETION,
     ContentType.DRAG_DROP,
@@ -87,6 +87,8 @@ function renderJsonContent(content, type) {
     }
     
     switch (type) {
+        case ContentType.VOCABULARY:
+            return renderVocabulary(data);
         case ContentType.FLASHCARDS:
             return renderFlashcards(data);
         case ContentType.TEXT_COMPLETION:
@@ -101,6 +103,103 @@ function renderJsonContent(content, type) {
             // Generic JSON display
             return renderGenericJson(data);
     }
+}
+
+// ==================== Vocabulary Renderer ====================
+
+/**
+ * Renders vocabulary items as visual cards.
+ * 
+ * Expected data format:
+ * { vocabulary: [{ word, pronunciation, translation, partOfSpeech, example, exampleTranslation, usageNote }] }
+ * or
+ * [{ word, pronunciation, translation, partOfSpeech, example, exampleTranslation, usageNote }]
+ */
+function renderVocabulary(data) {
+    const items = Array.isArray(data) ? data : (data.vocabulary || data.words || data.items || []);
+    
+    if (items.length === 0) {
+        return '<p class="empty-state">No vocabulary generated.</p>';
+    }
+    
+    return `
+        <div class="vocabulary-list">
+            <div class="vocabulary-count">${items.length} words</div>
+            <div class="vocabulary-cards">
+                ${items.map((item, index) => renderSingleVocabularyCard(item, index)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders a single vocabulary card with collapsible details.
+ * Cards are collapsed by default and expand on click.
+ * @param {Object} item - The vocabulary item data
+ * @param {number} index - The item index
+ * @returns {string} HTML string for the card
+ */
+function renderSingleVocabularyCard(item, index) {
+    const word = item.word || item.term || item.phrase || '';
+    const pronunciation = item.pronunciation || item.phonetic || '';
+    const translation = item.translation || item.meaning || item.definition || '';
+    const partOfSpeech = item.partOfSpeech || item.pos || item.type || '';
+    const example = item.example || item.exampleSentence || '';
+    const exampleTranslation = item.exampleTranslation || '';
+    const usageNote = item.usageNote || item.note || item.usage || '';
+    
+    // Check if there's any expandable content
+    const hasExpandableContent = pronunciation || example || usageNote;
+    
+    return `
+        <div class="vocabulary-card${hasExpandableContent ? ' collapsible' : ''}" data-index="${index}" onclick="window.toggleVocabCard(this, event)">
+            <div class="vocab-card-header">
+                <div class="vocab-header-main">
+                    <span class="vocab-word">${escapeHtml(word)}</span>
+                    ${partOfSpeech ? `<span class="vocab-pos">${escapeHtml(partOfSpeech)}</span>` : ''}
+                    <button class="vocab-play-btn" onclick="window.playVocabWord(this, event)" data-word="${escapeHtml(word)}" title="Listen to pronunciation">
+                        🔊
+                    </button>
+                </div>
+                <div class="vocab-header-summary">
+                    <span class="vocab-translation-preview">${escapeHtml(translation)}</span>
+                    ${hasExpandableContent ? '<span class="vocab-expand-icon">▼</span>' : ''}
+                </div>
+            </div>
+            
+            <div class="vocab-card-body">
+                ${pronunciation ? `
+                    <div class="vocab-pronunciation">
+                        <span class="pronunciation-icon">🔊</span>
+                        <span class="pronunciation-text">${escapeHtml(pronunciation)}</span>
+                    </div>
+                ` : ''}
+                
+                <div class="vocab-translation">
+                    <span class="translation-icon">📖</span>
+                    <span class="translation-text">${escapeHtml(translation)}</span>
+                </div>
+                
+                ${example ? `
+                    <div class="vocab-example">
+                        <div class="example-header">
+                            <span class="example-icon">💬</span>
+                            <span class="example-label">Example</span>
+                        </div>
+                        <p class="example-text">${escapeHtml(example)}</p>
+                        ${exampleTranslation ? `<p class="example-translation">${escapeHtml(exampleTranslation)}</p>` : ''}
+                    </div>
+                ` : ''}
+                
+                ${usageNote ? `
+                    <div class="vocab-usage-note">
+                        <span class="usage-icon">💡</span>
+                        <span class="usage-text">${escapeHtml(usageNote)}</span>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
 }
 
 // ==================== Flashcards Renderer ====================
@@ -206,9 +305,9 @@ function renderSingleFlashcard(card, index) {
 /**
  * Renders fill-in-the-blank exercises.
  * Expected data format:
- * { exercises: [{ sentence: string, blank: string, answer: string, hint?: string }] }
+ * { exercises: [{ sentence: string, correctAnswer: string, wordBank?: string[], explanation?: string }] }
  * or
- * [{ sentence: string, blank: string, answer: string }]
+ * [{ sentence: string, correctAnswer: string, ... }]
  */
 function renderTextCompletionExercises(data) {
     const exercises = Array.isArray(data) ? data : (data.exercises || data.questions || []);
@@ -221,8 +320,10 @@ function renderTextCompletionExercises(data) {
         <div class="exercises-list text-completion-exercises">
             ${exercises.map((ex, index) => {
                 const sentence = ex.sentence || ex.text || ex.question || '';
-                const answer = ex.answer || ex.blank || ex.correct || '';
-                const hint = ex.hint || '';
+                // Check for correctAnswer (from backend), then fallback to other common property names
+                const answer = ex.correctAnswer || ex.answer || ex.blank || ex.correct || '';
+                const hint = ex.hint || ex.explanation || '';
+                const wordBank = ex.wordBank || ex.options || [];
                 
                 // Replace blank marker with input field
                 const displaySentence = sentence.replace(/_{2,}|\[\.\.\.\]|\[blank\]|\{\{blank\}\}/gi, 
@@ -234,7 +335,13 @@ function renderTextCompletionExercises(data) {
                         <div class="exercise-number">${index + 1}</div>
                         <div class="exercise-content">
                             <p class="exercise-sentence">${displaySentence}</p>
-                            ${hint ? `<p class="exercise-hint">💡 ${escapeHtml(hint)}</p>` : ''}
+                            ${wordBank.length > 0 ? `
+                                <div class="word-bank-hint">
+                                    <span class="word-bank-label">💡 Word bank:</span>
+                                    <span class="word-bank-words">${wordBank.map(w => `<span class="word-option clickable" onclick="window.fillWordBankOption(this, '${escapeHtml(w)}')">${escapeHtml(w)}</span>`).join(' ')}</span>
+                                </div>
+                            ` : ''}
+                            ${hint ? `<p class="exercise-explanation hidden" data-explanation="${escapeHtml(hint)}">📚 ${escapeHtml(hint)}</p>` : ''}
                             <div class="exercise-feedback hidden"></div>
                         </div>
                         <button class="btn btn-sm btn-primary exercise-check" onclick="window.checkExerciseAnswer(this)">Check</button>
@@ -280,25 +387,33 @@ function renderDragDropExercises(data) {
 
 /**
  * Renders a single drag-drop exercise with proper data extraction.
+ * 
+ * The LLM provides words in CORRECT order via the "words" field.
+ * The frontend shuffles them for display. This approach:
+ * - Saves tokens (LLM doesn't need to shuffle)
+ * - Guarantees words match the expected answer
+ * - Allows consistent shuffling behavior controlled by frontend
  */
 function renderSingleDragDropExercise(ex, index) {
-    // Handle different data formats for words
-    let words = ex.scrambledWords || ex.words || ex.shuffled || [];
-    let correctSentence = '';
+    // Extract words in correct order - try multiple field names for backwards compatibility
+    // Priority: words (new format) > correctOrder (legacy) > correct > sentence
+    let wordsInCorrectOrder = [];
     
-    // Extract correct sentence
-    if (ex.correctOrder) {
-        correctSentence = Array.isArray(ex.correctOrder) ? ex.correctOrder.join(' ') : ex.correctOrder;
+    if (ex.words && Array.isArray(ex.words)) {
+        wordsInCorrectOrder = ex.words;
+    } else if (ex.correctOrder && Array.isArray(ex.correctOrder)) {
+        wordsInCorrectOrder = ex.correctOrder;
     } else if (ex.correct) {
-        correctSentence = ex.correct;
+        wordsInCorrectOrder = typeof ex.correct === 'string' ? ex.correct.split(/\s+/) : ex.correct;
     } else if (ex.sentence) {
-        correctSentence = ex.sentence;
+        wordsInCorrectOrder = typeof ex.sentence === 'string' ? ex.sentence.split(/\s+/) : ex.sentence;
     }
     
-    // If scrambledWords is an array, use it; otherwise shuffle from correct
-    if (words.length === 0 && correctSentence) {
-        words = shuffleArray(correctSentence.split(/\s+/));
-    }
+    // Build the correct sentence for validation
+    const correctSentence = wordsInCorrectOrder.join(' ');
+    
+    // Shuffle words for display - guaranteed to be different from correct order
+    const words = shuffleArray([...wordsInCorrectOrder]);
     
     // Extract translation (must be in native language)
     const translation = ex.translation || ex.hint || '';
@@ -369,8 +484,17 @@ function renderSingleDragDropExercise(ex, index) {
 
 /**
  * Renders translation exercises.
- * Expected data format:
- * { exercises: [{ source: string, target?: string, hint?: string }] }
+ * 
+ * Supports multiple data formats from the backend:
+ * 
+ * Format 1 (Backend LLM response):
+ * { exercises: [{ sourceText: string, modelAnswer: string, alternatives?: string[], keyPoints?: string[] }] }
+ * 
+ * Format 2 (Simple format):
+ * { exercises: [{ source: string, target: string, hint?: string }] }
+ * 
+ * Format 3 (Array only):
+ * [{ sourceText: string, modelAnswer: string, ... }]
  */
 function renderTranslationExercises(data) {
     const exercises = Array.isArray(data) ? data : (data.exercises || data.sentences || []);
@@ -382,16 +506,33 @@ function renderTranslationExercises(data) {
     return `
         <div class="exercises-list translation-exercises">
             ${exercises.map((ex, index) => {
-                const source = ex.source || ex.sentence || ex.original || '';
-                const target = ex.target || ex.translation || ex.answer || '';
+                // Extract source text - try backend format first (sourceText), then fallbacks
+                const source = ex.sourceText || ex.source || ex.sentence || ex.original || ex.text || '';
+                
+                // Extract target answer - try backend format first (modelAnswer), then fallbacks
+                const target = ex.modelAnswer || ex.target || ex.translation || ex.answer || '';
+                
+                // Extract alternatives for showing acceptable variations
+                const alternatives = ex.alternatives || [];
+                
+                // Extract hint - try keyPoints from backend, then standard hint fields
+                const keyPoints = ex.keyPoints || [];
                 const hint = ex.hint || ex.vocabulary || '';
                 
+                // Build hint text from keyPoints if available
+                let hintText = '';
+                if (keyPoints.length > 0) {
+                    hintText = `Key points: ${keyPoints.join(', ')}`;
+                } else if (hint) {
+                    hintText = typeof hint === 'object' ? JSON.stringify(hint) : hint;
+                }
+                
                 return `
-                    <div class="exercise-item translation-item" data-index="${index}">
+                    <div class="exercise-item translation-item" data-index="${index}" data-alternatives="${escapeHtml(JSON.stringify(alternatives))}">
                         <div class="exercise-number">${index + 1}</div>
                         <div class="exercise-content">
                             <p class="exercise-source"><strong>Translate:</strong> ${escapeHtml(source)}</p>
-                            ${hint ? `<p class="exercise-hint">💡 ${escapeHtml(typeof hint === 'object' ? JSON.stringify(hint) : hint)}</p>` : ''}
+                            ${hintText ? `<p class="exercise-hint">💡 ${escapeHtml(hintText)}</p>` : ''}
                             <textarea class="exercise-textarea" data-answer="${escapeHtml(target)}" placeholder="Type your translation here..." rows="2"></textarea>
                             <div class="exercise-feedback hidden"></div>
                         </div>
@@ -465,17 +606,133 @@ function escapeHtml(text) {
 
 /**
  * Shuffles an array using Fisher-Yates algorithm.
+ * Guarantees the result is different from the original if array has 2+ unique elements.
+ * @param {Array} array - Array to shuffle
+ * @returns {Array} Shuffled array (different order than original)
  */
 function shuffleArray(array) {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    if (array.length <= 1) return [...array];
+    
+    const original = [...array];
+    let shuffled = [...array];
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    // Keep shuffling until we get a different order (or hit max attempts)
+    do {
+        // Fisher-Yates shuffle
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        attempts++;
+    } while (arraysEqual(original, shuffled) && attempts < maxAttempts);
+    
+    // If we still have the same order after max attempts (very unlikely for arrays > 2),
+    // just swap the first two elements to guarantee a different order
+    if (arraysEqual(original, shuffled) && shuffled.length >= 2) {
+        [shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]];
     }
+    
     return shuffled;
 }
 
+/**
+ * Checks if two arrays have the same elements in the same order.
+ * @param {Array} a - First array
+ * @param {Array} b - Second array
+ * @returns {boolean} True if arrays are equal
+ */
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
 // ==================== Interactive Functions (Global) ====================
+
+/**
+ * Toggle vocabulary card expanded/collapsed state.
+ */
+window.toggleVocabCard = function(card, event) {
+    // Only toggle if the card is collapsible
+    if (!card.classList.contains('collapsible')) return;
+    
+    // Prevent toggle if clicking on interactive elements inside the card
+    if (event && event.target.closest('button, a, input, textarea, .vocab-play-btn')) return;
+    
+    card.classList.toggle('expanded');
+};
+
+/**
+ * Play vocabulary word audio using text-to-speech.
+ * Uses the speech API to synthesize and play the word.
+ */
+window.playVocabWord = async function(btn, event) {
+    // Prevent event bubbling to card click handler
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
+    const word = btn.dataset.word;
+    if (!word) return;
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '⏳';
+    btn.classList.add('loading');
+    
+    try {
+        // Import the API dynamically to avoid circular dependency
+        const { api } = await import('../api/client.js');
+        
+        // Get target language from app config (default to user's configured target language)
+        const targetLanguage = window.APP_CONFIG?.TARGET_LANGUAGE || 'de';
+        
+        // Call speech synthesis API
+        const audioBlob = await api.speech.synthesize(word, targetLanguage, false);
+        
+        // Create audio element and play
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        // Clean up URL after playing
+        audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            btn.classList.remove('loading', 'playing');
+        };
+        
+        audio.onerror = () => {
+            console.error('Audio playback error');
+            URL.revokeObjectURL(audioUrl);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            btn.classList.remove('loading', 'playing');
+        };
+        
+        btn.innerHTML = '🔊';
+        btn.classList.remove('loading');
+        btn.classList.add('playing');
+        await audio.play();
+        
+    } catch (error) {
+        console.error('Failed to play vocabulary word:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        btn.classList.remove('loading', 'playing');
+        
+        // Show error feedback (if toast is available)
+        if (window.showToast) {
+            window.showToast('Failed to play audio', 'error');
+        }
+    }
+};
 
 /**
  * Flashcard navigation and flip functions.
@@ -532,35 +789,90 @@ function updateFlashcardControls(deck, current, total) {
 }
 
 /**
- * Text completion exercise check.
+ * Normalizes text for lenient comparison.
+ * Removes accents, normalizes whitespace, and lowercases.
+ * @param {string} text - Text to normalize
+ * @returns {string} Normalized text
+ */
+function normalizeForComparison(text) {
+    if (!text) return '';
+    return text
+        // Normalize Unicode (decompose accented characters)
+        .normalize('NFD')
+        // Remove diacritical marks (accents)
+        .replace(/[\u0300-\u036f]/g, '')
+        // Convert to lowercase
+        .toLowerCase()
+        // Normalize whitespace (collapse multiple spaces, trim)
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Checks if two strings match leniently.
+ * Lenient matching ignores: whitespace differences, capitalization, accents.
+ * @param {string} userAnswer - User's answer
+ * @param {string} correctAnswer - Correct answer
+ * @returns {{isMatch: boolean, isExact: boolean}} Match result
+ */
+function lenientMatch(userAnswer, correctAnswer) {
+    const normalizedUser = normalizeForComparison(userAnswer);
+    const normalizedCorrect = normalizeForComparison(correctAnswer);
+    
+    // Exact match (after normalization)
+    if (normalizedUser === normalizedCorrect) {
+        // Check if it was also an exact match before normalization
+        const isExact = userAnswer.trim() === correctAnswer.trim();
+        return { isMatch: true, isExact };
+    }
+    
+    return { isMatch: false, isExact: false };
+}
+
+/**
+ * Text completion exercise check with lenient validation.
+ * Lenient matching ignores: whitespace differences, capitalization, accents.
  */
 window.checkExerciseAnswer = function(btn) {
     const item = btn.closest('.exercise-item');
     const input = item.querySelector('.exercise-input');
     const feedback = item.querySelector('.exercise-feedback');
-    const answer = input.dataset.answer.toLowerCase().trim();
-    const userAnswer = input.value.toLowerCase().trim();
+    const correctAnswer = input.dataset.answer || '';
+    const userAnswer = input.value || '';
     const index = parseInt(item.dataset.index) || 0;
     
-    const isCorrect = userAnswer === answer;
+    // Use lenient matching
+    const { isMatch, isExact } = lenientMatch(userAnswer, correctAnswer);
     
     feedback.classList.remove('hidden');
     
-    if (isCorrect) {
+    if (isMatch) {
         feedback.className = 'exercise-feedback correct';
-        feedback.innerHTML = '✅ Correct!';
+        if (isExact) {
+            feedback.innerHTML = '✅ Correct!';
+        } else {
+            // Matched but with minor differences (case, accents, whitespace)
+            feedback.innerHTML = `✅ Correct! <span class="feedback-note">(Note: exact spelling is "${escapeHtml(correctAnswer)}")</span>`;
+        }
         input.classList.add('correct');
     } else {
         feedback.className = 'exercise-feedback incorrect';
-        feedback.innerHTML = `❌ The correct answer is: <strong>${escapeHtml(input.dataset.answer)}</strong>`;
+        feedback.innerHTML = `❌ Incorrect. <button class="btn btn-sm btn-link show-solution-btn" onclick="window.toggleSolution(this)">Show solution</button>
+            <span class="solution-text hidden"><strong>${escapeHtml(correctAnswer)}</strong></span>`;
         input.classList.add('incorrect');
     }
     
     btn.disabled = true;
     
+    // Show explanation if available (only after checking)
+    const explanation = item.querySelector('.exercise-explanation');
+    if (explanation) {
+        explanation.classList.remove('hidden');
+    }
+    
     // Record the answer for score tracking
     if (window.recordExerciseAnswer) {
-        window.recordExerciseAnswer(index, isCorrect, input.value, input.dataset.answer);
+        window.recordExerciseAnswer(index, isMatch, input.value, correctAnswer);
     }
 };
 
@@ -694,45 +1006,91 @@ window.checkDragDropAnswer = function(btn) {
 };
 
 /**
- * Translation exercise check.
+ * Translation exercise check with support for alternative answers.
+ * Checks the user's answer against the model answer and any provided alternatives.
  */
 window.checkTranslationAnswer = function(btn) {
     const item = btn.closest('.translation-item');
     const textarea = item.querySelector('.exercise-textarea');
     const feedback = item.querySelector('.exercise-feedback');
-    const correctAnswer = textarea.dataset.answer.toLowerCase().trim();
-    const userAnswer = textarea.value.toLowerCase().trim();
+    const correctAnswer = textarea.dataset.answer || '';
+    const userAnswer = textarea.value.trim();
     const index = parseInt(item.dataset.index) || 0;
+    
+    // Get alternatives from data attribute
+    let alternatives = [];
+    try {
+        const altData = item.dataset.alternatives;
+        if (altData) {
+            alternatives = JSON.parse(altData);
+        }
+    } catch (e) {
+        // Ignore parse errors
+    }
+    
+    // All acceptable answers (model answer + alternatives)
+    const allAcceptable = [correctAnswer, ...alternatives].filter(a => a && a.trim());
     
     feedback.classList.remove('hidden');
     
-    // Simple comparison - in real app, you might use fuzzy matching or API evaluation
+    // Check for exact match (case-insensitive) against model answer or alternatives
+    const normalizedUserAnswer = userAnswer.toLowerCase().trim();
     let isCorrect = false;
-    if (userAnswer === correctAnswer) {
+    let matchedAnswer = null;
+    
+    for (const acceptable of allAcceptable) {
+        if (normalizedUserAnswer === acceptable.toLowerCase().trim()) {
+            isCorrect = true;
+            matchedAnswer = acceptable;
+            break;
+        }
+    }
+    
+    if (isCorrect) {
         feedback.className = 'exercise-feedback correct';
-        feedback.innerHTML = '✅ Perfect translation!';
+        if (matchedAnswer === correctAnswer) {
+            feedback.innerHTML = '✅ Perfect translation!';
+        } else {
+            feedback.innerHTML = `✅ Correct! (This is an acceptable alternative)`;
+        }
         textarea.classList.add('correct');
-        isCorrect = true;
     } else {
-        // Check for partial match
-        const similarity = calculateSimilarity(userAnswer, correctAnswer);
-        if (similarity > 0.7) {
+        // Check for partial match against model answer
+        const similarity = calculateSimilarity(normalizedUserAnswer, correctAnswer.toLowerCase().trim());
+        
+        // Also check similarity against alternatives
+        let bestAltSimilarity = 0;
+        for (const alt of alternatives) {
+            const altSim = calculateSimilarity(normalizedUserAnswer, alt.toLowerCase().trim());
+            if (altSim > bestAltSimilarity) {
+                bestAltSimilarity = altSim;
+            }
+        }
+        
+        const bestSimilarity = Math.max(similarity, bestAltSimilarity);
+        
+        if (bestSimilarity > 0.7) {
             feedback.className = 'exercise-feedback partial';
-            feedback.innerHTML = `🟡 Close! Expected: <strong>${escapeHtml(textarea.dataset.answer)}</strong>`;
+            feedback.innerHTML = `🟡 Close! Expected: <strong>${escapeHtml(correctAnswer)}</strong>`;
             // Partial credit - consider it correct for scoring
             isCorrect = true;
+            textarea.classList.add('partial');
         } else {
             feedback.className = 'exercise-feedback incorrect';
-            feedback.innerHTML = `❌ Expected: <strong>${escapeHtml(textarea.dataset.answer)}</strong>`;
+            let feedbackHtml = `❌ Expected: <strong>${escapeHtml(correctAnswer)}</strong>`;
+            if (alternatives.length > 0) {
+                feedbackHtml += `<br><span class="alternatives-note">Also acceptable: ${alternatives.map(a => escapeHtml(a)).join(', ')}</span>`;
+            }
+            feedback.innerHTML = feedbackHtml;
+            textarea.classList.add('incorrect');
         }
-        textarea.classList.add('incorrect');
     }
     
     btn.disabled = true;
     
     // Record the answer for score tracking
     if (window.recordExerciseAnswer) {
-        window.recordExerciseAnswer(index, isCorrect, textarea.value, textarea.dataset.answer);
+        window.recordExerciseAnswer(index, isCorrect, textarea.value, correctAnswer);
     }
 };
 
@@ -746,6 +1104,39 @@ function calculateSimilarity(str1, str2) {
     const union = new Set([...words1, ...words2]);
     return intersection.size / union.size;
 }
+
+/**
+ * Fill the input field with a word from the word bank.
+ * @param {HTMLElement} wordEl - The clicked word element
+ * @param {string} word - The word to fill
+ */
+window.fillWordBankOption = function(wordEl, word) {
+    const item = wordEl.closest('.exercise-item');
+    const input = item.querySelector('.exercise-input');
+    
+    if (input && !input.disabled) {
+        input.value = word;
+        input.focus();
+        
+        // Add visual feedback that the word was selected
+        const allWords = item.querySelectorAll('.word-bank-hint .word-option');
+        allWords.forEach(w => w.classList.remove('selected'));
+        wordEl.classList.add('selected');
+    }
+};
+
+/**
+ * Toggle the visibility of the solution text.
+ * @param {HTMLElement} btn - The toggle button
+ */
+window.toggleSolution = function(btn) {
+    const solutionText = btn.parentElement.querySelector('.solution-text');
+    if (solutionText) {
+        const isHidden = solutionText.classList.contains('hidden');
+        solutionText.classList.toggle('hidden');
+        btn.textContent = isHidden ? 'Hide solution' : 'Show solution';
+    }
+};
 
 export default {
     renderContent,

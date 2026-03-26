@@ -1,20 +1,32 @@
 /**
  * Vocabulary Page Module
- * Handles vocabulary generation and flashcards.
+ * Handles vocabulary generation and flashcards with session caching.
  */
 
 import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
+import { cache, CacheKeys } from '../services/cache.js';
+
+const { PAGE, CONTENT, FLASHCARDS, TOPIC, COUNT, FLASHCARD_TOPIC } = CacheKeys.VOCABULARY;
 
 /**
- * Initialize vocabulary page UI.
+ * Initialize vocabulary page UI with cached content restoration.
  */
 export function loadVocabularyData(showLoading, hideLoading) {
     showLoading();
     const container = document.getElementById('vocabulary-list');
     if (!container) { hideLoading(); return; }
+    
+    // Get cached values
+    const cachedTopic = cache.get(PAGE, TOPIC) || '';
+    const cachedCount = cache.get(PAGE, COUNT) || 10;
+    const cachedContent = cache.get(PAGE, CONTENT);
+    const cachedFlashcardTopic = cache.get(PAGE, FLASHCARD_TOPIC) || '';
+    const cachedFlashcards = cache.get(PAGE, FLASHCARDS);
+    
+    const hasAnyCache = cachedContent || cachedFlashcards;
     
     container.innerHTML = `
         <div class="vocab-generator">
@@ -22,32 +34,68 @@ export function loadVocabularyData(showLoading, hideLoading) {
             <div class="form-row">
                 <div class="form-group">
                     <label for="vocab-topic">${t('lessons.topic')}</label>
-                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" />
+                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" />
                 </div>
                 <div class="form-group">
                     <label for="vocab-count">${t('vocabulary.words')}</label>
-                    <input type="number" id="vocab-count" value="10" min="5" max="20" class="form-input" />
+                    <input type="number" id="vocab-count" value="${cachedCount}" min="5" max="20" class="form-input" />
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="window.generateVocabulary()">
-                ${t('vocabulary.generate')}
-            </button>
+            <div class="button-row">
+                <button class="btn btn-primary" onclick="window.generateVocabulary()">
+                    ${t('vocabulary.generate')}
+                </button>
+                ${hasAnyCache ? `
+                    <button class="btn btn-secondary btn-sm" onclick="window.clearVocabularyCache()">
+                        ${t('misc.clearCache') || 'Clear All'}
+                    </button>
+                ` : ''}
+            </div>
         </div>
-        <div id="generated-vocabulary" class="generated-content hidden"></div>
+        <div id="generated-vocabulary" class="generated-content ${cachedContent ? '' : 'hidden'}">
+            ${cachedContent || ''}
+        </div>
         
         <div class="vocab-flashcards-section">
             <h3>${t('vocabulary.flashcardsTitle')}</h3>
             <div class="form-group">
                 <label for="flashcard-topic">${t('lessons.topic')}</label>
-                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" />
+                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" />
             </div>
             <button class="btn btn-secondary" onclick="window.generateFlashcards()">
                 ${t('vocabulary.generateFlashcards')}
             </button>
-            <div id="flashcards-container" class="hidden"></div>
+            <div id="flashcards-container" class="${cachedFlashcards ? '' : 'hidden'}">
+                ${cachedFlashcards || ''}
+            </div>
         </div>
     `;
+    
+    // Save form values on input change
+    setupInputListeners();
+    
     hideLoading();
+}
+
+/**
+ * Set up input listeners to cache form values.
+ */
+function setupInputListeners() {
+    const vocabTopic = document.getElementById('vocab-topic');
+    const vocabCount = document.getElementById('vocab-count');
+    const flashcardTopic = document.getElementById('flashcard-topic');
+    
+    vocabTopic?.addEventListener('input', (e) => {
+        cache.save(PAGE, TOPIC, e.target.value);
+    });
+    
+    vocabCount?.addEventListener('input', (e) => {
+        cache.save(PAGE, COUNT, parseInt(e.target.value) || 10);
+    });
+    
+    flashcardTopic?.addEventListener('input', (e) => {
+        cache.save(PAGE, FLASHCARD_TOPIC, e.target.value);
+    });
 }
 
 /**
@@ -67,13 +115,24 @@ export async function generateVocabulary(showLoading, hideLoading, incrementWord
         const response = await api.content.generateVocabulary(topic, wordCount);
         const container = document.getElementById('generated-vocabulary');
         
-        container.innerHTML = `
+        const contentHtml = `
             <div class="vocabulary-content">
-                <h3>📖 ${topic}</h3>
+                <h3>📖 ${escapeHtml(topic)}</h3>
                 <div class="vocabulary-body markdown-content">${renderContent(response.content, response.type || ContentType.VOCABULARY)}</div>
             </div>
         `;
+        
+        container.innerHTML = contentHtml;
         container.classList.remove('hidden');
+        
+        // Cache the generated content
+        cache.save(PAGE, CONTENT, contentHtml);
+        cache.save(PAGE, TOPIC, topic);
+        cache.save(PAGE, COUNT, wordCount);
+        
+        // Update clear button visibility
+        updateClearButton();
+        
         toast.success(t('toast.vocabGenerated'));
         
         if (incrementWordsGoal) await incrementWordsGoal(wordCount);
@@ -98,13 +157,23 @@ export async function generateFlashcards(showLoading, hideLoading) {
         const response = await api.content.generateFlashcards(topic, 10);
         const container = document.getElementById('flashcards-container');
         
-        container.innerHTML = `
+        const contentHtml = `
             <div class="flashcards-content">
-                <h3>🃏 ${topic}</h3>
+                <h3>🃏 ${escapeHtml(topic)}</h3>
                 <div class="flashcards-body">${renderContent(response.content, response.type || ContentType.FLASHCARDS)}</div>
             </div>
         `;
+        
+        container.innerHTML = contentHtml;
         container.classList.remove('hidden');
+        
+        // Cache the generated content
+        cache.save(PAGE, FLASHCARDS, contentHtml);
+        cache.save(PAGE, FLASHCARD_TOPIC, topic);
+        
+        // Update clear button visibility
+        updateClearButton();
+        
         toast.success(t('toast.flashcardsGenerated'));
     } catch (error) {
         console.error('Failed to generate flashcards:', error);
@@ -114,4 +183,74 @@ export async function generateFlashcards(showLoading, hideLoading) {
     }
 }
 
-export default { loadVocabularyData, generateVocabulary, generateFlashcards };
+/**
+ * Clear cached vocabulary content.
+ */
+export function clearVocabularyCache() {
+    cache.clearPage(PAGE);
+    
+    // Clear the displayed content
+    const vocabContainer = document.getElementById('generated-vocabulary');
+    if (vocabContainer) {
+        vocabContainer.innerHTML = '';
+        vocabContainer.classList.add('hidden');
+    }
+    
+    const flashcardsContainer = document.getElementById('flashcards-container');
+    if (flashcardsContainer) {
+        flashcardsContainer.innerHTML = '';
+        flashcardsContainer.classList.add('hidden');
+    }
+    
+    // Clear inputs
+    const vocabTopic = document.getElementById('vocab-topic');
+    if (vocabTopic) vocabTopic.value = '';
+    
+    const vocabCount = document.getElementById('vocab-count');
+    if (vocabCount) vocabCount.value = '10';
+    
+    const flashcardTopic = document.getElementById('flashcard-topic');
+    if (flashcardTopic) flashcardTopic.value = '';
+    
+    // Update clear button visibility
+    updateClearButton();
+    
+    toast.info(t('toast.cacheCleared') || 'Cache cleared');
+}
+
+/**
+ * Update clear button visibility based on cache state.
+ */
+function updateClearButton() {
+    const hasCache = cache.has(PAGE, CONTENT) || cache.has(PAGE, FLASHCARDS);
+    const buttonRow = document.querySelector('.vocab-generator .button-row');
+    
+    if (buttonRow) {
+        const existingClearBtn = buttonRow.querySelector('[onclick*="clearVocabularyCache"]');
+        
+        if (hasCache && !existingClearBtn) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn btn-secondary btn-sm';
+            clearBtn.onclick = () => window.clearVocabularyCache();
+            clearBtn.textContent = t('misc.clearCache') || 'Clear All';
+            buttonRow.appendChild(clearBtn);
+        } else if (!hasCache && existingClearBtn) {
+            existingClearBtn.remove();
+        }
+    }
+}
+
+/**
+ * Escape HTML special characters.
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Register global function
+window.clearVocabularyCache = clearVocabularyCache;
+
+export default { loadVocabularyData, generateVocabulary, generateFlashcards, clearVocabularyCache };

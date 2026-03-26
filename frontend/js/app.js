@@ -228,7 +228,7 @@ async function generateRoleplayScenario() {
 // UI functions
 window.closeModal = closeModal;
 window.closeExercise = closeExercise;
-window.speakText = (text) => speakText(text, state.user?.targetLanguage);
+window.speakText = (text, languageCode, btn) => speakText(text, languageCode || state.user?.targetLanguage, btn);
 
 // Page generation functions
 window.generateLesson = () => generateLesson(showLoading, hideLoading, goals.incrementLessonGoal);

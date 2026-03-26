@@ -5,7 +5,6 @@ import dev.languagelearning.speech.exception.SpeechException;
 import dev.languagelearning.speech.service.SpeechService;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.openai.OpenAiAudioSpeechModel;
 import org.springframework.ai.openai.OpenAiAudioSpeechOptions;
@@ -27,14 +26,33 @@ import java.io.InputStream;
  * <p>
  * This class is registered as a bean by {@link dev.languagelearning.speech.config.SpeechServiceAutoConfiguration}
  * when the required audio models are available.
+ * <p>
+ * The transcription model is optional - if not provided, speech-to-text
+ * methods will throw {@link SpeechException}.
  */
 @Slf4j
-@RequiredArgsConstructor
 public class SpeechServiceImpl implements SpeechService {
 
     private final OpenAiAudioSpeechModel speechModel;
+    @Nullable
     private final OpenAiAudioTranscriptionModel transcriptionModel;
     private final AiProviderConfig aiProviderConfig;
+
+    /**
+     * Creates a new SpeechServiceImpl.
+     *
+     * @param speechModel        the text-to-speech model (required)
+     * @param transcriptionModel the speech-to-text model (optional, may be null)
+     * @param aiProviderConfig   the AI provider configuration
+     */
+    public SpeechServiceImpl(
+            @Nonnull OpenAiAudioSpeechModel speechModel,
+            @Nullable OpenAiAudioTranscriptionModel transcriptionModel,
+            @Nonnull AiProviderConfig aiProviderConfig) {
+        this.speechModel = speechModel;
+        this.transcriptionModel = transcriptionModel;
+        this.aiProviderConfig = aiProviderConfig;
+    }
 
     @Override
     @Nonnull
@@ -119,6 +137,12 @@ public class SpeechServiceImpl implements SpeechService {
     }
 
     private TranscriptionResult transcribe(Resource audioResource, String languageHint) {
+        if (transcriptionModel == null) {
+            throw SpeechException.transcriptionFailed(
+                    "Speech-to-text is not available. " +
+                            "Please configure transcription models (set OPENAI_TRANSCRIPTION_ENABLED=true) to use this feature.");
+        }
+
         var sttConfig = aiProviderConfig.getSpeechToText();
 
         OpenAiAudioTranscriptionOptions.Builder optionsBuilder = OpenAiAudioTranscriptionOptions.builder()

@@ -2,13 +2,17 @@
  * Visual Learning Cards Page Module
  * ==================================
  * Handles AI-generated image flashcards for visual vocabulary learning.
+ * Cards are persisted to session storage for navigation persistence.
  */
 
 import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
+import { cache, CacheKeys } from '../services/cache.js';
 
-// State for visual cards
+const { PAGE, VISUAL_CARDS, CURRENT_INDEX } = CacheKeys.CARDS;
+
+// State for visual cards - initialized from cache
 let visualCards = [];
 let currentCardIndex = 0;
 let isGenerating = false;
@@ -18,11 +22,16 @@ const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
 
 /**
  * Initialize visual cards page UI.
- * Note: This is synchronous initialization, no loading indicator needed.
+ * Restores state from session cache.
  */
 export function loadCardsData() {
+    // Restore state from cache
+    restoreFromCache();
+    
     const container = document.getElementById('cards-list');
     if (!container) return;
+    
+    const hasCards = visualCards.length > 0;
     
     container.innerHTML = `
         <div class="visual-cards-container">
@@ -39,13 +48,20 @@ export function loadCardsData() {
                         <input type="text" id="card-context" placeholder="${t('cards.contextPlaceholder')}" class="form-input" />
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="window.generateVisualCard()">
-                    ${t('cards.generate')}
-                </button>
+                <div class="button-row">
+                    <button class="btn btn-primary" onclick="window.generateVisualCard()">
+                        ${t('cards.generate')}
+                    </button>
+                    ${hasCards ? `
+                        <button class="btn btn-secondary btn-sm" onclick="window.clearCardsCache()">
+                            ${t('misc.clearCache') || 'Clear All'} (${visualCards.length})
+                        </button>
+                    ` : ''}
+                </div>
             </div>
             
             <!-- Card Viewer -->
-            <div id="card-viewer-section" class="hidden">
+            <div id="card-viewer-section" class="${hasCards ? '' : 'hidden'}">
                 <div class="visual-card-viewer">
                     <div id="visual-card-display"></div>
                     <div class="card-navigation">
@@ -65,7 +81,7 @@ export function loadCardsData() {
             </div>
             
             <!-- Empty State -->
-            <div id="cards-empty-state" class="visual-cards-empty">
+            <div id="cards-empty-state" class="visual-cards-empty ${hasCards ? 'hidden' : ''}">
                 <div class="visual-cards-empty-icon">🖼️</div>
                 <div class="visual-cards-empty-text">${t('cards.noCards')}</div>
             </div>
@@ -89,15 +105,41 @@ export function loadCardsData() {
             </div>
             
             <!-- Cards Grid -->
-            <div id="cards-grid" class="visual-cards-grid hidden"></div>
+            <div id="cards-grid" class="visual-cards-grid ${hasCards ? '' : 'hidden'}"></div>
         </div>
     `;
     
-    // Restore any existing cards
-    if (visualCards.length > 0) {
+    // Restore card display if we have cards
+    if (hasCards) {
         updateCardDisplay();
         updateCardsGrid();
     }
+}
+
+/**
+ * Restore state from session cache.
+ */
+function restoreFromCache() {
+    const cachedCards = cache.get(PAGE, VISUAL_CARDS);
+    const cachedIndex = cache.get(PAGE, CURRENT_INDEX);
+    
+    if (cachedCards && Array.isArray(cachedCards)) {
+        visualCards = cachedCards;
+        currentCardIndex = typeof cachedIndex === 'number' ? cachedIndex : 0;
+        
+        // Ensure index is within bounds
+        if (currentCardIndex >= visualCards.length) {
+            currentCardIndex = Math.max(0, visualCards.length - 1);
+        }
+    }
+}
+
+/**
+ * Save current state to session cache.
+ */
+function saveToCache() {
+    cache.save(PAGE, VISUAL_CARDS, visualCards);
+    cache.save(PAGE, CURRENT_INDEX, currentCardIndex);
 }
 
 /**
@@ -133,6 +175,9 @@ export async function generateVisualCard(showLoading, hideLoading) {
         visualCards.push(newCard);
         currentCardIndex = visualCards.length - 1;
         
+        // Save to cache
+        saveToCache();
+        
         // Clear the form
         document.getElementById('card-word').value = '';
         document.getElementById('card-context').value = '';
@@ -140,6 +185,7 @@ export async function generateVisualCard(showLoading, hideLoading) {
         // Update the display
         updateCardDisplay();
         updateCardsGrid();
+        updateClearButton();
         
         toast.success(t('cards.imageGenerated'));
     } catch (error) {
@@ -207,13 +253,17 @@ export async function generateVisualCardsBatch(showLoading, hideLoading) {
         if (progressFill) progressFill.style.width = '100%';
         if (progressText) progressText.textContent = t('cards.batchComplete');
         
+        // Save to cache
+        currentCardIndex = Math.max(0, visualCards.length - responses.length);
+        saveToCache();
+        
         // Clear the form
         document.getElementById('batch-words').value = '';
         
         // Update display
-        currentCardIndex = Math.max(0, visualCards.length - responses.length);
         updateCardDisplay();
         updateCardsGrid();
+        updateClearButton();
         
         toast.success(t('cards.batchComplete'));
     } catch (error) {
@@ -286,13 +336,53 @@ function updateCardsGrid() {
     
     grid.classList.remove('hidden');
     grid.innerHTML = visualCards.map((card, index) => `
-        <div class="visual-card-thumbnail" onclick="window.viewCard(${index})">
+        <div class="visual-card-thumbnail ${index === currentCardIndex ? 'active' : ''}" onclick="window.viewCard(${index})">
             <img src="${card.imageUrl}" alt="${escapeHtml(card.word)}" class="visual-card-thumbnail-image" onerror="window.handleCardImageError(this)" />
             <div class="visual-card-thumbnail-info">
                 <div class="visual-card-thumbnail-word">${escapeHtml(card.word)}</div>
             </div>
         </div>
     `).join('');
+}
+
+/**
+ * Update clear button visibility based on cards state.
+ */
+function updateClearButton() {
+    const hasCards = visualCards.length > 0;
+    const buttonRow = document.querySelector('.card-generator .button-row');
+    
+    if (buttonRow) {
+        const existingClearBtn = buttonRow.querySelector('[onclick*="clearCardsCache"]');
+        
+        if (hasCards && !existingClearBtn) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn btn-secondary btn-sm';
+            clearBtn.onclick = () => window.clearCardsCache();
+            clearBtn.textContent = `${t('misc.clearCache') || 'Clear All'} (${visualCards.length})`;
+            buttonRow.appendChild(clearBtn);
+        } else if (hasCards && existingClearBtn) {
+            existingClearBtn.textContent = `${t('misc.clearCache') || 'Clear All'} (${visualCards.length})`;
+        } else if (!hasCards && existingClearBtn) {
+            existingClearBtn.remove();
+        }
+    }
+}
+
+/**
+ * Clear all cached cards.
+ */
+export function clearCardsCache() {
+    visualCards = [];
+    currentCardIndex = 0;
+    cache.clearPage(PAGE);
+    
+    // Update display
+    updateCardDisplay();
+    updateCardsGrid();
+    updateClearButton();
+    
+    toast.info(t('toast.cacheCleared') || 'Cards cleared');
 }
 
 /**
@@ -319,7 +409,9 @@ export function flipCard(cardElement) {
 export function prevCard() {
     if (visualCards.length === 0) return;
     currentCardIndex = (currentCardIndex - 1 + visualCards.length) % visualCards.length;
+    saveToCache();
     updateCardDisplay();
+    updateCardsGrid();
 }
 
 /**
@@ -328,7 +420,9 @@ export function prevCard() {
 export function nextCard() {
     if (visualCards.length === 0) return;
     currentCardIndex = (currentCardIndex + 1) % visualCards.length;
+    saveToCache();
     updateCardDisplay();
+    updateCardsGrid();
 }
 
 /**
@@ -337,7 +431,9 @@ export function nextCard() {
 export function viewCard(index) {
     if (index >= 0 && index < visualCards.length) {
         currentCardIndex = index;
+        saveToCache();
         updateCardDisplay();
+        updateCardsGrid();
         
         // Scroll to the card viewer
         document.getElementById('card-viewer-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -352,3 +448,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Register global function
+window.clearCardsCache = clearCardsCache;

@@ -28,6 +28,7 @@ let exerciseScores = {
 
 /** Audio state for listening/speaking exercises */
 let currentAudioUrl = null;
+let currentAudio = null;
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
@@ -471,7 +472,18 @@ function renderListeningItem(ex, index) {
 }
 
 /**
- * Play audio for a listening exercise.
+ * Stop any currently playing audio.
+ */
+function stopCurrentAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+}
+
+/**
+ * Play audio for a listening exercise with play/pause toggle.
  */
 async function playListeningAudio(btn, index) {
     const item = btn.closest('.listening-item');
@@ -480,6 +492,34 @@ async function playListeningAudio(btn, index) {
     
     // Get user's target language from config or storage
     const languageCode = window.APP_CONFIG?.targetLanguage || 'en';
+    
+    // Check if this button's audio is already playing - toggle pause
+    if (currentAudio && btn.dataset.playing === 'true') {
+        if (currentAudio.paused) {
+            // Resume playback
+            await currentAudio.play();
+            btn.textContent = '⏸️';
+            playCountEl.textContent = t('exercises.playingAudio');
+        } else {
+            // Pause playback
+            currentAudio.pause();
+            btn.textContent = '▶️';
+            playCountEl.textContent = t('exercises.paused');
+        }
+        return;
+    }
+    
+    // Stop any other audio that might be playing
+    stopCurrentAudio();
+    
+    // Reset all other play buttons
+    document.querySelectorAll('.audio-btn.play-btn').forEach(otherBtn => {
+        if (otherBtn !== btn) {
+            otherBtn.textContent = '🔊';
+            otherBtn.dataset.playing = 'false';
+            otherBtn.disabled = false;
+        }
+    });
     
     btn.disabled = true;
     btn.textContent = '⏳';
@@ -494,30 +534,35 @@ async function playListeningAudio(btn, index) {
         }
         currentAudioUrl = URL.createObjectURL(audioBlob);
         
-        const audio = new Audio(currentAudioUrl);
-        audio.onended = () => {
+        currentAudio = new Audio(currentAudioUrl);
+        
+        currentAudio.onended = () => {
             btn.textContent = '🔊';
             btn.disabled = false;
+            btn.dataset.playing = 'false';
+            playCountEl.textContent = t('exercises.clickToReplay');
+            currentAudio = null;
         };
-        audio.onerror = () => {
+        
+        currentAudio.onerror = () => {
             btn.textContent = '🔊';
             btn.disabled = false;
+            btn.dataset.playing = 'false';
+            currentAudio = null;
             toast.error(t('toast.audioPlayFailed'));
         };
         
-        await audio.play();
+        await currentAudio.play();
+        btn.textContent = '⏸️';
+        btn.disabled = false;
+        btn.dataset.playing = 'true';
         playCountEl.textContent = t('exercises.playingAudio');
-        
-        audio.onended = () => {
-            btn.textContent = '🔊';
-            btn.disabled = false;
-            playCountEl.textContent = t('exercises.clickToReplay');
-        };
         
     } catch (error) {
         console.error('Failed to play audio:', error);
         btn.textContent = '🔊';
         btn.disabled = false;
+        btn.dataset.playing = 'false';
         toast.error(t('toast.audioGenerationFailed'));
     }
 }
@@ -655,13 +700,39 @@ function renderSpeakingItem(ex, index) {
 }
 
 /**
- * Play example audio for a speaking exercise.
+ * Play example audio for a speaking exercise with play/pause toggle.
  */
 async function playSpeakingExample(btn, index) {
     const item = btn.closest('.speaking-item');
     const text = item.dataset.text;
     
     const languageCode = window.APP_CONFIG?.targetLanguage || 'en';
+    
+    // Check if this button's audio is already playing - toggle pause
+    if (currentAudio && btn.dataset.playing === 'true') {
+        if (currentAudio.paused) {
+            // Resume playback
+            await currentAudio.play();
+            btn.textContent = '⏸️';
+        } else {
+            // Pause playback
+            currentAudio.pause();
+            btn.textContent = '▶️';
+        }
+        return;
+    }
+    
+    // Stop any other audio that might be playing
+    stopCurrentAudio();
+    
+    // Reset all other play buttons
+    document.querySelectorAll('.audio-btn.play-btn').forEach(otherBtn => {
+        if (otherBtn !== btn) {
+            otherBtn.textContent = '🔊';
+            otherBtn.dataset.playing = 'false';
+            otherBtn.disabled = false;
+        }
+    });
     
     btn.disabled = true;
     btn.textContent = '⏳';
@@ -674,23 +745,33 @@ async function playSpeakingExample(btn, index) {
         }
         currentAudioUrl = URL.createObjectURL(audioBlob);
         
-        const audio = new Audio(currentAudioUrl);
-        audio.onended = () => {
+        currentAudio = new Audio(currentAudioUrl);
+        
+        currentAudio.onended = () => {
             btn.textContent = '🔊';
             btn.disabled = false;
+            btn.dataset.playing = 'false';
+            currentAudio = null;
         };
-        audio.onerror = () => {
+        
+        currentAudio.onerror = () => {
             btn.textContent = '🔊';
             btn.disabled = false;
+            btn.dataset.playing = 'false';
+            currentAudio = null;
             toast.error(t('toast.audioPlayFailed'));
         };
         
-        await audio.play();
+        await currentAudio.play();
+        btn.textContent = '⏸️';
+        btn.disabled = false;
+        btn.dataset.playing = 'true';
         
     } catch (error) {
         console.error('Failed to play audio:', error);
         btn.textContent = '🔊';
         btn.disabled = false;
+        btn.dataset.playing = 'false';
         toast.error(t('toast.audioGenerationFailed'));
     }
 }

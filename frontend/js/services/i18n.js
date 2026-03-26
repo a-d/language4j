@@ -88,6 +88,7 @@ const translations = {
         'exercises.clickToListen': 'Click to listen',
         'exercises.playingAudio': 'Playing...',
         'exercises.clickToReplay': 'Click to replay',
+        'exercises.paused': 'Paused',
         'exercises.typeWhatYouHear': 'Type what you hear...',
         'exercises.listenExample': 'Listen to example',
         'exercises.recordYourVoice': 'Record your voice',
@@ -236,6 +237,10 @@ const translations = {
         'misc.generating': 'Generating...',
         'misc.comingSoon': 'coming soon!',
         'misc.roleplayTitle': '🎭 Roleplay:',
+        'misc.clearCache': 'Clear',
+        
+        // Toast - Cache
+        'toast.cacheCleared': 'Content cleared',
         
         // Visual Learning Cards
         'cards.title': 'Visual Learning Cards',
@@ -357,6 +362,7 @@ const translations = {
         'exercises.clickToListen': 'Klicken zum Anhören',
         'exercises.playingAudio': 'Wird abgespielt...',
         'exercises.clickToReplay': 'Nochmal anhören',
+        'exercises.paused': 'Pausiert',
         'exercises.typeWhatYouHear': 'Schreibe, was du hörst...',
         'exercises.listenExample': 'Beispiel anhören',
         'exercises.recordYourVoice': 'Stimme aufnehmen',
@@ -505,6 +511,10 @@ const translations = {
         'misc.generating': 'Wird generiert...',
         'misc.comingSoon': 'kommt bald!',
         'misc.roleplayTitle': '🎭 Rollenspiel:',
+        'misc.clearCache': 'Löschen',
+        
+        // Toast - Cache
+        'toast.cacheCleared': 'Inhalt gelöscht',
         
         // Visual Learning Cards
         'cards.title': 'Visuelle Lernkarten',

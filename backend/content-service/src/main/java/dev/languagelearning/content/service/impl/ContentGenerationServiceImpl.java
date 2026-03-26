@@ -3,6 +3,7 @@ package dev.languagelearning.content.service.impl;
 import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
 import dev.languagelearning.content.util.JsonExtractor;
+import dev.languagelearning.content.util.VocabularyJsonValidator;
 import dev.languagelearning.core.domain.User;
 import dev.languagelearning.llm.LlmService;
 import dev.languagelearning.llm.prompts.LanguageLearningPrompts;
@@ -58,7 +59,9 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "wordCount", wordCount
         );
 
-        return llmService.generate(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST, variables);
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST, variables);
+        String extractedJson = JsonExtractor.extractJson(response);
+        return VocabularyJsonValidator.validateAndNormalize(extractedJson);
     }
 
     @Override

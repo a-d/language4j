@@ -7,6 +7,10 @@ import { api } from '../api/client.js';
 import { toast } from './toast.js';
 import { t } from './i18n.js';
 
+/** Current playing audio state for speakText */
+let currentSpeakAudio = null;
+let currentSpeakAudioUrl = null;
+
 /**
  * Show loading overlay.
  */
@@ -42,23 +46,102 @@ export function closeModal() {
 }
 
 /**
- * Speak text using text-to-speech API.
+ * Stop any currently playing speech audio.
+ */
+export function stopSpeakAudio() {
+    if (currentSpeakAudio) {
+        currentSpeakAudio.pause();
+        currentSpeakAudio.currentTime = 0;
+        currentSpeakAudio = null;
+    }
+    if (currentSpeakAudioUrl) {
+        URL.revokeObjectURL(currentSpeakAudioUrl);
+        currentSpeakAudioUrl = null;
+    }
+}
+
+/**
+ * Speak text using text-to-speech API with play/pause toggle support.
  * @param {string} text - Text to speak
  * @param {string} languageCode - Target language code
+ * @param {HTMLElement} btn - The button element that triggered this (optional, for icon updates)
  */
-export async function speakText(text, languageCode) {
+export async function speakText(text, languageCode, btn) {
     if (!text) return;
+    
+    // If this button's audio is already playing - toggle pause/resume
+    if (currentSpeakAudio && btn && btn.dataset.playing === 'true') {
+        if (currentSpeakAudio.paused) {
+            // Resume playback
+            await currentSpeakAudio.play();
+            btn.textContent = '⏸️ ' + t('exercises.paused').replace('Paused', 'Pause').replace('Pausiert', 'Pause');
+            btn.innerHTML = '⏸️ Pause';
+        } else {
+            // Pause playback
+            currentSpeakAudio.pause();
+            btn.innerHTML = '▶️ ' + t('lessons.listen').replace('🔊 ', '');
+        }
+        return;
+    }
+    
+    // Stop any other audio that might be playing
+    stopSpeakAudio();
+    
+    // Reset all other speak buttons
+    document.querySelectorAll('[data-speak-btn="true"]').forEach(otherBtn => {
+        if (otherBtn !== btn) {
+            otherBtn.innerHTML = '🔊 ' + t('lessons.listen').replace('🔊 ', '');
+            otherBtn.dataset.playing = 'false';
+        }
+    });
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ ' + t('misc.loading').replace('...', '');
+    }
     
     toast.info(t('toast.generatingAudio'));
     
     try {
         const audioBlob = await api.speech.synthesize(text, languageCode || 'fr', true);
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play();
+        currentSpeakAudioUrl = URL.createObjectURL(audioBlob);
+        currentSpeakAudio = new Audio(currentSpeakAudioUrl);
+        
+        currentSpeakAudio.onended = () => {
+            if (btn) {
+                btn.innerHTML = '🔊 ' + t('lessons.listen').replace('🔊 ', '');
+                btn.dataset.playing = 'false';
+            }
+            currentSpeakAudio = null;
+        };
+        
+        currentSpeakAudio.onerror = () => {
+            if (btn) {
+                btn.innerHTML = '🔊 ' + t('lessons.listen').replace('🔊 ', '');
+                btn.dataset.playing = 'false';
+                btn.disabled = false;
+            }
+            currentSpeakAudio = null;
+            toast.error(t('toast.audioPlayFailed'));
+        };
+        
+        await currentSpeakAudio.play();
+        
+        if (btn) {
+            btn.innerHTML = '⏸️ Pause';
+            btn.disabled = false;
+            btn.dataset.playing = 'true';
+            btn.dataset.speakBtn = 'true';
+        }
+        
         toast.success(t('toast.playingAudio'));
     } catch (error) {
         console.error('Failed to generate speech:', error);
+        if (btn) {
+            btn.innerHTML = '🔊 ' + t('lessons.listen').replace('🔊 ', '');
+            btn.disabled = false;
+            btn.dataset.playing = 'false';
+        }
         toast.error(t('toast.speechUnavailable'));
     }
 }
@@ -66,4 +149,4 @@ export async function speakText(text, languageCode) {
 // Register global functions for use in inline handlers
 window.closeModal = closeModal;
 
-export default { showLoading, hideLoading, openModal, closeModal, speakText };
+export default { showLoading, hideLoading, openModal, closeModal, speakText, stopSpeakAudio };

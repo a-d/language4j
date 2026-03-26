@@ -94,16 +94,35 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of words: {wordCount}
             
-            For each word/phrase include:
-            1. The word in {targetLanguage}
-            2. Pronunciation guide (IPA or phonetic)
-            3. Translation in {nativeLanguage}
-            4. Part of speech
-            5. Example sentence in {targetLanguage}
-            6. Translation of the example
-            7. Usage notes (if helpful)
+            IMPORTANT:
+            - The "word" field MUST be in {targetLanguage} (the language being learned)
+            - The "translation" field MUST be in {nativeLanguage} (the learner's native language)
+            - The "exampleTranslation" field MUST be in {nativeLanguage}
+            - All translations must be accurate and natural in {nativeLanguage}
             
-            Format as a Markdown table or structured list.
+            For each word/phrase include:
+            1. word: The word or phrase in {targetLanguage}
+            2. pronunciation: IPA or phonetic pronunciation guide
+            3. translation: Translation in {nativeLanguage}
+            4. partOfSpeech: Part of speech (noun, verb, adjective, etc.)
+            5. example: An example sentence using the word in {targetLanguage}
+            6. exampleTranslation: Translation of the example in {nativeLanguage}
+            7. usageNote: Usage notes or tips (in {nativeLanguage}, optional but helpful)
+            
+            Return ONLY valid JSON with no additional text:
+            {{
+              "vocabulary": [
+                {{
+                  "word": "word in {targetLanguage}",
+                  "pronunciation": "phonetic guide",
+                  "translation": "translation in {nativeLanguage}",
+                  "partOfSpeech": "noun/verb/adjective/etc.",
+                  "example": "example sentence in {targetLanguage}",
+                  "exampleTranslation": "example translation in {nativeLanguage}",
+                  "usageNote": "usage tip in {nativeLanguage}"
+                }}
+              ]
+            }}
             """);
 
     // ==================== Exercise Generation Prompts ====================
@@ -141,22 +160,20 @@ public final class LanguageLearningPrompts {
             Number of sentences: {sentenceCount}
             
             IMPORTANT:
-            - The "scrambledWords" and "correctOrder" MUST be in {targetLanguage} (the language being learned)
+            - The "words" field MUST be in {targetLanguage} (the language being learned) - provide words in CORRECT order, the UI will shuffle them
             - The "translation" field MUST be in {nativeLanguage} (the learner's native language) - this shows what the user needs to build in {targetLanguage}
             - The "explanation" field MUST be in {nativeLanguage} to explain grammar rules
             
             For each exercise provide:
-            1. scrambledWords: An array of words from the sentence in {targetLanguage}, shuffled randomly
-            2. correctOrder: An array of words in the correct order forming a valid {targetLanguage} sentence
-            3. translation: The sentence's meaning in {nativeLanguage} (this helps the user understand what to construct)
-            4. explanation: A brief grammar explanation in {nativeLanguage} (e.g., word order rules, verb placement)
+            1. words: An array of words in the CORRECT ORDER forming a valid {targetLanguage} sentence (the frontend will shuffle these for display)
+            2. translation: The sentence's meaning in {nativeLanguage} (this helps the user understand what to construct)
+            3. explanation: A brief grammar explanation in {nativeLanguage} (e.g., word order rules, verb placement)
             
             Return ONLY valid JSON with no additional text:
             {{
               "exercises": [
                 {{
-                  "scrambledWords": ["word1 in {targetLanguage}", "word2", "..."],
-                  "correctOrder": ["correct", "word", "order", "in {targetLanguage}"],
+                  "words": ["correct", "word", "order", "in", "{targetLanguage}"],
                   "translation": "translation in {nativeLanguage}",
                   "explanation": "grammar explanation in {nativeLanguage}"
                 }}

@@ -509,6 +509,18 @@ h3 {
     margin-top: var(--spacing-lg);
 }
 
+/* Button Row - inline buttons with gap */
+.button-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.button-row .btn-sm {
+    margin-left: auto;
+}
+
 /* Generator Sections */
 .lesson-generator,
 .vocab-generator,
@@ -1345,6 +1357,299 @@ h3 {
 
 .markdown-table tbody tr:hover {
     background: rgba(79, 70, 229, 0.03);
+}
+
+/* ==================== Vocabulary Card Styles ==================== */
+
+.vocabulary-list {
+    width: 100%;
+}
+
+.vocabulary-count {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-lg);
+    font-weight: 500;
+}
+
+.vocabulary-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.vocabulary-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.vocabulary-card.collapsible {
+    cursor: pointer;
+}
+
+.vocabulary-card.collapsible:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.vocabulary-card.expanded {
+    border-color: var(--primary-color);
+}
+
+/* Header styles for collapsible cards */
+.vocab-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.vocab-header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+/* Vocabulary Play Button */
+.vocab-play-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-full);
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.vocab-play-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.vocab-play-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.vocab-play-btn.loading {
+    background: var(--bg-color);
+    animation: pulse 1s infinite;
+}
+
+.vocab-play-btn.playing {
+    background: var(--secondary-color);
+    color: white;
+    animation: pulse-playing 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+@keyframes pulse-playing {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.vocab-header-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.vocab-word {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--primary-color);
+    word-break: break-word;
+}
+
+.vocab-pos {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+.vocab-translation-preview {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.vocab-expand-icon {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    transition: transform var(--transition-base);
+    flex-shrink: 0;
+}
+
+.vocabulary-card.expanded .vocab-expand-icon {
+    transform: rotate(180deg);
+}
+
+/* Collapsible body */
+.vocab-card-body {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.2s ease, margin-top 0.3s ease;
+    margin-top: 0;
+}
+
+.vocabulary-card.expanded .vocab-card-body {
+    max-height: 500px;
+    opacity: 1;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Non-collapsible cards show body by default */
+.vocabulary-card:not(.collapsible) .vocab-card-body {
+    max-height: none;
+    opacity: 1;
+    margin-top: var(--spacing-md);
+}
+
+.vocabulary-card:not(.collapsible) .vocab-header-summary {
+    display: none;
+}
+
+.vocab-pronunciation {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(79, 70, 229, 0.05);
+    border-radius: var(--radius-md);
+}
+
+.vocab-pronunciation .pronunciation-icon {
+    font-size: var(--font-size-base);
+}
+
+.vocab-pronunciation .pronunciation-text {
+    font-family: monospace;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.vocab-translation {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--secondary-color);
+}
+
+.vocab-translation .translation-icon {
+    font-size: var(--font-size-base);
+    flex-shrink: 0;
+}
+
+.vocab-translation .translation-text {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vocab-example {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+}
+
+.vocab-example .example-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+}
+
+.vocab-example .example-icon {
+    font-size: var(--font-size-sm);
+}
+
+.vocab-example .example-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.vocab-example .example-text {
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    font-style: italic;
+    margin: 0 0 var(--spacing-xs) 0;
+    line-height: 1.5;
+}
+
+.vocab-example .example-translation {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin: 0;
+    padding-left: var(--spacing-md);
+    border-left: 2px solid var(--border-color);
+}
+
+.vocab-usage-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(245, 158, 11, 0.08);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--accent-color);
+}
+
+.vocab-usage-note .usage-icon {
+    font-size: var(--font-size-sm);
+    flex-shrink: 0;
+}
+
+.vocab-usage-note .usage-text {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Responsive adjustments for vocabulary cards */
+@media (max-width: 768px) {
+    .vocab-word {
+        font-size: var(--font-size-base);
+    }
+    
+    .vocab-translation-preview {
+        font-size: var(--font-size-sm);
+    }
 }
 
 /* ==================== Flashcard Styles ==================== */
