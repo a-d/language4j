@@ -9,7 +9,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.web.client.DefaultResponseErrorHandler;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -60,7 +61,8 @@ public class SpeechModelConfiguration {
         log.info("Configuring OpenAI Audio API (TTS) with base URL: {}", baseUrl);
 
         RestClient.Builder restClientBuilder = createRestClientBuilder();
-        return new OpenAiAudioApi(baseUrl, apiKey, restClientBuilder, null);
+        ResponseErrorHandler errorHandler = createResponseErrorHandler();
+        return new OpenAiAudioApi(baseUrl, apiKey, restClientBuilder, errorHandler);
     }
 
     /**
@@ -96,7 +98,8 @@ public class SpeechModelConfiguration {
         log.info("Configuring OpenAI Audio API (STT) with base URL: {}", baseUrl);
 
         RestClient.Builder restClientBuilder = createRestClientBuilder();
-        return new OpenAiAudioApi(baseUrl, apiKey, restClientBuilder, null);
+        ResponseErrorHandler errorHandler = createResponseErrorHandler();
+        return new OpenAiAudioApi(baseUrl, apiKey, restClientBuilder, errorHandler);
     }
 
     /**
@@ -113,10 +116,11 @@ public class SpeechModelConfiguration {
     }
 
     private RestClient.Builder createRestClientBuilder() {
-        return RestClient.builder()
-                .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
-                    throw new RuntimeException("OpenAI Audio API error: " + response.getStatusCode());
-                });
+        return RestClient.builder();
+    }
+
+    private ResponseErrorHandler createResponseErrorHandler() {
+        return new DefaultResponseErrorHandler();
     }
 
     private String resolveApiKey(AiProviderConfig.TextToSpeechConfig ttsConfig, AiProviderConfig aiConfig) {
