@@ -94,11 +94,20 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of words: {wordCount}
             
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: ONLY use the 100 most common, basic words. Simple concrete nouns (apple, house, cat), basic verbs (be, have, go, eat), numbers 1-20, colors, family members. NO abstract words, NO idioms, NO complex grammar.
+            - A2: Use common everyday vocabulary (up to 1000 words). Include basic adjectives, common verbs in present/past tense. Topics: daily routine, weather, shopping, family.
+            - B1: Broader vocabulary (up to 2000 words). Can include opinions, feelings, work/travel vocabulary. Some compound words acceptable.
+            - B2+: Full range of vocabulary including idioms, nuanced expressions, specialized terms.
+            
+            STRICTLY match the complexity to {skillLevel} - do NOT include words above this level!
+            
             IMPORTANT:
             - The "word" field MUST be in {targetLanguage} (the language being learned)
             - The "translation" field MUST be in {nativeLanguage} (the learner's native language)
             - The "exampleTranslation" field MUST be in {nativeLanguage}
             - All translations must be accurate and natural in {nativeLanguage}
+            - Example sentences must use ONLY vocabulary appropriate for {skillLevel}
             
             For each word/phrase include:
             1. word: The word or phrase in {targetLanguage}
@@ -133,11 +142,19 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of questions: {questionCount}
             
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: Use ONLY the most basic vocabulary and present tense. Sentences must be very short (3-6 words). Test simple nouns, articles, basic verbs (be, have, like). Example: "I ___ a cat." (have)
+            - A2: Simple sentences with common vocabulary. Can test present/past tense, basic prepositions, common adjectives. Sentences 5-8 words.
+            - B1: Moderate complexity. Can include different tenses, common conjunctions, comparative forms. Sentences up to 10 words.
+            - B2+: Full complexity including subjunctive, complex tenses, idioms, advanced vocabulary.
+            
+            STRICTLY match complexity to {skillLevel} - A1 learners should NOT see complex grammar!
+            
             Format each question as:
             1. The sentence with blank(s) marked as ___
-            2. Word bank with options (including correct answer and distractors)
+            2. Word bank with options (including correct answer and distractors appropriate for {skillLevel})
             3. The correct answer
-            4. Brief explanation of why this answer is correct
+            4. Brief explanation in {nativeLanguage} of why this answer is correct
             
             Return as JSON:
             {{
@@ -158,6 +175,14 @@ public final class LanguageLearningPrompts {
             
             Topic: {topic}
             Number of sentences: {sentenceCount}
+            
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: Sentences must have 3-5 words ONLY. Use basic SVO structure. Only basic vocabulary (I, you, have, am, is, like, cat, dog, house, water, etc.). NO complex grammar.
+            - A2: Sentences 4-6 words. Simple structures with common vocabulary. Can include basic adjectives and adverbs.
+            - B1: Sentences 5-8 words. Can include compound sentences, relative clauses basics.
+            - B2+: Full complexity allowed.
+            
+            STRICTLY match complexity to {skillLevel}!
             
             IMPORTANT:
             - The "words" field MUST be in {targetLanguage} (the language being learned) - provide words in CORRECT order, the UI will shuffle them
@@ -187,8 +212,16 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of sentences: {sentenceCount}
             
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: Very short sentences (3-5 words). Use ONLY basic vocabulary and present tense. Examples: "I have a cat.", "The house is big.", "I like water."
+            - A2: Simple sentences (4-7 words). Present and simple past tense. Common vocabulary. Examples: "Yesterday I went to the store.", "My family is nice."
+            - B1: Moderate sentences. Multiple tenses, basic conjunctions, feelings/opinions. Up to 10 words.
+            - B2+: Full complexity including idioms, subjunctive, complex structures.
+            
+            STRICTLY match complexity to {skillLevel}!
+            
             For each exercise provide:
-            1. Sentence in {nativeLanguage} to translate
+            1. Sentence in {nativeLanguage} to translate (complexity matching {skillLevel})
             2. Model answer in {targetLanguage}
             3. Alternative acceptable answers
             4. Key vocabulary/grammar points tested
@@ -350,11 +383,20 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of cards: {cardCount}
             
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: ONLY the most basic, common words. Concrete nouns (cat, dog, house, apple), basic verbs (be, have, go, eat, drink, like), colors, numbers. NO abstract concepts, NO idioms.
+            - A2: Common everyday vocabulary. Basic adjectives (big, small, good, bad), time words (today, yesterday), family, food, weather basics.
+            - B1: Broader vocabulary including feelings, opinions, work/travel terms. Some compound words.
+            - B2+: Full range including idioms, nuanced expressions.
+            
+            STRICTLY select words appropriate for {skillLevel}!
+            
             IMPORTANT: 
             - The "front" field MUST be in {targetLanguage} (the language being learned)
             - The "translation" field MUST be in {nativeLanguage} (the learner's native language)
             - The "exampleTranslation" field MUST be in {nativeLanguage}
             - All translations must be accurate and natural in {nativeLanguage}
+            - Example sentences must use ONLY vocabulary appropriate for {skillLevel}
             
             For each flashcard include:
             1. front: A word or phrase in {targetLanguage}
@@ -392,9 +434,17 @@ public final class LanguageLearningPrompts {
             Topic: {topic}
             Number of words: {wordCount}
             
+            CRITICAL - SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: ONLY the most basic, concrete, visual words. Simple nouns like: cat, dog, apple, house, car, water, bread, book, chair, table. NO abstract words.
+            - A2: Common everyday objects and simple actions. Add: kitchen items, clothing, body parts, basic actions (run, sleep, eat).
+            - B1: Broader vocabulary including less common objects, professions, places.
+            - B2+: Can include any visual vocabulary.
+            
+            STRICTLY select words appropriate for {skillLevel}!
+            
             Select words that:
             - Are concrete nouns or actions that can be clearly illustrated with an image
-            - Are appropriate for the learner's skill level
+            - Are appropriate for the learner's skill level ({skillLevel})
             - Are related to the given topic
             - Are commonly used in everyday language
             

@@ -368,6 +368,7 @@ public class ChatServiceImpl implements ChatService {
             case "SPEAKING" -> contentGenerationService.generateSpeakingExercises(topic, 5);
             case "LESSON" -> contentGenerationService.generateLesson(topic);
             case "SCENARIO" -> contentGenerationService.generateRoleplayScenario(topic);
+            case "PAIR_MATCHING", "MEMORY_GAME" -> contentGenerationService.generateVocabulary(topic, 8);
             default -> throw new IllegalArgumentException("Unknown activity type: " + activityType);
         };
     }
@@ -384,6 +385,8 @@ public class ChatServiceImpl implements ChatService {
             case "SPEAKING" -> EmbeddedActivityType.SPEAKING;
             case "LESSON" -> EmbeddedActivityType.LESSON;
             case "SCENARIO" -> EmbeddedActivityType.SCENARIO;
+            case "PAIR_MATCHING" -> EmbeddedActivityType.PAIR_MATCHING;
+            case "MEMORY_GAME" -> EmbeddedActivityType.MEMORY_GAME;
             default -> throw new IllegalArgumentException("Unknown activity type: " + type);
         };
     }

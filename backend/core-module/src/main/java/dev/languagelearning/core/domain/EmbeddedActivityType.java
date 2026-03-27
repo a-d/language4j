@@ -65,5 +65,17 @@ public enum EmbeddedActivityType {
     /**
      * Activity completion summary.
      */
-    SUMMARY
+    SUMMARY,
+
+    /**
+     * Pair matching exercise (two columns).
+     * Match source words with target words.
+     */
+    PAIR_MATCHING,
+
+    /**
+     * Memory card game.
+     * Find matching word pairs by flipping cards.
+     */
+    MEMORY_GAME
 }

@@ -1,5 +1,299 @@
 /* Exercise Component Styles */
 
+/* ===================================
+   Pair Matching Exercise
+   =================================== */
+
+.pair-matching-container {
+    background: var(--bg-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.pair-matching-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.matching-icon {
+    font-size: 1.5rem;
+}
+
+.matching-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.matching-progress {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    background: var(--surface-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-md);
+}
+
+.pair-matching-instructions {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+}
+
+.pair-matching-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.matching-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.column-header {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.matching-word {
+    padding: 0.75rem 1rem;
+    background: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.matching-word:hover:not(.matched) {
+    border-color: var(--primary-color);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.matching-word.selected {
+    border-color: var(--primary-color);
+    background: rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.matching-word.matched {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: var(--success-color);
+    color: var(--success-color);
+    cursor: default;
+    opacity: 0.7;
+}
+
+.matching-word.correct-match {
+    animation: matchSuccess 0.5s ease;
+}
+
+.matching-word.incorrect-match {
+    animation: matchError 0.5s ease;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger-color);
+}
+
+@keyframes matchSuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes matchError {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.pair-matching-feedback {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.pair-matching-feedback.complete {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* ===================================
+   Memory Game
+   =================================== */
+
+.memory-game-container {
+    background: var(--bg-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.memory-game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.memory-icon {
+    font-size: 1.5rem;
+}
+
+.memory-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.memory-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.memory-game-instructions {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+}
+
+.memory-game-grid {
+    display: grid;
+    gap: 0.75rem;
+    perspective: 1000px;
+}
+
+.memory-card {
+    aspect-ratio: 1;
+    cursor: pointer;
+    position: relative;
+}
+
+.memory-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+}
+
+.memory-card.flipped .memory-card-inner,
+.memory-card.matched .memory-card-inner {
+    transform: rotateY(180deg);
+}
+
+.memory-card-front,
+.memory-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border: 2px solid var(--border-color);
+    box-sizing: border-box;
+}
+
+.memory-card-front {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.memory-card-front .card-icon {
+    font-size: 2rem;
+    opacity: 0.9;
+}
+
+.memory-card-back {
+    background: var(--surface-color);
+    transform: rotateY(180deg);
+}
+
+.memory-card-back .card-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.memory-card-back .card-type-indicator {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.memory-card.matched .memory-card-back {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: var(--success-color);
+    opacity: 0.7;
+}
+
+.memory-game-feedback {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.memory-game-feedback.complete {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.memory-final-stats {
+    display: block;
+    font-weight: normal;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Responsive pair matching */
+@media (max-width: 600px) {
+    .pair-matching-columns {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .memory-game-grid {
+        gap: 0.5rem;
+    }
+    
+    .memory-card-back .card-text {
+        font-size: 0.75rem;
+    }
+}
+
 /* Exercise Container */
 .exercise-container {
     max-width: 800px;

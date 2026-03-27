@@ -161,7 +161,9 @@ function renderEmbeddedActivity(message) {
             'LISTENING': contentRenderer.ContentType.LISTENING,
             'SPEAKING': contentRenderer.ContentType.SPEAKING,
             'LESSON': contentRenderer.ContentType.LESSON,
-            'SCENARIO': contentRenderer.ContentType.SCENARIO
+            'SCENARIO': contentRenderer.ContentType.SCENARIO,
+            'PAIR_MATCHING': contentRenderer.ContentType.PAIR_MATCHING,
+            'MEMORY_GAME': contentRenderer.ContentType.MEMORY_GAME
         };
         
         const contentType = typeMapping[type];

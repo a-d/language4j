@@ -22,7 +22,9 @@ export const ContentType = {
     LISTENING: 'listening',
     SPEAKING: 'speaking',
     EVALUATION: 'evaluation',
-    PRONUNCIATION_EVALUATION: 'pronunciation-evaluation'
+    PRONUNCIATION_EVALUATION: 'pronunciation-evaluation',
+    PAIR_MATCHING: 'pair-matching',
+    MEMORY_GAME: 'memory-game'
 };
 
 /**
@@ -46,7 +48,9 @@ const JSON_TYPES = [
     ContentType.LISTENING,
     ContentType.SPEAKING,
     ContentType.EVALUATION,
-    ContentType.PRONUNCIATION_EVALUATION
+    ContentType.PRONUNCIATION_EVALUATION,
+    ContentType.PAIR_MATCHING,
+    ContentType.MEMORY_GAME
 ];
 
 /**
@@ -271,6 +275,10 @@ function renderJsonContent(content, type) {
             return renderSpeakingExercises(data);
         case ContentType.PRONUNCIATION_EVALUATION:
             return renderPronunciationEvaluation(data);
+        case ContentType.PAIR_MATCHING:
+            return renderPairMatchingExercises(data);
+        case ContentType.MEMORY_GAME:
+            return renderMemoryGame(data);
         default:
             // Generic JSON display
             return renderGenericJson(data);
@@ -883,6 +891,147 @@ function renderPronunciationEvaluation(data) {
     `;
 }
 
+// ==================== Pair Matching Renderer ====================
+
+/**
+ * Renders pair matching exercises (two columns).
+ * User clicks a word from each column to match source with target.
+ * Expected data format:
+ * { vocabulary: [{ word, translation }] }
+ */
+function renderPairMatchingExercises(data) {
+    const items = Array.isArray(data) ? data : (data.vocabulary || data.words || data.items || []);
+    
+    if (items.length === 0) {
+        return '<p class="empty-state">No vocabulary for pair matching.</p>';
+    }
+    
+    // Shuffle both columns independently
+    const sourceItems = shuffleArray([...items].map((item, i) => ({ 
+        text: item.translation || item.meaning || '', 
+        index: i 
+    })));
+    const targetItems = shuffleArray([...items].map((item, i) => ({ 
+        text: item.word || item.term || '', 
+        index: i 
+    })));
+    
+    return `
+        <div class="pair-matching-container" data-total="${items.length}" data-matched="0">
+            <div class="pair-matching-header">
+                <span class="matching-icon">🔗</span>
+                <span class="matching-title">Match the pairs</span>
+                <span class="matching-progress">0 / ${items.length} matched</span>
+            </div>
+            <div class="pair-matching-instructions">
+                💡 Click a word from the left column, then click its translation from the right column.
+            </div>
+            <div class="pair-matching-columns">
+                <div class="matching-column source-column">
+                    <div class="column-header">📖 Native Language</div>
+                    ${sourceItems.map((item, idx) => `
+                        <div class="matching-word source-word" 
+                             data-pair-index="${item.index}" 
+                             data-column="source"
+                             onclick="window.selectMatchingWord(this)">
+                            ${escapeHtml(item.text)}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="matching-column target-column">
+                    <div class="column-header">🎯 Target Language</div>
+                    ${targetItems.map((item, idx) => `
+                        <div class="matching-word target-word" 
+                             data-pair-index="${item.index}" 
+                             data-column="target"
+                             onclick="window.selectMatchingWord(this)">
+                            ${escapeHtml(item.text)}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="pair-matching-feedback hidden"></div>
+        </div>
+    `;
+}
+
+// ==================== Memory Game Renderer ====================
+
+/**
+ * Renders memory card game.
+ * User flips cards to find matching word-translation pairs.
+ * Expected data format:
+ * { vocabulary: [{ word, translation }] }
+ */
+function renderMemoryGame(data) {
+    const items = Array.isArray(data) ? data : (data.vocabulary || data.words || data.items || []);
+    
+    if (items.length === 0) {
+        return '<p class="empty-state">No vocabulary for memory game.</p>';
+    }
+    
+    // Take at most 8 pairs for a reasonable game size (16 cards = 4x4 grid)
+    const gamePairs = items.slice(0, 8);
+    
+    // Create cards: one for word (target), one for translation (source)
+    const cards = [];
+    gamePairs.forEach((item, pairIndex) => {
+        cards.push({
+            text: item.word || item.term || '',
+            type: 'target',
+            pairIndex
+        });
+        cards.push({
+            text: item.translation || item.meaning || '',
+            type: 'source',
+            pairIndex
+        });
+    });
+    
+    // Shuffle cards
+    const shuffledCards = shuffleArray(cards);
+    
+    // Determine grid size
+    const totalCards = shuffledCards.length;
+    const cols = totalCards <= 8 ? 4 : (totalCards <= 12 ? 4 : 4);
+    
+    return `
+        <div class="memory-game-container" data-total-pairs="${gamePairs.length}" data-matched="0" data-attempts="0">
+            <div class="memory-game-header">
+                <span class="memory-icon">🧠</span>
+                <span class="memory-title">Memory Game</span>
+                <div class="memory-stats">
+                    <span class="memory-matched">0 / ${gamePairs.length} pairs</span>
+                    <span class="memory-attempts">Attempts: 0</span>
+                </div>
+            </div>
+            <div class="memory-game-instructions">
+                💡 Flip cards to find matching word-translation pairs. Click two cards at a time.
+            </div>
+            <div class="memory-game-grid" style="grid-template-columns: repeat(${cols}, 1fr);">
+                ${shuffledCards.map((card, idx) => `
+                    <div class="memory-card" 
+                         data-card-index="${idx}"
+                         data-pair-index="${card.pairIndex}"
+                         data-card-type="${card.type}"
+                         onclick="window.flipMemoryCard(this)">
+                        <div class="memory-card-inner">
+                            <div class="memory-card-front">
+                                <span class="card-icon">${card.type === 'target' ? '🎯' : '📖'}</span>
+                            </div>
+                            <div class="memory-card-back">
+                                <span class="card-text">${escapeHtml(card.text)}</span>
+                                <span class="card-type-indicator">${card.type === 'target' ? '🎯' : '📖'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="memory-game-feedback hidden"></div>
+        </div>
+    `;
+}
+
 // ==================== Evaluation Renderer ====================
 
 /**
@@ -1476,6 +1625,207 @@ window.toggleSolution = function(btn) {
         btn.textContent = isHidden ? 'Hide solution' : 'Show solution';
     }
 };
+
+// ==================== Pair Matching Interactive Functions ====================
+
+// State for pair matching
+let pairMatchingState = {
+    selectedSource: null,
+    selectedTarget: null
+};
+
+/**
+ * Handle click on a word in pair matching exercise.
+ */
+window.selectMatchingWord = function(wordEl) {
+    const container = wordEl.closest('.pair-matching-container');
+    const column = wordEl.dataset.column;
+    const pairIndex = parseInt(wordEl.dataset.pairIndex);
+    
+    // Don't allow clicking on already matched words
+    if (wordEl.classList.contains('matched')) return;
+    
+    // Select the word
+    if (column === 'source') {
+        // Deselect previous source selection
+        const prevSource = container.querySelector('.source-word.selected');
+        if (prevSource) prevSource.classList.remove('selected');
+        
+        wordEl.classList.add('selected');
+        pairMatchingState.selectedSource = { element: wordEl, pairIndex };
+    } else if (column === 'target') {
+        // Deselect previous target selection  
+        const prevTarget = container.querySelector('.target-word.selected');
+        if (prevTarget) prevTarget.classList.remove('selected');
+        
+        wordEl.classList.add('selected');
+        pairMatchingState.selectedTarget = { element: wordEl, pairIndex };
+    }
+    
+    // Check if we have both selections
+    if (pairMatchingState.selectedSource && pairMatchingState.selectedTarget) {
+        checkPairMatch(container);
+    }
+};
+
+/**
+ * Check if the selected pair matches.
+ */
+function checkPairMatch(container) {
+    const source = pairMatchingState.selectedSource;
+    const target = pairMatchingState.selectedTarget;
+    
+    if (source.pairIndex === target.pairIndex) {
+        // Correct match!
+        source.element.classList.remove('selected');
+        target.element.classList.remove('selected');
+        source.element.classList.add('matched', 'correct-match');
+        target.element.classList.add('matched', 'correct-match');
+        
+        // Update progress
+        const matched = parseInt(container.dataset.matched) + 1;
+        const total = parseInt(container.dataset.total);
+        container.dataset.matched = matched;
+        container.querySelector('.matching-progress').textContent = `${matched} / ${total} matched`;
+        
+        // Check if complete
+        if (matched === total) {
+            showPairMatchingComplete(container);
+        }
+    } else {
+        // Incorrect match - show error briefly
+        source.element.classList.add('incorrect-match');
+        target.element.classList.add('incorrect-match');
+        
+        setTimeout(() => {
+            source.element.classList.remove('selected', 'incorrect-match');
+            target.element.classList.remove('selected', 'incorrect-match');
+        }, 800);
+    }
+    
+    // Reset selection state
+    pairMatchingState.selectedSource = null;
+    pairMatchingState.selectedTarget = null;
+}
+
+/**
+ * Show completion message for pair matching.
+ */
+function showPairMatchingComplete(container) {
+    const feedback = container.querySelector('.pair-matching-feedback');
+    feedback.classList.remove('hidden');
+    feedback.className = 'pair-matching-feedback complete';
+    feedback.innerHTML = '🎉 Congratulations! You matched all pairs!';
+}
+
+// ==================== Memory Game Interactive Functions ====================
+
+// State for memory game
+let memoryGameState = {
+    flippedCards: [],
+    isChecking: false
+};
+
+/**
+ * Handle click on a memory card.
+ */
+window.flipMemoryCard = function(cardEl) {
+    const container = cardEl.closest('.memory-game-container');
+    
+    // Don't allow flipping if:
+    // - Already flipped
+    // - Already matched
+    // - Currently checking two cards
+    // - More than 2 cards already flipped
+    if (cardEl.classList.contains('flipped') || 
+        cardEl.classList.contains('matched') ||
+        memoryGameState.isChecking ||
+        memoryGameState.flippedCards.length >= 2) {
+        return;
+    }
+    
+    // Flip the card
+    cardEl.classList.add('flipped');
+    memoryGameState.flippedCards.push(cardEl);
+    
+    // Check if we have two flipped cards
+    if (memoryGameState.flippedCards.length === 2) {
+        memoryGameState.isChecking = true;
+        
+        // Update attempts counter
+        const attempts = parseInt(container.dataset.attempts) + 1;
+        container.dataset.attempts = attempts;
+        container.querySelector('.memory-attempts').textContent = `Attempts: ${attempts}`;
+        
+        // Check for match
+        checkMemoryMatch(container);
+    }
+};
+
+/**
+ * Check if the two flipped cards match.
+ */
+function checkMemoryMatch(container) {
+    const [card1, card2] = memoryGameState.flippedCards;
+    const pairIndex1 = parseInt(card1.dataset.pairIndex);
+    const pairIndex2 = parseInt(card2.dataset.pairIndex);
+    const type1 = card1.dataset.cardType;
+    const type2 = card2.dataset.cardType;
+    
+    // Match if same pair index but different types (source vs target)
+    if (pairIndex1 === pairIndex2 && type1 !== type2) {
+        // Correct match!
+        setTimeout(() => {
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            
+            // Update progress
+            const matched = parseInt(container.dataset.matched) + 1;
+            const totalPairs = parseInt(container.dataset.totalPairs);
+            container.dataset.matched = matched;
+            container.querySelector('.memory-matched').textContent = `${matched} / ${totalPairs} pairs`;
+            
+            // Reset state
+            memoryGameState.flippedCards = [];
+            memoryGameState.isChecking = false;
+            
+            // Check if complete
+            if (matched === totalPairs) {
+                showMemoryGameComplete(container);
+            }
+        }, 500);
+    } else {
+        // Incorrect - flip back after delay
+        setTimeout(() => {
+            card1.classList.remove('flipped');
+            card2.classList.remove('flipped');
+            
+            // Reset state
+            memoryGameState.flippedCards = [];
+            memoryGameState.isChecking = false;
+        }, 1000);
+    }
+}
+
+/**
+ * Show completion message for memory game.
+ */
+function showMemoryGameComplete(container) {
+    const feedback = container.querySelector('.memory-game-feedback');
+    const attempts = parseInt(container.dataset.attempts);
+    const totalPairs = parseInt(container.dataset.totalPairs);
+    const minAttempts = totalPairs;
+    const efficiency = Math.round((minAttempts / attempts) * 100);
+    
+    feedback.classList.remove('hidden');
+    feedback.className = 'memory-game-feedback complete';
+    feedback.innerHTML = `
+        🎉 Congratulations! You found all pairs!<br>
+        <span class="memory-final-stats">
+            Completed in ${attempts} attempts (${efficiency}% efficiency)
+        </span>
+    `;
+}
 
 /**
  * Content renderer object for convenient imports.
