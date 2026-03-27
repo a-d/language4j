@@ -400,7 +400,7 @@ export function autoResize(element) {
 }
 
 /**
- * Show typing indicator
+ * Show typing indicator with "thinking" message
  */
 function showTypingIndicator() {
     const container = document.getElementById('chatMessages');
@@ -411,10 +411,13 @@ function showTypingIndicator() {
     indicator.className = 'chat-message assistant';
     indicator.innerHTML = `
         <div class="typing-indicator">
-            <div class="chat-loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="typing-content">
+                <div class="chat-loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="typing-text">${t('chat.thinking')}</span>
             </div>
         </div>
     `;

@@ -304,6 +304,7 @@ const translations = {
         'chat.suggestionDoExercises': 'Do some exercises',
         'chat.suggestionStartLesson': 'Start a lesson',
         'chat.suggestionReview': 'Review what I learned',
+        'chat.thinking': 'Thinking...',
         
         // Languages
         'lang.de': 'German',
@@ -615,6 +616,7 @@ const translations = {
         'chat.suggestionDoExercises': 'Übungen machen',
         'chat.suggestionStartLesson': 'Lektion starten',
         'chat.suggestionReview': 'Gelerntes wiederholen',
+        'chat.thinking': 'Denkt nach...',
         
         // Languages
         'lang.de': 'Deutsch',

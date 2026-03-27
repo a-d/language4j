@@ -84,11 +84,15 @@ export function renderContent(content, type) {
 /**
  * Sanitizes JSON string to fix common LLM output issues.
  * Handles invalid control characters and escape sequences.
+ * Uses a more robust state machine approach.
  * @param {string} json - Raw JSON string
  * @returns {string} Sanitized JSON string
  */
 function sanitizeJson(json) {
     if (!json || typeof json !== 'string') return json;
+    
+    // First pass: Replace all control characters (except those that are part of structure)
+    // with their escaped equivalents, being careful about what's inside strings
     
     // Valid JSON escape characters (after the backslash)
     const validEscapes = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u']);
@@ -101,72 +105,126 @@ function sanitizeJson(json) {
         const c = json[i];
         const charCode = json.charCodeAt(i);
         
-        if (c === '"' && (i === 0 || json[i - 1] !== '\\' || !inString)) {
-            // Toggle string state (but only if not escaped inside a string)
-            // Need to count preceding backslashes to handle \\\" correctly
+        // Handle quote characters - toggle string state
+        if (c === '"') {
+            // Count preceding backslashes to determine if this quote is escaped
             let backslashCount = 0;
-            let j = i - 1;
-            while (j >= 0 && json[j] === '\\') {
+            // Count backslashes in the RESULT string, not the input (since we may have modified escapes)
+            let j = result.length - 1;
+            while (j >= 0 && result[j] === '\\') {
                 backslashCount++;
                 j--;
             }
+            
             // Quote is escaped only if odd number of backslashes before it
-            if (!inString || backslashCount % 2 === 0) {
+            // (e.g., \" is escaped, \\" is not escaped because the backslash itself is escaped)
+            if (backslashCount % 2 === 0) {
                 inString = !inString;
             }
             result += c;
             i++;
-        } else if (c === '\\' && inString) {
-            // Check the next character for escape sequence
+            continue;
+        }
+        
+        // Handle backslashes inside strings
+        if (c === '\\' && inString) {
             const nextChar = json[i + 1];
             
             if (nextChar === undefined) {
-                // Backslash at end of string - remove it
+                // Backslash at end of string - just skip it
                 i++;
-            } else if (validEscapes.has(nextChar)) {
+                continue;
+            }
+            
+            if (validEscapes.has(nextChar)) {
                 // Valid escape sequence - keep both characters
-                result += c + nextChar;
-                i += 2;
-            } else if (nextChar === "'") {
+                if (nextChar === 'u') {
+                    // Unicode escape - validate it has 4 hex digits
+                    const unicodeSeq = json.substring(i + 2, i + 6);
+                    if (/^[0-9a-fA-F]{4}$/.test(unicodeSeq)) {
+                        result += c + 'u' + unicodeSeq;
+                        i += 6;
+                    } else {
+                        // Invalid unicode escape - skip the backslash
+                        result += nextChar;
+                        i += 2;
+                    }
+                } else {
+                    result += c + nextChar;
+                    i += 2;
+                }
+                continue;
+            }
+            
+            // Handle invalid escape sequences
+            if (nextChar === "'") {
                 // \' is not valid in JSON - convert to just apostrophe
                 result += "'";
                 i += 2;
-            } else if (nextChar === '\n') {
-                // Escaped literal newline - convert to \n
-                result += '\\n';
-                i += 2;
-            } else if (nextChar === '\r') {
-                // Escaped literal carriage return - convert to \r
-                result += '\\r';
-                i += 2;
-            } else if (nextChar === '\t') {
-                // Escaped literal tab - convert to \t
-                result += '\\t';
-                i += 2;
-            } else {
-                // Invalid escape sequence (like \x, \a, \c, etc.)
-                // Skip the backslash, keep the character as-is
-                result += nextChar;
-                i += 2;
+                continue;
             }
-        } else if (inString && charCode < 32) {
-            // Control character inside string - escape it properly
-            switch (c) {
-                case '\n': result += '\\n'; break;
-                case '\r': result += '\\r'; break;
-                case '\t': result += '\\t'; break;
-                case '\b': result += '\\b'; break;
-                case '\f': result += '\\f'; break;
-                default:
-                    // Other control characters - encode as unicode escape
-                    result += '\\u' + charCode.toString(16).padStart(4, '0');
+            
+            // Check if next char is a control character that needs escaping
+            const nextCharCode = json.charCodeAt(i + 1);
+            if (nextCharCode < 32) {
+                // Escaped literal control char - convert to proper escape
+                switch (nextChar) {
+                    case '\n': result += '\\n'; break;
+                    case '\r': result += '\\r'; break;
+                    case '\t': result += '\\t'; break;
+                    case '\b': result += '\\b'; break;
+                    case '\f': result += '\\f'; break;
+                    default:
+                        result += '\\u' + nextCharCode.toString(16).padStart(4, '0');
+                }
+                i += 2;
+                continue;
             }
-            i++;
-        } else {
-            // Regular character - keep as-is
-            result += c;
-            i++;
+            
+            // Any other invalid escape (like \x, \a, \c, etc.)
+            // Skip the backslash, keep the character as-is
+            result += nextChar;
+            i += 2;
+            continue;
         }
+        
+        // Handle control characters (ASCII 0-31) inside strings
+        if (charCode < 32) {
+            if (inString) {
+                // Escape the control character
+                switch (c) {
+                    case '\n': result += '\\n'; break;
+                    case '\r': result += '\\r'; break;
+                    case '\t': result += '\\t'; break;
+                    case '\b': result += '\\b'; break;
+                    case '\f': result += '\\f'; break;
+                    default:
+                        // Other control characters - encode as unicode escape
+                        result += '\\u' + charCode.toString(16).padStart(4, '0');
+                }
+            } else {
+                // Outside strings, control chars like newlines are whitespace - preserve them
+                // (But only if they're whitespace-ish)
+                if (c === '\n' || c === '\r' || c === '\t') {
+                    result += c;
+                }
+                // Other control chars outside strings are just dropped
+            }
+            i++;
+            continue;
+        }
+        
+        // Handle DEL character (127) and other problematic characters inside strings
+        if (inString && (charCode === 127 || charCode === 0x2028 || charCode === 0x2029)) {
+            // DEL (127), Line Separator (U+2028), Paragraph Separator (U+2029)
+            result += '\\u' + charCode.toString(16).padStart(4, '0');
+            i++;
+            continue;
+        }
+        
+        // Regular character - keep as-is
+        result += c;
+        i++;
     }
     
     return result;
@@ -178,31 +236,76 @@ function sanitizeJson(json) {
  * @returns {Object|null} Parsed object or null if all repairs fail
  */
 function tryRepairJson(json) {
-    // Strategy 1: Basic sanitization (escape sequences, control chars)
+    // Strategy 0: Strip markdown code blocks if present (LLMs sometimes wrap JSON in ```json...```)
+    let cleanedJson = json;
+    const codeBlockMatch = json.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+        cleanedJson = codeBlockMatch[1].trim();
+        console.log('Extracted JSON from code block');
+    }
+    
+    // Also strip any leading/trailing whitespace and non-JSON characters
+    cleanedJson = cleanedJson.trim();
+    // If there's text before the first { or [, remove it
+    const firstBrace = cleanedJson.search(/[\[{]/);
+    if (firstBrace > 0) {
+        cleanedJson = cleanedJson.substring(firstBrace);
+    }
+    // If there's text after the last } or ], remove it
+    const lastBrace = Math.max(cleanedJson.lastIndexOf('}'), cleanedJson.lastIndexOf(']'));
+    if (lastBrace >= 0 && lastBrace < cleanedJson.length - 1) {
+        cleanedJson = cleanedJson.substring(0, lastBrace + 1);
+    }
+    
+    // Strategy 1: Try parsing the cleaned JSON directly
     try {
-        const sanitized = sanitizeJson(json);
+        return JSON.parse(cleanedJson);
+    } catch (e) {
+        // Continue to next strategy
+    }
+    
+    // Strategy 2: Basic sanitization (escape sequences, control chars)
+    try {
+        const sanitized = sanitizeJson(cleanedJson);
         return JSON.parse(sanitized);
     } catch (e) {
         // Continue to next strategy
     }
     
-    // Strategy 2: Use regex to extract just the vocabulary array
+    // Strategy 3: Use regex to extract just the main JSON object
     // This handles cases where there's extra text around the JSON
     try {
-        const vocabMatch = json.match(/\{\s*"vocabulary"\s*:\s*\[[\s\S]*\]\s*\}/);
-        if (vocabMatch) {
-            const extracted = sanitizeJson(vocabMatch[0]);
-            return JSON.parse(extracted);
+        // Try to find common content structures
+        const patterns = [
+            /\{\s*"vocabulary"\s*:\s*\[[\s\S]*?\]\s*\}/,
+            /\{\s*"exercises"\s*:\s*\[[\s\S]*?\]\s*\}/,
+            /\{\s*"flashcards"\s*:\s*\[[\s\S]*?\]\s*\}/,
+            /\{\s*"cards"\s*:\s*\[[\s\S]*?\]\s*\}/,
+            /\[\s*\{[\s\S]*?\}\s*\]/  // Array of objects
+        ];
+        
+        for (const pattern of patterns) {
+            const match = cleanedJson.match(pattern);
+            if (match) {
+                const extracted = sanitizeJson(match[0]);
+                try {
+                    return JSON.parse(extracted);
+                } catch (innerE) {
+                    // Try this pattern's match but continue to next pattern
+                }
+            }
         }
     } catch (e) {
         // Continue to next strategy
     }
     
-    // Strategy 3: Try to fix common structural issues
+    // Strategy 4: Try to fix common structural issues
     try {
-        let fixed = json;
+        let fixed = cleanedJson;
         // Remove trailing commas before } or ]
         fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+        // Remove any BOM or zero-width characters
+        fixed = fixed.replace(/[\uFEFF\u200B-\u200D\u2060]/g, '');
         // Try sanitizing the fixed version
         fixed = sanitizeJson(fixed);
         return JSON.parse(fixed);
@@ -210,15 +313,15 @@ function tryRepairJson(json) {
         // Continue to next strategy
     }
     
-    // Strategy 4: Try to manually build vocabulary array from patterns
+    // Strategy 5: Try to manually build vocabulary/exercise array from patterns
     try {
         const items = [];
         // Match patterns like "word": "..." and "translation": "..."
         const wordPattern = /"word"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
         const translationPattern = /"translation"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
         
-        const words = [...json.matchAll(wordPattern)].map(m => m[1]);
-        const translations = [...json.matchAll(translationPattern)].map(m => m[1]);
+        const words = [...cleanedJson.matchAll(wordPattern)].map(m => m[1]);
+        const translations = [...cleanedJson.matchAll(translationPattern)].map(m => m[1]);
         
         if (words.length > 0 && words.length === translations.length) {
             for (let i = 0; i < words.length; i++) {
@@ -231,10 +334,73 @@ function tryRepairJson(json) {
             return { vocabulary: items };
         }
     } catch (e) {
+        // Continue to next strategy
+    }
+    
+    // Strategy 6: Try extracting exercises from pattern (for text-completion, etc.)
+    try {
+        const exercises = [];
+        // Look for sentence/correctAnswer pairs
+        const sentencePattern = /"sentence"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+        const correctAnswerPattern = /"correctAnswer"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+        
+        const sentences = [...cleanedJson.matchAll(sentencePattern)].map(m => m[1]);
+        const answers = [...cleanedJson.matchAll(correctAnswerPattern)].map(m => m[1]);
+        
+        if (sentences.length > 0 && sentences.length === answers.length) {
+            for (let i = 0; i < sentences.length; i++) {
+                exercises.push({
+                    sentence: sentences[i],
+                    correctAnswer: answers[i]
+                });
+            }
+            console.log('JSON recovered via exercise pattern extraction');
+            return { exercises };
+        }
+    } catch (e) {
         // All strategies failed
     }
     
+    // Strategy 7: Last resort - try aggressive character-by-character repair
+    try {
+        const aggressiveClean = aggressiveSanitize(cleanedJson);
+        return JSON.parse(aggressiveClean);
+    } catch (e) {
+        console.error('All JSON repair strategies failed');
+    }
+    
     return null;
+}
+
+/**
+ * Aggressive sanitization for severely malformed JSON.
+ * This removes all potentially problematic characters.
+ * @param {string} json - Raw JSON string
+ * @returns {string} Aggressively sanitized JSON
+ */
+function aggressiveSanitize(json) {
+    if (!json || typeof json !== 'string') return json;
+    
+    // First apply normal sanitization
+    let result = sanitizeJson(json);
+    
+    // Then apply additional aggressive fixes
+    // Replace any remaining non-printable characters (except standard whitespace)
+    result = result.replace(/[^\x20-\x7E\r\n\t]/g, (char) => {
+        const code = char.charCodeAt(0);
+        // Keep common Unicode ranges (Latin Extended, common symbols)
+        if (code >= 0x00A0 && code <= 0x024F) return char; // Latin Extended
+        if (code >= 0x0400 && code <= 0x04FF) return char; // Cyrillic
+        if (code >= 0x0600 && code <= 0x06FF) return char; // Arabic
+        if (code >= 0x4E00 && code <= 0x9FFF) return char; // CJK
+        if (code >= 0x3040 && code <= 0x30FF) return char; // Japanese
+        if (code >= 0xAC00 && code <= 0xD7AF) return char; // Korean
+        if (code >= 0x00C0 && code <= 0x00FF) return char; // Latin-1 Supplement (accented chars)
+        // Escape anything else
+        return '\\u' + code.toString(16).padStart(4, '0');
+    });
+    
+    return result;
 }
 
 /**
