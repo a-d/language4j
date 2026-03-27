@@ -28,6 +28,9 @@ import lombok.extern.slf4j.Slf4j;
  *   ]
  * }
  * </pre>
+ * <p>
+ * Note: JSON sanitization is handled by {@code JsonSanitizer} in the llm-module,
+ * which is called by {@code LlmJsonGenerator} before this validator is invoked.
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -46,14 +49,10 @@ public final class VocabularyJsonValidator {
      *   <li>{@code [...]} - Array wrapped in {"vocabulary": [...]}</li>
      * </ul>
      * <p>
-     * Also sanitizes JSON to fix common LLM issues:
-     * <ul>
-     *   <li>Invalid control characters inside strings</li>
-     *   <li>Bad escape sequences</li>
-     *   <li>Unescaped special characters</li>
-     * </ul>
+     * Note: JSON sanitization (control characters, escape sequences) is already
+     * handled by {@code LlmJsonGenerator} before this method is called.
      *
-     * @param json the raw JSON string
+     * @param json the raw JSON string (should already be sanitized)
      * @return normalized JSON string with correct structure
      */
     public static String validateAndNormalize(String json) {
@@ -62,11 +61,8 @@ public final class VocabularyJsonValidator {
             return createEmptyVocabulary();
         }
 
-        // Sanitize JSON to fix common LLM issues
-        String sanitizedJson = sanitizeJson(json);
-
         try {
-            JsonNode root = OBJECT_MAPPER.readTree(sanitizedJson);
+            JsonNode root = OBJECT_MAPPER.readTree(json);
             
             // Case 1: Already has "vocabulary" array
             if (root.has("vocabulary") && root.get("vocabulary").isArray()) {
@@ -188,90 +184,4 @@ public final class VocabularyJsonValidator {
         return () -> iterator;
     }
 
-    /**
-     * Sanitizes JSON string to fix common issues from LLM output.
-     * <p>
-     * Fixes:
-     * <ul>
-     *   <li>Invalid control characters (ASCII 0-31) inside string values</li>
-     *   <li>Invalid escape sequences like \' (not valid in JSON)</li>
-     *   <li>Unescaped newlines and tabs inside strings</li>
-     * </ul>
-     *
-     * @param json the raw JSON string
-     * @return sanitized JSON string
-     */
-    private static String sanitizeJson(String json) {
-        if (json == null) return null;
-        
-        StringBuilder result = new StringBuilder(json.length());
-        boolean inString = false;
-        boolean escaped = false;
-        
-        for (int i = 0; i < json.length(); i++) {
-            char c = json.charAt(i);
-            
-            if (escaped) {
-                // Handle escape sequences
-                switch (c) {
-                    case '"', '\\', '/', 'b', 'f', 'n', 'r', 't' -> {
-                        // Valid JSON escape sequences
-                        result.append(c);
-                    }
-                    case 'u' -> {
-                        // Unicode escape - needs 4 hex digits
-                        result.append(c);
-                    }
-                    case '\'' -> {
-                        // \' is not valid in JSON, replace with just '
-                        result.append('\'');
-                    }
-                    default -> {
-                        // Invalid escape - remove the backslash and keep the character
-                        // or escape it properly if needed
-                        if (c == '\n') {
-                            result.append('n');
-                        } else if (c == '\r') {
-                            result.append('r');
-                        } else if (c == '\t') {
-                            result.append('t');
-                        } else {
-                            // Unknown escape - just append the character without backslash
-                            result.append(c);
-                        }
-                    }
-                }
-                escaped = false;
-            } else if (c == '\\' && inString) {
-                result.append(c);
-                escaped = true;
-            } else if (c == '"') {
-                result.append(c);
-                inString = !inString;
-            } else if (inString) {
-                // Inside a string - handle control characters
-                if (c < 32) {
-                    // Replace control characters with their escape sequences
-                    switch (c) {
-                        case '\n' -> result.append("\\n");
-                        case '\r' -> result.append("\\r");
-                        case '\t' -> result.append("\\t");
-                        case '\b' -> result.append("\\b");
-                        case '\f' -> result.append("\\f");
-                        default -> {
-                            // Other control characters - encode as unicode
-                            result.append(String.format("\\u%04x", (int) c));
-                        }
-                    }
-                } else {
-                    result.append(c);
-                }
-            } else {
-                // Outside of string - keep as is
-                result.append(c);
-            }
-        }
-        
-        return result.toString();
-    }
 }

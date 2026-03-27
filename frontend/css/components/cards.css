@@ -111,6 +111,7 @@
     min-height: 100%;
     top: 0;
     left: 0;
+    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     border-radius: var(--radius-lg);
     display: flex;
@@ -130,7 +131,7 @@
 
 .visual-card-back {
     transform: rotateY(180deg);
-    background: var(--bg-secondary);
+    background-color: var(--bg-secondary);
 }
 
 /* Card Content */

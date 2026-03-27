@@ -2,11 +2,11 @@ package dev.languagelearning.content.service.impl;
 
 import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
-import dev.languagelearning.content.util.JsonExtractor;
 import dev.languagelearning.content.util.VocabularyJsonValidator;
 import dev.languagelearning.core.domain.User;
 import dev.languagelearning.llm.LlmService;
 import dev.languagelearning.llm.prompts.LanguageLearningPrompts;
+import dev.languagelearning.llm.service.LlmJsonGenerator;
 import dev.languagelearning.learning.service.UserService;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +17,13 @@ import java.util.Map;
 
 /**
  * Default implementation of ContentGenerationService using LLM.
+ * <p>
+ * Uses {@link LlmJsonGenerator} for JSON content generation, which provides:
+ * <ul>
+ *   <li>Automatic JSON sanitization to fix LLM output issues</li>
+ *   <li>Automatic retry on JSON parse failures</li>
+ *   <li>Validation that output is parseable JSON</li>
+ * </ul>
  */
 @Slf4j
 @Service
@@ -24,6 +31,7 @@ import java.util.Map;
 public class ContentGenerationServiceImpl implements ContentGenerationService {
 
     private final LlmService llmService;
+    private final LlmJsonGenerator llmJsonGenerator;
     private final UserService userService;
     private final LanguageConfig languageConfig;
 
@@ -59,9 +67,9 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "wordCount", wordCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST, variables);
-        String extractedJson = JsonExtractor.extractJson(response);
-        return VocabularyJsonValidator.validateAndNormalize(extractedJson);
+        // Use LlmJsonGenerator for validated JSON with retry
+        String json = llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST, variables);
+        return VocabularyJsonValidator.validateAndNormalize(json);
     }
 
     @Override
@@ -78,8 +86,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "questionCount", questionCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION, variables);
     }
 
     @Override
@@ -96,8 +104,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "sentenceCount", sentenceCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_DRAG_DROP, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_DRAG_DROP, variables);
     }
 
     @Override
@@ -114,8 +122,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "sentenceCount", sentenceCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE, variables);
     }
 
     @Override
@@ -132,8 +140,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "cardCount", cardCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_FLASHCARDS, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_FLASHCARDS, variables);
     }
 
     @Override
@@ -185,8 +193,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "expected", expectedAnswer
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.EVALUATE_RESPONSE, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.EVALUATE_RESPONSE, variables);
     }
 
     @Override
@@ -204,8 +212,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "exerciseCount", exerciseCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
     }
 
     @Override
@@ -223,8 +231,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "exerciseCount", exerciseCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
     }
 
     @Override
@@ -241,8 +249,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "transcription", transcription
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
     }
 
     @Override
@@ -260,7 +268,7 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 "wordCount", wordCount
         );
 
-        String response = llmService.generate(LanguageLearningPrompts.GENERATE_VISUAL_VOCABULARY, variables);
-        return JsonExtractor.extractJson(response);
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_VISUAL_VOCABULARY, variables);
     }
 }
