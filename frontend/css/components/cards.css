@@ -1,7 +1,11 @@
 /**
  * Visual Learning Cards Component Styles
  * ======================================
- * Styles for AI-generated image flashcards.
+ * Styles for AI-generated image flashcards with bilingual support.
+ * 
+ * Card flow:
+ * - FRONT: Image + Native language word
+ * - BACK (flipped): Image + Target language word
  */
 
 /* Card Generator Form */
@@ -12,9 +16,22 @@
     margin-bottom: 2rem;
 }
 
-.card-generator h3 {
-    margin-bottom: 1rem;
+.card-generator h3,
+.card-generator h4 {
+    margin-bottom: 0.5rem;
     color: var(--text-primary);
+}
+
+.generator-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Topic Generator (Primary) */
+.topic-generator {
+    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
 }
 
 .card-generator .form-row {
@@ -47,22 +64,40 @@
     gap: 1.5rem;
 }
 
+/* Card display container - ensures proper width for the card */
+#visual-card-display {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
 .visual-card {
     width: 100%;
     max-width: 400px;
-    aspect-ratio: 1;
+    min-height: 400px;
     perspective: 1000px;
     cursor: pointer;
+}
+
+/* Wider card when it has an image */
+.visual-card.bilingual-card {
+    max-width: 500px;
+    min-height: 520px;
 }
 
 .visual-card-inner {
     position: relative;
     width: 100%;
-    height: 100%;
+    min-height: 400px;
     transition: transform 0.6s;
     transform-style: preserve-3d;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
+}
+
+/* Taller inner card for bilingual cards with images */
+.bilingual-card .visual-card-inner {
+    min-height: 520px;
 }
 
 .visual-card.flipped .visual-card-inner {
@@ -73,7 +108,9 @@
 .visual-card-back {
     position: absolute;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
+    top: 0;
+    left: 0;
     backface-visibility: hidden;
     border-radius: var(--radius-lg);
     display: flex;
@@ -83,6 +120,7 @@
     padding: 1.5rem;
     background: var(--bg-primary);
     border: 2px solid var(--border-color);
+    box-sizing: border-box;
 }
 
 .visual-card-front {
@@ -111,8 +149,8 @@
 }
 
 .visual-card-image {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 300px;
     object-fit: contain;
     border-radius: var(--radius-md);
 }
@@ -354,4 +392,213 @@
 @keyframes flipHint {
     0%, 100% { transform: rotateY(0deg); }
     50% { transform: rotateY(180deg); }
+}
+
+/* ==================== Bilingual Card Styles ==================== */
+
+/* Bilingual Card Layout */
+.bilingual-card .visual-card-front,
+.bilingual-card .visual-card-back {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    justify-content: flex-start;
+}
+
+/* Image sizing - let image determine its natural size up to constraints */
+.bilingual-card .visual-card-image {
+    max-width: 100%;
+    max-height: 320px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+
+.bilingual-card .visual-card-back .visual-card-image {
+    background: var(--bg-tertiary);
+}
+
+.bilingual-card .visual-card-content {
+    text-align: center;
+    padding: 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Native word (front side) */
+.bilingual-card .native-word {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Target word (back side) */
+.bilingual-card .target-word {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Pronunciation guide */
+.visual-card-pronunciation {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
+/* Example sentence */
+.visual-card-example {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-style: italic;
+}
+
+/* Language hint labels */
+.visual-card-language-hint {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.visual-card-front .visual-card-language-hint {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.visual-card-back .visual-card-language-hint {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ==================== Generation Progress ==================== */
+
+.generation-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.generation-progress-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.generation-progress-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ==================== Manual Generator Section ==================== */
+
+.manual-generator-section {
+    margin-top: 2rem;
+}
+
+.manual-generator-toggle {
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.manual-generator-toggle:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.manual-generator {
+    margin-top: 1rem;
+    border: 1px dashed var(--border-color);
+}
+
+/* ==================== Thumbnail Grid Enhancements ==================== */
+
+.visual-card-thumbnail-native {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.visual-card-thumbnail-target {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    margin-top: 0.25rem;
+}
+
+.visual-card-thumbnail.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-color-alpha);
+}
+
+/* ==================== Button Row Styling ==================== */
+
+.button-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.button-row .btn-sm {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+}
+
+/* ==================== Responsive Adjustments ==================== */
+
+@media (max-width: 768px) {
+    .bilingual-card .native-word,
+    .bilingual-card .target-word {
+        font-size: 1.4rem;
+    }
+    
+    .visual-card-pronunciation {
+        font-size: 0.9rem;
+    }
+    
+    .visual-card-example {
+        font-size: 0.85rem;
+    }
+    
+    .generation-progress {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .visual-card-thumbnail-info {
+        padding: 0.5rem;
+    }
+    
+    .visual-card-thumbnail-native,
+    .visual-card-thumbnail-target {
+        font-size: 0.8rem;
+    }
 }

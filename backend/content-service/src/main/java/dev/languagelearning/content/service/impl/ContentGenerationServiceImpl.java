@@ -244,4 +244,23 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         String response = llmService.generate(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
         return JsonExtractor.extractJson(response);
     }
+
+    @Override
+    @Nonnull
+    public String generateVisualVocabulary(@Nonnull String topic, int wordCount) {
+        User user = userService.getCurrentUser();
+        log.info("Generating {} visual vocabulary words on topic '{}' for level {}",
+                wordCount, topic, user.getSkillLevel());
+
+        Map<String, Object> variables = Map.of(
+                "nativeLanguage", languageConfig.getNativeName(),
+                "targetLanguage", languageConfig.getTargetName(),
+                "skillLevel", user.getSkillLevel().name(),
+                "topic", topic,
+                "wordCount", wordCount
+        );
+
+        String response = llmService.generate(LanguageLearningPrompts.GENERATE_VISUAL_VOCABULARY, variables);
+        return JsonExtractor.extractJson(response);
+    }
 }

@@ -16,6 +16,7 @@ import { setLanguage, t, getLanguageName } from './services/i18n.js';
 import { showLoading, hideLoading, openModal, closeModal, speakText } from './services/ui.js';
 import { renderContent, ContentType } from './services/content-renderer.js';
 import * as goals from './services/goals.js';
+import { initTheme, toggleDarkMode } from './services/theme.js';
 
 // Page modules
 import { loadDashboardData, getCachedGoal as getDashboardCachedGoal } from './pages/dashboard.js';
@@ -38,6 +39,9 @@ const state = {
 async function init() {
     console.log('Initializing Language Learning Platform...');
     
+    // Initialize theme early to prevent flash of wrong theme
+    initTheme();
+    
     setupNavigation();
     setupEventListeners();
     await loadUserData();
@@ -53,6 +57,7 @@ async function loadUserData() {
     try {
         state.user = await api.users.getCurrent();
         setLanguage(state.user.nativeLanguage);
+        updateAppConfig(state.user);
         updateUserDisplay();
     } catch (error) {
         console.error('Failed to load user data:', error);
@@ -64,8 +69,25 @@ async function loadUserData() {
             skillLevel: 'A1'
         };
         setLanguage(state.user.nativeLanguage);
+        updateAppConfig(state.user);
         updateUserDisplay();
         toast.error(t('toast.backendUnavailable'));
+    }
+}
+
+/**
+ * Update global APP_CONFIG with user's language settings.
+ * This makes language info available to modules that need it (e.g., exercises).
+ * @param {Object} user - User object with language settings
+ */
+function updateAppConfig(user) {
+    if (user) {
+        window.APP_CONFIG = {
+            ...window.APP_CONFIG,
+            nativeLanguage: user.nativeLanguage,
+            targetLanguage: user.targetLanguage,
+            skillLevel: user.skillLevel
+        };
     }
 }
 
@@ -337,12 +359,18 @@ window.closeGoalMenu = () => {
 // Profile functions
 window.showEditProfileModal = () => showEditProfileModal(state.user, openModal);
 window.submitProfileUpdate = () => submitProfileUpdate(
-    (user) => { state.user = user; },
+    (user) => { 
+        state.user = user; 
+        updateAppConfig(user); // Also update APP_CONFIG with new user settings
+    },
     updateUserDisplay,
     closeModal,
     state.currentPage,
     loadSettingsData
 );
+
+// Theme functions
+window.toggleDarkMode = toggleDarkMode;
 
 // ==================== Start Application ====================
 

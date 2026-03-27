@@ -161,13 +161,18 @@ management:
       show-details: when_authorized
 
 # Logging Configuration
+# Override log levels via environment variables for troubleshooting:
+#   LOG_LEVEL_ROOT=DEBUG
+#   LOG_LEVEL_APP=DEBUG
+#   LOG_LEVEL_SPRING_AI=DEBUG
+#   LOG_LEVEL_SQL=DEBUG
 logging:
   level:
-    root: INFO
-    dev.languagelearning: DEBUG
-    org.springframework.ai: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    root: ${LOG_LEVEL_ROOT:INFO}
+    dev.languagelearning: ${LOG_LEVEL_APP:INFO}
+    org.springframework.ai: ${LOG_LEVEL_SPRING_AI:WARN}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BINDER:WARN}
 
 ---
 # Development Profile

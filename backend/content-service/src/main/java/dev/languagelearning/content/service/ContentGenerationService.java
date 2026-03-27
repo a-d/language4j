@@ -133,4 +133,17 @@ public interface ContentGenerationService {
      */
     @Nonnull
     String evaluatePronunciation(@Nonnull String expectedText, @Nonnull String transcription);
+
+    /**
+     * Generates vocabulary for visual learning cards.
+     * <p>
+     * Each item includes native word, target word, pronunciation,
+     * example sentence, and image description for AI image generation.
+     *
+     * @param topic the vocabulary topic
+     * @param wordCount number of words to generate
+     * @return JSON string with vocabulary for visual cards
+     */
+    @Nonnull
+    String generateVisualVocabulary(@Nonnull String topic, int wordCount);
 }

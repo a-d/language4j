@@ -75,15 +75,178 @@ export function renderContent(content, type) {
 }
 
 /**
+ * Sanitizes JSON string to fix common LLM output issues.
+ * Handles invalid control characters and escape sequences.
+ * @param {string} json - Raw JSON string
+ * @returns {string} Sanitized JSON string
+ */
+function sanitizeJson(json) {
+    if (!json || typeof json !== 'string') return json;
+    
+    // Valid JSON escape characters (after the backslash)
+    const validEscapes = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u']);
+    
+    let result = '';
+    let inString = false;
+    let i = 0;
+    
+    while (i < json.length) {
+        const c = json[i];
+        const charCode = json.charCodeAt(i);
+        
+        if (c === '"' && (i === 0 || json[i - 1] !== '\\' || !inString)) {
+            // Toggle string state (but only if not escaped inside a string)
+            // Need to count preceding backslashes to handle \\\" correctly
+            let backslashCount = 0;
+            let j = i - 1;
+            while (j >= 0 && json[j] === '\\') {
+                backslashCount++;
+                j--;
+            }
+            // Quote is escaped only if odd number of backslashes before it
+            if (!inString || backslashCount % 2 === 0) {
+                inString = !inString;
+            }
+            result += c;
+            i++;
+        } else if (c === '\\' && inString) {
+            // Check the next character for escape sequence
+            const nextChar = json[i + 1];
+            
+            if (nextChar === undefined) {
+                // Backslash at end of string - remove it
+                i++;
+            } else if (validEscapes.has(nextChar)) {
+                // Valid escape sequence - keep both characters
+                result += c + nextChar;
+                i += 2;
+            } else if (nextChar === "'") {
+                // \' is not valid in JSON - convert to just apostrophe
+                result += "'";
+                i += 2;
+            } else if (nextChar === '\n') {
+                // Escaped literal newline - convert to \n
+                result += '\\n';
+                i += 2;
+            } else if (nextChar === '\r') {
+                // Escaped literal carriage return - convert to \r
+                result += '\\r';
+                i += 2;
+            } else if (nextChar === '\t') {
+                // Escaped literal tab - convert to \t
+                result += '\\t';
+                i += 2;
+            } else {
+                // Invalid escape sequence (like \x, \a, \c, etc.)
+                // Skip the backslash, keep the character as-is
+                result += nextChar;
+                i += 2;
+            }
+        } else if (inString && charCode < 32) {
+            // Control character inside string - escape it properly
+            switch (c) {
+                case '\n': result += '\\n'; break;
+                case '\r': result += '\\r'; break;
+                case '\t': result += '\\t'; break;
+                case '\b': result += '\\b'; break;
+                case '\f': result += '\\f'; break;
+                default:
+                    // Other control characters - encode as unicode escape
+                    result += '\\u' + charCode.toString(16).padStart(4, '0');
+            }
+            i++;
+        } else {
+            // Regular character - keep as-is
+            result += c;
+            i++;
+        }
+    }
+    
+    return result;
+}
+
+/**
+ * Attempts multiple repair strategies to parse malformed JSON.
+ * @param {string} json - Raw JSON string
+ * @returns {Object|null} Parsed object or null if all repairs fail
+ */
+function tryRepairJson(json) {
+    // Strategy 1: Basic sanitization (escape sequences, control chars)
+    try {
+        const sanitized = sanitizeJson(json);
+        return JSON.parse(sanitized);
+    } catch (e) {
+        // Continue to next strategy
+    }
+    
+    // Strategy 2: Use regex to extract just the vocabulary array
+    // This handles cases where there's extra text around the JSON
+    try {
+        const vocabMatch = json.match(/\{\s*"vocabulary"\s*:\s*\[[\s\S]*\]\s*\}/);
+        if (vocabMatch) {
+            const extracted = sanitizeJson(vocabMatch[0]);
+            return JSON.parse(extracted);
+        }
+    } catch (e) {
+        // Continue to next strategy
+    }
+    
+    // Strategy 3: Try to fix common structural issues
+    try {
+        let fixed = json;
+        // Remove trailing commas before } or ]
+        fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+        // Try sanitizing the fixed version
+        fixed = sanitizeJson(fixed);
+        return JSON.parse(fixed);
+    } catch (e) {
+        // Continue to next strategy
+    }
+    
+    // Strategy 4: Try to manually build vocabulary array from patterns
+    try {
+        const items = [];
+        // Match patterns like "word": "..." and "translation": "..."
+        const wordPattern = /"word"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+        const translationPattern = /"translation"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+        
+        const words = [...json.matchAll(wordPattern)].map(m => m[1]);
+        const translations = [...json.matchAll(translationPattern)].map(m => m[1]);
+        
+        if (words.length > 0 && words.length === translations.length) {
+            for (let i = 0; i < words.length; i++) {
+                items.push({
+                    word: words[i],
+                    translation: translations[i]
+                });
+            }
+            console.log('JSON recovered via pattern extraction');
+            return { vocabulary: items };
+        }
+    } catch (e) {
+        // All strategies failed
+    }
+    
+    return null;
+}
+
+/**
  * Renders JSON-based content.
  */
 function renderJsonContent(content, type) {
     let data;
     try {
+        // First try to parse as-is
         data = JSON.parse(content);
     } catch (e) {
-        console.warn('Failed to parse JSON content, falling back to Markdown:', e);
-        return renderMarkdown(content);
+        // If parsing fails, try multiple repair strategies
+        data = tryRepairJson(content);
+        if (data) {
+            console.log('JSON parsed after repair');
+        } else {
+            console.warn('Failed to parse JSON content even after repair attempts, falling back to Markdown:', e);
+            return renderMarkdown(content);
+        }
     }
     
     switch (type) {

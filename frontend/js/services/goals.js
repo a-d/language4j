@@ -83,13 +83,34 @@ export async function completeGoal(goalId, reloadPage) {
 export async function deleteGoal(goalId, reloadPage) {
     if (!confirm(t('goals.delete') + '?')) return;
     
+    // Immediately hide the goal card for better UX
+    const goalCard = document.querySelector(`.goal-card[data-goal-id="${goalId}"]`);
+    if (goalCard) {
+        goalCard.style.opacity = '0.5';
+        goalCard.style.pointerEvents = 'none';
+    }
+    
     try {
         await api.goals.delete(goalId);
+        
+        // Remove the card from DOM immediately
+        if (goalCard) {
+            goalCard.remove();
+        }
+        
         toast.success(t('toast.goalDeleted'));
+        
+        // Reload page to update counts and other UI elements
         if (reloadPage) reloadPage();
     } catch (error) {
         console.error('Failed to delete goal:', error);
         toast.error(t('toast.goalCreateFailed'));
+        
+        // Restore the card if deletion failed
+        if (goalCard) {
+            goalCard.style.opacity = '1';
+            goalCard.style.pointerEvents = 'auto';
+        }
     }
 }
 

@@ -2,6 +2,11 @@
  * Visual Learning Cards Page Module
  * ==================================
  * Handles AI-generated image flashcards for visual vocabulary learning.
+ * 
+ * Card flow:
+ * - FRONT: Shows image + word in NATIVE language (what user knows)
+ * - BACK (after flip): Shows image + word in TARGET language (what user learns)
+ * 
  * Cards are persisted to session storage for navigation persistence.
  */
 
@@ -35,28 +40,38 @@ export function loadCardsData() {
     
     container.innerHTML = `
         <div class="visual-cards-container">
-            <!-- Single Word Generator -->
-            <div class="card-generator">
-                <h3>🖼️ ${t('cards.generateTitle')}</h3>
+            <!-- Topic-Based Generator (Primary) -->
+            <div class="card-generator topic-generator">
+                <h3>🎯 ${t('cards.generateFromTopic')}</h3>
+                <p class="generator-description">${t('cards.topicDescription')}</p>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="card-word">${t('cards.word')}</label>
-                        <input type="text" id="card-word" placeholder="${t('cards.wordPlaceholder')}" class="form-input" />
+                    <div class="form-group" style="flex: 2;">
+                        <label for="topic-input">${t('cards.topicLabel')}</label>
+                        <input type="text" id="topic-input" placeholder="${t('cards.topicPlaceholder')}" class="form-input" />
                     </div>
-                    <div class="form-group">
-                        <label for="card-context">${t('cards.context')}</label>
-                        <input type="text" id="card-context" placeholder="${t('cards.contextPlaceholder')}" class="form-input" />
+                    <div class="form-group" style="flex: 1;">
+                        <label for="card-count">${t('cards.cardCount')}</label>
+                        <select id="card-count" class="form-input">
+                            <option value="3">3</option>
+                            <option value="5" selected>5</option>
+                            <option value="7">7</option>
+                            <option value="10">10</option>
+                        </select>
                     </div>
                 </div>
                 <div class="button-row">
-                    <button class="btn btn-primary" onclick="window.generateVisualCard()">
-                        ${t('cards.generate')}
+                    <button class="btn btn-primary" onclick="window.generateVisualCardsFromTopic()">
+                        🖼️ ${t('cards.generateFromTopic')}
                     </button>
                     ${hasCards ? `
                         <button class="btn btn-secondary btn-sm" onclick="window.clearCardsCache()">
                             ${t('misc.clearCache') || 'Clear All'} (${visualCards.length})
                         </button>
                     ` : ''}
+                </div>
+                <div id="generation-progress" class="generation-progress hidden">
+                    <div class="generation-progress-spinner"></div>
+                    <div class="generation-progress-text" id="generation-progress-text">${t('cards.generating')}</div>
                 </div>
             </div>
             
@@ -75,7 +90,7 @@ export function loadCardsData() {
                     </div>
                     <div class="flip-hint">
                         <span class="flip-hint-icon">🔄</span>
-                        <span>${t('cards.flipCard')}</span>
+                        <span>${t('cards.flipHint')}</span>
                     </div>
                 </div>
             </div>
@@ -86,26 +101,31 @@ export function loadCardsData() {
                 <div class="visual-cards-empty-text">${t('cards.noCards')}</div>
             </div>
             
-            <!-- Batch Generator -->
-            <div class="batch-generator">
-                <h4>📚 ${t('cards.generateBatch')}</h4>
-                <div class="form-group">
-                    <label for="batch-words">${t('cards.wordsList')}</label>
-                    <textarea id="batch-words" placeholder="${t('cards.wordsListPlaceholder')}"></textarea>
-                </div>
-                <button class="btn btn-secondary" onclick="window.generateVisualCardsBatch()">
-                    ${t('cards.generateBatch')}
-                </button>
-                <div id="batch-progress" class="batch-progress hidden">
-                    <div class="batch-progress-bar">
-                        <div class="batch-progress-fill" id="batch-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="batch-progress-text" id="batch-progress-text"></div>
-                </div>
-            </div>
-            
             <!-- Cards Grid -->
             <div id="cards-grid" class="visual-cards-grid ${hasCards ? '' : 'hidden'}"></div>
+            
+            <!-- Manual/Custom Generator (Collapsed) -->
+            <details class="manual-generator-section">
+                <summary class="manual-generator-toggle">
+                    ⚙️ ${t('cards.customCardTitle')}
+                </summary>
+                <div class="card-generator manual-generator">
+                    <h4>🖼️ ${t('cards.generateTitle')}</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-word">${t('cards.word')}</label>
+                            <input type="text" id="card-word" placeholder="${t('cards.wordPlaceholder')}" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="card-context">${t('cards.context')}</label>
+                            <input type="text" id="card-context" placeholder="${t('cards.contextPlaceholder')}" class="form-input" />
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="window.generateVisualCard()">
+                        ${t('cards.generate')}
+                    </button>
+                </div>
+            </details>
         </div>
     `;
     
@@ -143,7 +163,92 @@ function saveToCache() {
 }
 
 /**
- * Generate a single visual card.
+ * Generate visual cards from a topic using the new API.
+ * This is the primary generation method - it uses LLM to derive words
+ * and generates images for bilingual flashcards.
+ */
+export async function generateVisualCardsFromTopic(showLoading, hideLoading) {
+    if (isGenerating) return;
+    
+    const topic = document.getElementById('topic-input')?.value.trim();
+    const cardCount = parseInt(document.getElementById('card-count')?.value || '5', 10);
+    
+    if (!topic) {
+        toast.warning(t('toast.enterTitle'));
+        return;
+    }
+    
+    isGenerating = true;
+    
+    // Show progress indicator
+    const progressContainer = document.getElementById('generation-progress');
+    const progressText = document.getElementById('generation-progress-text');
+    progressContainer?.classList.remove('hidden');
+    if (progressText) {
+        progressText.textContent = t('cards.generatingFromTopic', { count: cardCount });
+    }
+    
+    toast.info(t('cards.generatingFromTopic', { count: cardCount }));
+    showLoading?.();
+    
+    try {
+        // Call the new visual cards API
+        const response = await api.content.generateVisualCards(topic, cardCount);
+        
+        // Transform response to our card format
+        const newCards = response.cards.map(card => ({
+            nativeWord: card.nativeWord,
+            targetWord: card.targetWord,
+            imageUrl: card.imageUrl || PLACEHOLDER_IMAGE,
+            exampleSentence: card.exampleSentence,
+            pronunciation: card.pronunciation,
+            topic: response.topic,
+            nativeLanguage: response.nativeLanguage,
+            targetLanguage: response.targetLanguage,
+            createdAt: new Date().toISOString()
+        }));
+        
+        // Add to collection
+        visualCards.push(...newCards);
+        currentCardIndex = visualCards.length - newCards.length;  // Go to first new card
+        
+        // Save to cache
+        saveToCache();
+        
+        // Clear the form
+        document.getElementById('topic-input').value = '';
+        
+        // Update the display
+        updateCardDisplay();
+        updateCardsGrid();
+        updateClearButton();
+        
+        // Show result
+        if (response.failedCount > 0) {
+            toast.warning(t('cards.partialSuccess', { 
+                success: response.cardCount - response.failedCount, 
+                total: response.cardCount 
+            }));
+        } else {
+            toast.success(t('cards.topicSuccess', { count: response.cardCount }));
+        }
+        
+    } catch (error) {
+        console.error('Failed to generate visual cards:', error);
+        if (error.status === 503) {
+            toast.error(t('cards.imageServiceUnavailable'));
+        } else {
+            toast.error(t('cards.topicGenerateFailed'));
+        }
+    } finally {
+        isGenerating = false;
+        hideLoading?.();
+        progressContainer?.classList.add('hidden');
+    }
+}
+
+/**
+ * Generate a single visual card (legacy/custom mode).
  */
 export async function generateVisualCard(showLoading, hideLoading) {
     if (isGenerating) return;
@@ -158,17 +263,17 @@ export async function generateVisualCard(showLoading, hideLoading) {
     
     isGenerating = true;
     toast.info(t('cards.generating'));
-    showLoading();
+    showLoading?.();
     
     try {
         const response = await api.images.generateFlashcard(word, context);
         
-        // Add the card to our collection
+        // Add the card to our collection (legacy format - single language)
         const newCard = {
-            word,
-            context,
+            nativeWord: word,  // For legacy cards, use same word
+            targetWord: word,
             imageUrl: response.url,
-            revisedPrompt: response.revisedPrompt,
+            context,
             createdAt: new Date().toISOString()
         };
         
@@ -193,96 +298,15 @@ export async function generateVisualCard(showLoading, hideLoading) {
         toast.error(t('cards.imageGenerateFailed'));
     } finally {
         isGenerating = false;
-        hideLoading();
-    }
-}
-
-/**
- * Generate multiple visual cards in batch using the batch API.
- */
-export async function generateVisualCardsBatch(showLoading, hideLoading) {
-    if (isGenerating) return;
-    
-    const wordsInput = document.getElementById('batch-words')?.value.trim();
-    if (!wordsInput) {
-        toast.warning(t('toast.enterTitle'));
-        return;
-    }
-    
-    // Parse comma-separated words
-    const words = wordsInput.split(',')
-        .map(w => w.trim())
-        .filter(w => w.length > 0)
-        .slice(0, 5); // Limit to 5 words (API limit)
-    
-    if (words.length === 0) {
-        toast.warning(t('toast.enterTitle'));
-        return;
-    }
-    
-    isGenerating = true;
-    toast.info(t('cards.generatingBatch'));
-    showLoading();
-    
-    // Show progress
-    const progressContainer = document.getElementById('batch-progress');
-    const progressFill = document.getElementById('batch-progress-fill');
-    const progressText = document.getElementById('batch-progress-text');
-    progressContainer?.classList.remove('hidden');
-    
-    if (progressFill) progressFill.style.width = '50%';
-    if (progressText) progressText.textContent = `${t('cards.generatingBatch')} (${words.length} ${t('vocabulary.words').toLowerCase()})`;
-    
-    try {
-        // Use batch API for efficiency
-        const requests = words.map(word => ({ word, context: null }));
-        const responses = await api.images.generateFlashcardBatch(requests);
-        
-        // Add all generated cards
-        responses.forEach((response, index) => {
-            visualCards.push({
-                word: words[index],
-                context: null,
-                imageUrl: response.url,
-                revisedPrompt: response.revisedPrompt,
-                createdAt: new Date().toISOString()
-            });
-        });
-        
-        // Complete
-        if (progressFill) progressFill.style.width = '100%';
-        if (progressText) progressText.textContent = t('cards.batchComplete');
-        
-        // Save to cache
-        currentCardIndex = Math.max(0, visualCards.length - responses.length);
-        saveToCache();
-        
-        // Clear the form
-        document.getElementById('batch-words').value = '';
-        
-        // Update display
-        updateCardDisplay();
-        updateCardsGrid();
-        updateClearButton();
-        
-        toast.success(t('cards.batchComplete'));
-    } catch (error) {
-        console.error('Failed to generate batch:', error);
-        toast.error(t('cards.imageGenerateFailed'));
-    } finally {
-        isGenerating = false;
-        hideLoading();
-        
-        // Hide progress after a delay
-        setTimeout(() => {
-            progressContainer?.classList.add('hidden');
-            if (progressFill) progressFill.style.width = '0%';
-        }, 2000);
+        hideLoading?.();
     }
 }
 
 /**
  * Update the card display with current card.
+ * Card shows:
+ * - FRONT: Image + Native language word
+ * - BACK (flipped): Image + Target language word
  */
 function updateCardDisplay() {
     const viewerSection = document.getElementById('card-viewer-section');
@@ -301,16 +325,28 @@ function updateCardDisplay() {
     
     const card = visualCards[currentCardIndex];
     
+    // Determine if this is a bilingual card (from topic generation) or legacy single-word card
+    const isBilingual = card.nativeWord !== card.targetWord;
+    
     if (cardDisplay) {
         cardDisplay.innerHTML = `
-            <div class="visual-card" onclick="window.flipCard(this)">
+            <div class="visual-card bilingual-card" onclick="window.flipCard(this)">
                 <div class="visual-card-inner">
                     <div class="visual-card-front">
-                        <div class="visual-card-word">${escapeHtml(card.word)}</div>
-                        ${card.context ? `<div class="visual-card-context">${escapeHtml(card.context)}</div>` : ''}
+                        <img src="${card.imageUrl}" alt="${escapeHtml(card.nativeWord)}" class="visual-card-image" onerror="window.handleCardImageError(this)" />
+                        <div class="visual-card-content">
+                            <div class="visual-card-word native-word">${escapeHtml(card.nativeWord)}</div>
+                            ${isBilingual ? `<div class="visual-card-language-hint">${t('cards.yourLanguage')}</div>` : ''}
+                        </div>
                     </div>
                     <div class="visual-card-back">
-                        <img src="${card.imageUrl}" alt="${escapeHtml(card.word)}" class="visual-card-image" onerror="window.handleCardImageError(this)" />
+                        <img src="${card.imageUrl}" alt="${escapeHtml(card.targetWord)}" class="visual-card-image" onerror="window.handleCardImageError(this)" />
+                        <div class="visual-card-content">
+                            <div class="visual-card-word target-word">${escapeHtml(card.targetWord)}</div>
+                            ${card.pronunciation ? `<div class="visual-card-pronunciation">${escapeHtml(card.pronunciation)}</div>` : ''}
+                            ${card.exampleSentence ? `<div class="visual-card-example">${escapeHtml(card.exampleSentence)}</div>` : ''}
+                            ${isBilingual ? `<div class="visual-card-language-hint">${t('cards.targetLanguage')}</div>` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -337,9 +373,12 @@ function updateCardsGrid() {
     grid.classList.remove('hidden');
     grid.innerHTML = visualCards.map((card, index) => `
         <div class="visual-card-thumbnail ${index === currentCardIndex ? 'active' : ''}" onclick="window.viewCard(${index})">
-            <img src="${card.imageUrl}" alt="${escapeHtml(card.word)}" class="visual-card-thumbnail-image" onerror="window.handleCardImageError(this)" />
+            <img src="${card.imageUrl}" alt="${escapeHtml(card.nativeWord)}" class="visual-card-thumbnail-image" onerror="window.handleCardImageError(this)" />
             <div class="visual-card-thumbnail-info">
-                <div class="visual-card-thumbnail-word">${escapeHtml(card.word)}</div>
+                <div class="visual-card-thumbnail-native">${escapeHtml(card.nativeWord)}</div>
+                ${card.nativeWord !== card.targetWord ? `
+                    <div class="visual-card-thumbnail-target">${escapeHtml(card.targetWord)}</div>
+                ` : ''}
             </div>
         </div>
     `).join('');
@@ -350,7 +389,7 @@ function updateCardsGrid() {
  */
 function updateClearButton() {
     const hasCards = visualCards.length > 0;
-    const buttonRow = document.querySelector('.card-generator .button-row');
+    const buttonRow = document.querySelector('.topic-generator .button-row');
     
     if (buttonRow) {
         const existingClearBtn = buttonRow.querySelector('[onclick*="clearCardsCache"]');
@@ -444,10 +483,32 @@ export function viewCard(index) {
  * Escape HTML to prevent XSS.
  */
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Register global function
+// Register global functions for onclick handlers in HTML
 window.clearCardsCache = clearCardsCache;
+window.generateVisualCardsFromTopic = generateVisualCardsFromTopic;
+window.generateVisualCard = generateVisualCard;
+window.flipCard = flipCard;
+window.prevCard = prevCard;
+window.nextCard = nextCard;
+window.viewCard = viewCard;
+window.handleCardImageError = handleCardImageError;
+
+/**
+ * Legacy function for backwards compatibility.
+ * Calls the new topic-based generation if a topic is provided,
+ * otherwise shows a warning.
+ */
+export function generateVisualCardsBatch(showLoading, hideLoading) {
+    // Check if there's a topic input, use the new flow
+    const topicInput = document.getElementById('topic-input');
+    if (topicInput && topicInput.value.trim()) {
+        return generateVisualCardsFromTopic(showLoading, hideLoading);
+    }
+    toast.warning(t('cards.topicPlaceholder'));
+}

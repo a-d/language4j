@@ -382,4 +382,49 @@ public final class LanguageLearningPrompts {
               ]
             }}
             """);
+
+    // ==================== Visual Learning Card Prompts ====================
+
+    public static final PromptTemplate GENERATE_VISUAL_VOCABULARY = PromptTemplate.of("""
+            Generate vocabulary for visual learning cards in {targetLanguage}.
+            The learner's native language is {nativeLanguage} and their level is {skillLevel}.
+            
+            Topic: {topic}
+            Number of words: {wordCount}
+            
+            Select words that:
+            - Are concrete nouns or actions that can be clearly illustrated with an image
+            - Are appropriate for the learner's skill level
+            - Are related to the given topic
+            - Are commonly used in everyday language
+            
+            IMPORTANT:
+            - "nativeWord" MUST be in {nativeLanguage} (the learner's native language)
+            - "targetWord" MUST be in {targetLanguage} (the language being learned)
+            - "exampleSentence" MUST be in {targetLanguage}
+            - "imageDescription" MUST be in English (for image generation AI)
+            - Choose words that can be visually represented clearly
+            
+            For each word provide:
+            1. nativeWord: The word in {nativeLanguage}
+            2. targetWord: The word in {targetLanguage}
+            3. pronunciation: IPA or phonetic pronunciation guide for the {targetLanguage} word
+            4. exampleSentence: A simple sentence using the word in {targetLanguage}
+            5. imageDescription: A clear, simple description for generating an educational image (in English)
+               - Use format: "Simple illustration of [object/action], clean minimalist style, educational"
+               - Focus on the core concept, avoid complex scenes
+            
+            Return ONLY valid JSON with no additional text:
+            {{
+              "vocabulary": [
+                {{
+                  "nativeWord": "word in {nativeLanguage}",
+                  "targetWord": "word in {targetLanguage}",
+                  "pronunciation": "phonetic guide",
+                  "exampleSentence": "example in {targetLanguage}",
+                  "imageDescription": "Simple illustration of..., clean minimalist style, educational"
+                }}
+              ]
+            }}
+            """);
 }

@@ -77,6 +77,15 @@
     color: var(--text-primary);
 }
 
+/* Dark Mode Adjustments */
+.dark-mode .nav-link:hover {
+    background: #2d3748;
+}
+
+.dark-mode .nav-link.active {
+    background: rgba(79, 70, 229, 0.2);
+}
+
 /* Mobile Navigation */
 @media (max-width: 768px) {
     .navbar {

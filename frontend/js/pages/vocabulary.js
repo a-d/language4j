@@ -226,11 +226,17 @@ function updateClearButton() {
     const buttonRow = document.querySelector('.vocab-generator .button-row');
     
     if (buttonRow) {
-        const existingClearBtn = buttonRow.querySelector('[onclick*="clearVocabularyCache"]');
+        // Use a specific class to identify the clear button (more reliable than onclick selector)
+        let existingClearBtn = buttonRow.querySelector('.vocab-clear-cache-btn');
+        
+        // Fallback: also check for onclick attribute (for buttons in initial HTML)
+        if (!existingClearBtn) {
+            existingClearBtn = buttonRow.querySelector('[onclick*="clearVocabularyCache"]');
+        }
         
         if (hasCache && !existingClearBtn) {
             const clearBtn = document.createElement('button');
-            clearBtn.className = 'btn btn-secondary btn-sm';
+            clearBtn.className = 'btn btn-secondary btn-sm vocab-clear-cache-btn';
             clearBtn.onclick = () => window.clearVocabularyCache();
             clearBtn.textContent = t('misc.clearCache') || 'Clear All';
             buttonRow.appendChild(clearBtn);

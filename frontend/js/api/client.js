@@ -141,6 +141,17 @@ export const api = {
         generateLearningPlan: (dailyGoal, weeklyGoal, monthlyGoal) => request('/v1/content/learning-plan/generate', { 
             method: 'POST', 
             body: { dailyGoal, weeklyGoal, monthlyGoal } 
+        }),
+        
+        /**
+         * Generate visual learning cards from a topic
+         * @param {string} topic - Topic for vocabulary generation (e.g., "Kitchen items", "Animals")
+         * @param {number} cardCount - Number of cards to generate (1-10, default 5)
+         * @returns {Promise<{topic: string, nativeLanguage: string, targetLanguage: string, cards: Array, cardCount: number, failedCount: number}>}
+         */
+        generateVisualCards: (topic, cardCount = 5) => request('/v1/content/visual-cards/generate', {
+            method: 'POST',
+            body: { topic, cardCount }
         })
     },
     
