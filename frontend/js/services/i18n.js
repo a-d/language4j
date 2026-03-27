@@ -11,6 +11,7 @@
 const translations = {
     en: {
         // Navigation
+        'nav.chat': 'Coach',
         'nav.dashboard': 'Dashboard',
         'nav.lessons': 'Lessons',
         'nav.vocabulary': 'Vocabulary',
@@ -283,6 +284,27 @@ const translations = {
         'cards.yourLanguage': 'Your language',
         'cards.targetLanguage': 'Learning',
         
+        // Chat
+        'chat.title': 'Learning Coach',
+        'chat.subtitle': 'Your AI-powered language learning assistant',
+        'chat.loading': 'Connecting to your learning coach...',
+        'chat.placeholder': 'Type your message...',
+        'chat.send': 'Send',
+        'chat.you': 'You',
+        'chat.coach': 'Coach',
+        'chat.suggestions': 'Suggestions',
+        'chat.newSession': 'New Session',
+        'chat.newSessionConfirm': 'Start a new conversation? Current messages will be cleared.',
+        'chat.clearChat': 'Clear Chat',
+        'chat.error': 'Failed to send message. Please try again.',
+        'chat.connectionError': 'Could not connect to the learning coach.',
+        'chat.unknownActivity': 'Activity content',
+        'chat.activityError': 'Failed to load activity',
+        'chat.suggestionPracticeVocab': 'Practice vocabulary',
+        'chat.suggestionDoExercises': 'Do some exercises',
+        'chat.suggestionStartLesson': 'Start a lesson',
+        'chat.suggestionReview': 'Review what I learned',
+        
         // Languages
         'lang.de': 'German',
         'lang.fr': 'French',
@@ -300,6 +322,7 @@ const translations = {
     
     de: {
         // Navigation
+        'nav.chat': 'Coach',
         'nav.dashboard': 'Übersicht',
         'nav.lessons': 'Lektionen',
         'nav.vocabulary': 'Vokabeln',
@@ -571,6 +594,27 @@ const translations = {
         'cards.visualFlashcardsDesc': 'Mit KI-generierten Bildern lernen',
         'cards.yourLanguage': 'Deine Sprache',
         'cards.targetLanguage': 'Lernsprache',
+        
+        // Chat
+        'chat.title': 'Lerncoach',
+        'chat.subtitle': 'Dein KI-gestützter Sprachlern-Assistent',
+        'chat.loading': 'Verbindung zu deinem Lerncoach...',
+        'chat.placeholder': 'Nachricht eingeben...',
+        'chat.send': 'Senden',
+        'chat.you': 'Du',
+        'chat.coach': 'Coach',
+        'chat.suggestions': 'Vorschläge',
+        'chat.newSession': 'Neue Sitzung',
+        'chat.newSessionConfirm': 'Neue Unterhaltung beginnen? Aktuelle Nachrichten werden gelöscht.',
+        'chat.clearChat': 'Chat löschen',
+        'chat.error': 'Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.',
+        'chat.connectionError': 'Verbindung zum Lerncoach fehlgeschlagen.',
+        'chat.unknownActivity': 'Aktivitätsinhalt',
+        'chat.activityError': 'Aktivität konnte nicht geladen werden',
+        'chat.suggestionPracticeVocab': 'Vokabeln üben',
+        'chat.suggestionDoExercises': 'Übungen machen',
+        'chat.suggestionStartLesson': 'Lektion starten',
+        'chat.suggestionReview': 'Gelerntes wiederholen',
         
         // Languages
         'lang.de': 'Deutsch',

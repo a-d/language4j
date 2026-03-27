@@ -43,7 +43,10 @@ const JSON_TYPES = [
     ContentType.TEXT_COMPLETION,
     ContentType.DRAG_DROP,
     ContentType.TRANSLATION,
-    ContentType.EVALUATION
+    ContentType.LISTENING,
+    ContentType.SPEAKING,
+    ContentType.EVALUATION,
+    ContentType.PRONUNCIATION_EVALUATION
 ];
 
 /**
@@ -262,6 +265,12 @@ function renderJsonContent(content, type) {
             return renderTranslationExercises(data);
         case ContentType.EVALUATION:
             return renderEvaluation(data);
+        case ContentType.LISTENING:
+            return renderListeningExercises(data);
+        case ContentType.SPEAKING:
+            return renderSpeakingExercises(data);
+        case ContentType.PRONUNCIATION_EVALUATION:
+            return renderPronunciationEvaluation(data);
         default:
             // Generic JSON display
             return renderGenericJson(data);
@@ -703,6 +712,173 @@ function renderTranslationExercises(data) {
                     </div>
                 `;
             }).join('')}
+        </div>
+    `;
+}
+
+// ==================== Listening Exercises Renderer ====================
+
+/**
+ * Renders listening comprehension exercises.
+ * Expected data format:
+ * { exercises: [{ sentence: string, translation: string, hint?: string }] }
+ */
+function renderListeningExercises(data) {
+    const exercises = Array.isArray(data) ? data : (data.exercises || []);
+    
+    if (exercises.length === 0) {
+        return '<p class="empty-state">No listening exercises generated.</p>';
+    }
+    
+    return `
+        <div class="exercises-list listening-exercises">
+            <div class="listening-instructions">
+                <span class="instruction-icon">🎧</span>
+                <span>Listen to the audio and type what you hear.</span>
+            </div>
+            ${exercises.map((ex, index) => {
+                const sentence = ex.sentence || ex.text || '';
+                const translation = ex.translation || ex.hint || '';
+                
+                return `
+                    <div class="exercise-item listening-item" data-index="${index}">
+                        <div class="exercise-number">${index + 1}</div>
+                        <div class="exercise-content">
+                            <div class="audio-controls">
+                                <button class="btn btn-secondary play-audio-btn" onclick="window.playListeningAudio(this)" data-sentence="${escapeHtml(sentence)}">
+                                    🔊 Play Audio
+                                </button>
+                                <button class="btn btn-secondary play-slow-btn" onclick="window.playListeningAudio(this, true)" data-sentence="${escapeHtml(sentence)}">
+                                    🐢 Play Slow
+                                </button>
+                            </div>
+                            ${translation ? `<p class="exercise-hint">💡 Translation: ${escapeHtml(translation)}</p>` : ''}
+                            <input type="text" class="exercise-input listening-input" data-answer="${escapeHtml(sentence)}" placeholder="Type what you hear..." />
+                            <div class="exercise-feedback hidden"></div>
+                        </div>
+                        <button class="btn btn-sm btn-primary exercise-check" onclick="window.checkListeningAnswer(this)">Check</button>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// ==================== Speaking Exercises Renderer ====================
+
+/**
+ * Renders speaking/pronunciation exercises.
+ * Expected data format:
+ * { exercises: [{ text: string, translation: string, pronunciationTips?: string, commonMistakes?: string }] }
+ */
+function renderSpeakingExercises(data) {
+    const exercises = Array.isArray(data) ? data : (data.exercises || []);
+    
+    if (exercises.length === 0) {
+        return '<p class="empty-state">No speaking exercises generated.</p>';
+    }
+    
+    return `
+        <div class="exercises-list speaking-exercises">
+            <div class="speaking-instructions">
+                <span class="instruction-icon">🎤</span>
+                <span>Read the text aloud. Click "Record" to practice your pronunciation.</span>
+            </div>
+            ${exercises.map((ex, index) => {
+                const text = ex.text || ex.sentence || '';
+                const translation = ex.translation || '';
+                const tips = ex.pronunciationTips || ex.tips || '';
+                const mistakes = ex.commonMistakes || '';
+                
+                return `
+                    <div class="exercise-item speaking-item" data-index="${index}">
+                        <div class="exercise-number">${index + 1}</div>
+                        <div class="exercise-content">
+                            <p class="speaking-text">${escapeHtml(text)}</p>
+                            ${translation ? `<p class="speaking-translation">📖 ${escapeHtml(translation)}</p>` : ''}
+                            
+                            <div class="audio-controls">
+                                <button class="btn btn-secondary play-model-btn" onclick="window.playModelAudio(this)" data-text="${escapeHtml(text)}">
+                                    🔊 Listen to Model
+                                </button>
+                            </div>
+                            
+                            ${tips ? `
+                                <div class="pronunciation-tips">
+                                    <span class="tips-icon">💡</span>
+                                    <span class="tips-text">${escapeHtml(tips)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${mistakes ? `
+                                <div class="common-mistakes">
+                                    <span class="mistakes-icon">⚠️</span>
+                                    <span class="mistakes-text">Common mistakes: ${escapeHtml(mistakes)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="recording-controls">
+                                <button class="btn btn-primary record-btn" onclick="window.toggleRecording(this)" data-expected="${escapeHtml(text)}">
+                                    🎤 Record
+                                </button>
+                                <span class="recording-status"></span>
+                            </div>
+                            
+                            <div class="exercise-feedback hidden"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// ==================== Pronunciation Evaluation Renderer ====================
+
+/**
+ * Renders pronunciation evaluation results.
+ * Expected data format:
+ * { accuracy: number, feedback: string, wordByWord?: [{ word, correct, tip }], tips?: string[] }
+ */
+function renderPronunciationEvaluation(data) {
+    const accuracy = data.accuracy || data.score || 0;
+    const feedback = data.feedback || data.message || '';
+    const wordByWord = data.wordByWord || data.words || [];
+    const tips = data.tips || data.suggestions || [];
+    
+    const accuracyClass = accuracy >= 80 ? 'excellent' : accuracy >= 60 ? 'good' : 'needs-practice';
+    
+    return `
+        <div class="pronunciation-evaluation ${accuracyClass}">
+            <div class="evaluation-header">
+                <span class="accuracy-icon">${accuracy >= 80 ? '🎉' : accuracy >= 60 ? '👍' : '🔄'}</span>
+                <span class="accuracy-score">${accuracy}% Accuracy</span>
+            </div>
+            
+            ${feedback ? `<p class="evaluation-feedback">${escapeHtml(feedback)}</p>` : ''}
+            
+            ${wordByWord.length > 0 ? `
+                <div class="word-by-word">
+                    <strong>Word breakdown:</strong>
+                    <div class="word-list">
+                        ${wordByWord.map(w => `
+                            <span class="word-item ${w.correct ? 'correct' : 'incorrect'}">
+                                ${escapeHtml(w.word)}
+                                ${w.tip ? `<span class="word-tip">(${escapeHtml(w.tip)})</span>` : ''}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${tips.length > 0 ? `
+                <div class="pronunciation-tips-list">
+                    <strong>Tips for improvement:</strong>
+                    <ul>
+                        ${tips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -1301,8 +1477,13 @@ window.toggleSolution = function(btn) {
     }
 };
 
-export default {
+/**
+ * Content renderer object for convenient imports.
+ */
+export const contentRenderer = {
     renderContent,
     renderMarkdown,
     ContentType
 };
+
+export default contentRenderer;

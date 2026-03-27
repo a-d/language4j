@@ -44,6 +44,10 @@
             <groupId>dev.languagelearning</groupId>
             <artifactId>image-service</artifactId>
         </dependency>
+        <dependency>
+            <groupId>dev.languagelearning</groupId>
+            <artifactId>chat-service</artifactId>
+        </dependency>
 
         <!-- Spring Boot -->
         <dependency>

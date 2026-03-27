@@ -146,4 +146,29 @@ public interface ExerciseResultRepository extends JpaRepository<ExerciseResult, 
             @Param("user") User user,
             @Param("reference") String exerciseReference
     );
+
+    /**
+     * Finds recent exercise results for a user by user ID within N days.
+     *
+     * @param userId the user ID
+     * @param days   number of days to look back
+     * @return list of recent results, most recent first
+     */
+    @Query(value = "SELECT * FROM exercise_results r " +
+           "WHERE r.user_id = :userId " +
+           "AND r.created_at >= CURRENT_TIMESTAMP - CAST(:days || ' days' AS INTERVAL) " +
+           "ORDER BY r.created_at DESC", nativeQuery = true)
+    List<ExerciseResult> findRecentByUserId(@Param("userId") UUID userId, @Param("days") int days);
+
+    /**
+     * Finds today's exercise results for a user by user ID.
+     *
+     * @param userId the user ID
+     * @return list of today's results
+     */
+    @Query(value = "SELECT * FROM exercise_results r " +
+           "WHERE r.user_id = :userId " +
+           "AND DATE(r.created_at) = CURRENT_DATE " +
+           "ORDER BY r.created_at DESC", nativeQuery = true)
+    List<ExerciseResult> findTodayByUserId(@Param("userId") UUID userId);
 }

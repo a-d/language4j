@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/components/navbar.css">
     <link rel="stylesheet" href="css/components/cards.css">
     <link rel="stylesheet" href="css/components/exercises.css">
+    <link rel="stylesheet" href="css/components/chat.css">
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
 </head>
 <body>
@@ -19,7 +20,8 @@
                 <span class="title">Language Learning</span>
             </div>
             <div class="navbar-menu">
-                <a href="#dashboard" class="nav-link active" data-page="dashboard" data-i18n="nav.dashboard">Dashboard</a>
+                <a href="#chat" class="nav-link active" data-page="chat" data-i18n="nav.chat">💬 Coach</a>
+                <a href="#dashboard" class="nav-link" data-page="dashboard" data-i18n="nav.dashboard">Dashboard</a>
                 <a href="#lessons" class="nav-link" data-page="lessons" data-i18n="nav.lessons">Lessons</a>
                 <a href="#vocabulary" class="nav-link" data-page="vocabulary" data-i18n="nav.vocabulary">Vocabulary</a>
                 <a href="#cards" class="nav-link" data-page="cards" data-i18n="nav.cards">Cards</a>
@@ -44,8 +46,19 @@
 
             <!-- Page Container -->
             <div id="page-container">
-                <!-- Dashboard Page (default) -->
-                <section id="dashboard-page" class="page active">
+                <!-- Chat Page (default - AI Learning Coach) -->
+                <section id="chat-page" class="page active">
+                    <header class="page-header">
+                        <h1 data-i18n="chat.title">🎓 AI Learning Coach</h1>
+                        <p data-i18n="chat.subtitle">Your personalized learning companion</p>
+                    </header>
+                    <div id="chat-page-content">
+                        <!-- Chat content loaded dynamically -->
+                    </div>
+                </section>
+
+                <!-- Dashboard Page -->
+                <section id="dashboard-page" class="page hidden">
                     <header class="page-header">
                         <h1 data-i18n="dashboard.welcome">Welcome Back!</h1>
                         <p id="language-info"></p>
@@ -256,13 +269,6 @@
                                     <input type="checkbox" id="dark-mode-toggle" onchange="window.toggleDarkMode()">
                                     <span class="toggle-slider"></span>
                                 </label>
-                            </div>
-                            <div class="settings-option">
-                                <div class="settings-option-info">
-                                    <h4 data-i18n="settings.notifications">Notifications</h4>
-                                    <p data-i18n="settings.notificationsDesc">Daily reminders and goal notifications</p>
-                                </div>
-                                <span class="coming-soon-badge" data-i18n="settings.comingSoon">Coming Soon</span>
                             </div>
                             <div class="settings-option">
                                 <div class="settings-option-info">

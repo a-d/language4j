@@ -296,6 +296,35 @@ export const api = {
         }
     },
     
+    // ==================== Chat ====================
+    chat: {
+        /** Get or create an active chat session */
+        getOrCreateSession: () => request('/v1/chat/session'),
+        
+        /** Get a specific session by ID */
+        getSession: (sessionId) => request(`/v1/chat/session/${sessionId}`),
+        
+        /** Get all messages in a session */
+        getMessages: (sessionId) => request(`/v1/chat/session/${sessionId}/messages`),
+        
+        /** Send a message and get AI response */
+        sendMessage: (sessionId, content) => request(`/v1/chat/session/${sessionId}/messages`, {
+            method: 'POST',
+            body: { content }
+        }),
+        
+        /** Complete an embedded activity */
+        completeActivity: (messageId, score, feedback = null) => request(`/v1/chat/messages/${messageId}/complete`, {
+            method: 'POST',
+            body: { score, feedback }
+        }),
+        
+        /** Clear a session (delete all messages) */
+        clearSession: (sessionId) => request(`/v1/chat/session/${sessionId}`, {
+            method: 'DELETE'
+        })
+    },
+    
     // ==================== Images ====================
     images: {
         /**
@@ -334,5 +363,8 @@ export const api = {
         })
     }
 };
+
+// Legacy alias for backwards compatibility
+export const apiClient = api;
 
 export { ApiError };

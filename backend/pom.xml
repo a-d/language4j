@@ -27,6 +27,7 @@
         <module>learning-service</module>
         <module>speech-service</module>
         <module>image-service</module>
+        <module>chat-service</module>
         <module>api-module</module>
     </modules>
 
@@ -102,6 +103,11 @@
             <dependency>
                 <groupId>dev.languagelearning</groupId>
                 <artifactId>image-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.languagelearning</groupId>
+                <artifactId>chat-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

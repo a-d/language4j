@@ -55,6 +55,10 @@ From the initial query, the project was conceived as:
 
 | Category | Feature | Implementation |
 |----------|---------|----------------|
+| **Chat Moderation** | AI Learning Coach | `chat-service` module |
+| | Session management | `ChatSession`, `ChatMessage` entities |
+| | Embedded activities | Activities within chat messages |
+| | Learning context | User progress, goals, and history |
 | **Infrastructure** | Docker deployment | `docker/docker-compose.yml` |
 | | Multi-provider AI support | OpenAI, Anthropic, Ollama |
 | | Configuration management | `config-module` with env vars |
@@ -117,7 +121,6 @@ From the initial query, the project was conceived as:
 | **Intelligent Scheduling** | 🟡 Medium | Medium |
 | **Multi-User Support** | 🟢 Low | High |
 | **Dark Mode** | 🟢 Low | Low |
-| **Notifications** | 🟢 Low | Medium |
 
 ---
 

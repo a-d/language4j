@@ -26,6 +26,7 @@ import { loadCardsData, generateVisualCard, generateVisualCardsBatch, flipCard, 
 import { startExercise, closeExercise, initExercisesPage } from './pages/exercises.js';
 import { loadProgressData, filterGoals, getCachedGoal as getProgressCachedGoal } from './pages/progress.js';
 import { loadSettingsData, showEditProfileModal, submitProfileUpdate } from './pages/settings.js';
+import * as chatPage from './pages/chat.js';
 
 // ==================== Application State ====================
 
@@ -131,7 +132,7 @@ function navigateTo(page) {
 }
 
 function handleRoute() {
-    const hash = window.location.hash.slice(1) || 'dashboard';
+    const hash = window.location.hash.slice(1) || 'chat';  // Chat is now the default page
     showPage(hash);
 }
 
@@ -160,6 +161,14 @@ function showPage(pageName) {
 
 async function loadPageData(pageName) {
     switch (pageName) {
+        case 'chat':
+            // Chat page renders its own content dynamically
+            const chatContainer = document.getElementById('chat-page-content');
+            if (chatContainer) {
+                chatContainer.innerHTML = chatPage.render();
+            }
+            await chatPage.init();
+            break;
         case 'dashboard':
             await loadDashboardData(showLoading, hideLoading);
             break;

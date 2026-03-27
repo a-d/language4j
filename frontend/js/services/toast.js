@@ -32,6 +32,11 @@ function showToast(message, type = 'info') {
 }
 
 /**
+ * Show a toast notification (exported for direct use)
+ */
+export { showToast };
+
+/**
  * Toast service with typed methods
  */
 export const toast = {
