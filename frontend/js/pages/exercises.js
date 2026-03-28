@@ -14,6 +14,7 @@ const EXERCISE_TYPE_MAP = {
     'drag-drop': 'DRAG_DROP',
     'translation': 'TRANSLATION',
     'listening': 'LISTENING',
+    'listening-comprehension': 'LISTENING_COMPREHENSION',
     'speaking': 'SPEAKING'
 };
 
@@ -60,6 +61,7 @@ export async function startExercise(type, showLoading, hideLoading) {
         'drag-drop': t('exercises.wordOrder'),
         'translation': t('exercises.translation'),
         'listening': t('exercises.listening'),
+        'listening-comprehension': t('exercises.listeningComprehension') || '🎧 Listening Comprehension',
         'speaking': t('exercises.speakingExercise')
     };
     
@@ -94,6 +96,9 @@ export async function startExercise(type, showLoading, hideLoading) {
             case 'listening':
                 response = await api.exercises.generateListening(topic, 5);
                 break;
+            case 'listening-comprehension':
+                response = await api.exercises.generateListeningComprehension(topic, 100, 5);
+                break;
             case 'speaking':
                 response = await api.exercises.generateSpeaking(topic, 5);
                 break;
@@ -120,11 +125,31 @@ export async function startExercise(type, showLoading, hideLoading) {
             'drag-drop': ContentType.DRAG_DROP,
             'translation': ContentType.TRANSLATION,
             'listening': ContentType.LISTENING,
+            'listening-comprehension': ContentType.LISTENING_COMPREHENSION,
             'speaking': ContentType.SPEAKING
         };
         
+        // Handle listening comprehension - uses content-renderer
+        if (type === 'listening-comprehension') {
+            // Listening comprehension has a different score structure (statements)
+            const parsed = JSON.parse(response.content);
+            exerciseScores.total = parsed.statements?.length || 5;
+            
+            exerciseArea.innerHTML = `
+                <div class="exercise-container">
+                    <div class="exercise-header">
+                        <h3>${exerciseTitles[type]}: ${topic}</h3>
+                        <div class="exercise-header-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="window.closeExercise()">${t('exercises.exit')}</button>
+                        </div>
+                    </div>
+                    <div class="exercise-content">${renderContent(response.content, ContentType.LISTENING_COMPREHENSION)}</div>
+                </div>
+            `;
+            toast.success(t('toast.exerciseLoaded'));
+        }
         // Handle listening and speaking exercises with custom renderers
-        if (type === 'listening') {
+        else if (type === 'listening') {
             exerciseArea.innerHTML = renderListeningExercises(parsedExercises, topic, exerciseTitles[type]);
             toast.success(t('toast.exerciseLoaded'));
         } else if (type === 'speaking') {

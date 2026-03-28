@@ -302,6 +302,90 @@ public final class LanguageLearningPrompts {
             }}
             """);
 
+    public static final PromptTemplate GENERATE_LISTENING_COMPREHENSION = PromptTemplate.of("""
+            Create a listening comprehension exercise for language learning.
+            
+            **LANGUAGE SETUP:**
+            - The learner's NATIVE language (their first language): {nativeLanguage}
+            - The TARGET language (what they are learning): {targetLanguage}
+            - Skill Level: {skillLevel}
+            
+            Topic: {topic}
+            Target word count for story: {wordCount}
+            Number of statements: {statementCount}
+            
+            ╔══════════════════════════════════════════════════════════════════════╗
+            ║  !!! CRITICAL: THE STORY MUST BE IN {targetLanguage} !!!             ║
+            ║                                                                      ║
+            ║  The learner is practicing LISTENING to {targetLanguage}.            ║
+            ║  The story will be read aloud by a {targetLanguage} TTS system.      ║
+            ║  Writing the story in {nativeLanguage} would defeat the purpose!     ║
+            ╚══════════════════════════════════════════════════════════════════════╝
+            
+            Create:
+            1. A short story WRITTEN IN {targetLanguage} (approximately {wordCount} words)
+            2. A translation of that story in {nativeLanguage} (to help learner understand)
+            3. True/false comprehension statements to test understanding
+            
+            SKILL LEVEL CONSTRAINTS for {skillLevel}:
+            - A1: Very simple story using ONLY basic vocabulary (present tense, common nouns, simple sentences). Sentences 3-6 words each.
+            - A2: Simple story with everyday vocabulary. Past tense allowed. Sentences 5-8 words.
+            - B1: Moderate complexity. Multiple tenses, feelings, opinions. Compound sentences allowed.
+            - B2+: Full complexity including nuanced expressions, idioms, complex structures.
+            
+            STRICTLY match the story and statements complexity to {skillLevel}!
+            
+            For each TRUE/FALSE statement:
+            - Write the statement in {targetLanguage}
+            - Provide translation in {nativeLanguage}
+            - Indicate if it is TRUE or FALSE based on the story
+            - Provide an explanation in {targetLanguage} (for learning purposes)
+            
+            Mix of statement types:
+            - 2-3 factual statements (directly stated in story)
+            - 1-2 inference statements (requires understanding context)
+            - 1-2 false statements (contradicts story details)
+            
+            ═══════════════════════════════════════════════════════════════════════
+            *** ABSOLUTE LANGUAGE REQUIREMENTS - VIOLATION WILL CAUSE ERRORS ***
+            ═══════════════════════════════════════════════════════════════════════
+            
+            ✓ "story" field → MUST be 100% in {targetLanguage} (the language being learned)
+            ✗ "story" field → MUST NOT contain ANY {nativeLanguage} words
+            
+            ✓ "storyTranslation" field → MUST be 100% in {nativeLanguage}
+            ✓ "statement" field → MUST be 100% in {targetLanguage}
+            ✓ "statementTranslation" field → MUST be 100% in {nativeLanguage}
+            ✓ "explanation" field → MUST be 100% in {targetLanguage}
+            
+            WHY THIS MATTERS: The "story" text is sent to a Text-to-Speech engine configured
+            for {targetLanguage}. If you write it in {nativeLanguage}, the TTS will fail or
+            produce gibberish. This is a LISTENING exercise in {targetLanguage}!
+            
+            Return ONLY valid JSON with no additional text:
+            {{
+              "title": "Short descriptive title in {nativeLanguage}",
+              "story": "The complete story text in {targetLanguage}...",
+              "storyTranslation": "The story translation in {nativeLanguage}...",
+              "wordCount": {wordCount},
+              "skillLevel": "{skillLevel}",
+              "statements": [
+                {{
+                  "statement": "statement in {targetLanguage}",
+                  "statementTranslation": "statement translation in {nativeLanguage}",
+                  "isTrue": true,
+                  "explanation": "explanation in {targetLanguage}"
+                }},
+                {{
+                  "statement": "another statement in {targetLanguage}",
+                  "statementTranslation": "statement translation in {nativeLanguage}",
+                  "isTrue": false,
+                  "explanation": "explanation in {targetLanguage}"
+                }}
+              ]
+            }}
+            """);
+
     // ==================== Roleplay/Scenario Prompts ====================
 
     public static final PromptTemplate GENERATE_ROLEPLAY_SCENARIO = PromptTemplate.of("""

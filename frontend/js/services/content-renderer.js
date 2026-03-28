@@ -20,6 +20,7 @@ export const ContentType = {
     DRAG_DROP: 'drag-drop',
     TRANSLATION: 'translation',
     LISTENING: 'listening',
+    LISTENING_COMPREHENSION: 'listening-comprehension',
     SPEAKING: 'speaking',
     EVALUATION: 'evaluation',
     PRONUNCIATION_EVALUATION: 'pronunciation-evaluation',
@@ -46,6 +47,7 @@ const JSON_TYPES = [
     ContentType.DRAG_DROP,
     ContentType.TRANSLATION,
     ContentType.LISTENING,
+    ContentType.LISTENING_COMPREHENSION,
     ContentType.SPEAKING,
     ContentType.EVALUATION,
     ContentType.PRONUNCIATION_EVALUATION,
@@ -437,6 +439,8 @@ function renderJsonContent(content, type) {
             return renderEvaluation(data);
         case ContentType.LISTENING:
             return renderListeningExercises(data);
+        case ContentType.LISTENING_COMPREHENSION:
+            return renderListeningComprehensionExercise(data);
         case ContentType.SPEAKING:
             return renderSpeakingExercises(data);
         case ContentType.PRONUNCIATION_EVALUATION:
@@ -934,6 +938,143 @@ function renderListeningExercises(data) {
                     </div>
                 `;
             }).join('')}
+        </div>
+    `;
+}
+
+// ==================== Listening Comprehension Renderer ====================
+
+/**
+ * Renders listening comprehension exercise (story + true/false statements).
+ * Expected data format:
+ * {
+ *   title: string,
+ *   story: string,
+ *   storyTranslation: string,
+ *   wordCount: number,
+ *   skillLevel: string,
+ *   statements: [{
+ *     statement: string,
+ *     statementTranslation: string,
+ *     isTrue: boolean,
+ *     explanation: string
+ *   }]
+ * }
+ */
+function renderListeningComprehensionExercise(data) {
+    const title = data.title || t('exercises.listeningComprehension');
+    const story = data.story || '';
+    const storyTranslation = data.storyTranslation || '';
+    const skillLevel = data.skillLevel || '';
+    const statements = data.statements || [];
+    
+    if (!story) {
+        return `<p class="empty-state">${t('exercises.noExercisesGenerated')}</p>`;
+    }
+    
+    // Generate a unique ID for this exercise
+    const exerciseId = 'lc-' + Date.now();
+    
+    return `
+        <div class="listening-comprehension-container" id="${exerciseId}" data-story="${escapeHtml(story)}" data-translation="${escapeHtml(storyTranslation)}" data-total="${statements.length}" data-answered="0" data-correct="0">
+            <div class="listening-comprehension-header">
+                <span class="lc-icon">🎧</span>
+                <span class="lc-title">${escapeHtml(title)}</span>
+                ${skillLevel ? `<span class="lc-level">${escapeHtml(skillLevel)}</span>` : ''}
+            </div>
+            
+            <div class="lc-instructions">
+                💡 ${t('exercises.lcInstructions')}
+            </div>
+            
+            <div class="lc-story-section">
+                <div class="lc-controls-row">
+                    <button class="btn btn-primary lc-play-btn" onclick="window.toggleListeningComprehensionAudio(this)" data-playing="false">
+                        <span class="play-icon">▶️</span>
+                        <span class="play-text">${t('exercises.lcPlayStory')}</span>
+                    </button>
+                    <button class="btn btn-secondary lc-replay-btn" onclick="window.replayListeningComprehensionAudio(this)" disabled>
+                        🔄 ${t('exercises.lcReplay')}
+                    </button>
+                    <button class="btn btn-secondary lc-show-text-btn" onclick="window.toggleListeningComprehensionText(this)" data-showing="false">
+                        👁️ ${t('exercises.lcShowStoryText')}
+                    </button>
+                    <button class="btn btn-secondary lc-show-translation-btn" onclick="window.toggleListeningComprehensionTranslation(this)" data-showing="false">
+                        📖 ${t('exercises.lcShowTranslation')}
+                    </button>
+                </div>
+                
+                <div class="lc-story-text hidden">
+                    <div class="lc-story-content">
+                        <p class="lc-story-target">${escapeHtml(story)}</p>
+                    </div>
+                </div>
+                
+                <div class="lc-story-translation hidden">
+                    <span class="translation-label">📖 ${t('exercises.lcTranslation')}:</span>
+                    <p class="lc-translation-text">${escapeHtml(storyTranslation)}</p>
+                </div>
+            </div>
+            
+            <div class="lc-statements-section">
+                <div class="lc-statements-header">
+                    <span class="statements-icon">❓</span>
+                    <span class="statements-title">${t('exercises.lcTrueOrFalse')}</span>
+                    <span class="lc-progress">0 / ${statements.length} ${t('exercises.lcAnswered')}</span>
+                </div>
+                
+                <div class="lc-statements-list">
+                    ${statements.map((stmt, index) => renderListeningComprehensionStatement(stmt, index, exerciseId)).join('')}
+                </div>
+            </div>
+            
+            <div class="lc-summary hidden">
+                <div class="lc-summary-icon">🏆</div>
+                <div class="lc-summary-score"></div>
+                <div class="lc-summary-message"></div>
+                <button class="btn btn-secondary lc-replay-full-btn" onclick="window.replayListeningComprehensionAudio(this)">
+                    🔄 ${t('exercises.lcListenAgain')}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders a single true/false statement for listening comprehension.
+ */
+function renderListeningComprehensionStatement(stmt, index, exerciseId) {
+    const statement = stmt.statement || '';
+    const translation = stmt.statementTranslation || '';
+    const isTrue = stmt.isTrue || false;
+    const explanation = stmt.explanation || '';
+    
+    return `
+        <div class="lc-statement-item" data-index="${index}" data-answer="${isTrue}" data-explanation="${escapeHtml(explanation)}">
+            <div class="lc-statement-number">${index + 1}</div>
+            <div class="lc-statement-content">
+                <p class="lc-statement-text">${escapeHtml(statement)}</p>
+                ${translation ? `<p class="lc-statement-translation">${escapeHtml(translation)}</p>` : ''}
+                
+                <div class="lc-answer-options">
+                    <button class="btn btn-outline lc-true-btn" onclick="window.answerListeningComprehension(this, true)">
+                        ✅ True
+                    </button>
+                    <button class="btn btn-outline lc-false-btn" onclick="window.answerListeningComprehension(this, false)">
+                        ❌ False
+                    </button>
+                </div>
+                
+                <div class="lc-statement-feedback hidden">
+                    <span class="lc-feedback-icon"></span>
+                    <span class="lc-feedback-text"></span>
+                </div>
+                
+                <div class="lc-statement-explanation hidden">
+                    <span class="explanation-icon">💡</span>
+                    <span class="explanation-text">${escapeHtml(explanation)}</span>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -1991,6 +2132,378 @@ function showMemoryGameComplete(container) {
             Completed in ${attempts} attempts (${efficiency}% efficiency)
         </span>
     `;
+}
+
+// ==================== Listening Exercise Interactive Functions ====================
+
+// State for listening exercise audio
+let listeningExerciseAudioState = {
+    audio: null,
+    audioUrl: null
+};
+
+/**
+ * Play audio for a listening exercise (from content-renderer).
+ * This handles the LISTENING type exercises with play-audio-btn and play-slow-btn.
+ */
+window.playListeningAudio = async function(btn, slow = false) {
+    // Get the sentence from the button's data attribute
+    const sentence = btn.dataset.sentence;
+    
+    if (!sentence) {
+        console.error('No sentence data found on button');
+        return;
+    }
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Loading...';
+    
+    try {
+        const { api } = await import('../api/client.js');
+        const targetLanguage = window.APP_CONFIG?.TARGET_LANGUAGE || 'de';
+        
+        // Stop any currently playing audio
+        if (listeningExerciseAudioState.audio) {
+            listeningExerciseAudioState.audio.pause();
+            if (listeningExerciseAudioState.audioUrl) {
+                URL.revokeObjectURL(listeningExerciseAudioState.audioUrl);
+            }
+        }
+        
+        // Generate audio
+        const audioBlob = await api.speech.synthesize(sentence, targetLanguage, slow);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        listeningExerciseAudioState.audio = audio;
+        listeningExerciseAudioState.audioUrl = audioUrl;
+        
+        audio.onended = () => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        };
+        
+        audio.onerror = () => {
+            console.error('Audio playback error');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        };
+        
+        btn.textContent = '🔊 Playing...';
+        await audio.play();
+        
+    } catch (error) {
+        console.error('Failed to play listening audio:', error);
+        btn.disabled = false;
+        btn.textContent = originalText;
+        
+        if (window.showToast) {
+            window.showToast('Failed to play audio', 'error');
+        }
+    }
+};
+
+/**
+ * Check answer for a listening exercise (from content-renderer).
+ */
+window.checkListeningAnswer = window.checkListeningAnswer || function(btn) {
+    const item = btn.closest('.listening-item') || btn.closest('.exercise-item');
+    const input = item.querySelector('.listening-input') || item.querySelector('.exercise-input');
+    const feedback = item.querySelector('.exercise-feedback');
+    const correctAnswer = input.dataset.answer || '';
+    const userAnswer = input.value || '';
+    const index = parseInt(item.dataset.index) || 0;
+    
+    // Normalize for comparison
+    const normalizedUser = userAnswer.toLowerCase().trim();
+    const normalizedCorrect = correctAnswer.toLowerCase().trim();
+    
+    const isCorrect = normalizedUser === normalizedCorrect;
+    
+    feedback.classList.remove('hidden');
+    
+    if (isCorrect) {
+        feedback.className = 'exercise-feedback correct';
+        feedback.innerHTML = '✅ Correct!';
+        input.classList.add('correct');
+    } else {
+        feedback.className = 'exercise-feedback incorrect';
+        feedback.innerHTML = `❌ Expected: <strong>${correctAnswer}</strong>`;
+        input.classList.add('incorrect');
+    }
+    
+    btn.disabled = true;
+    
+    // Record the answer for score tracking
+    if (window.recordExerciseAnswer) {
+        window.recordExerciseAnswer(index, isCorrect, input.value, correctAnswer);
+    }
+};
+
+// ==================== Listening Comprehension Interactive Functions ====================
+
+// State for listening comprehension audio
+let listeningComprehensionAudioState = {
+    audio: null,
+    audioUrl: null,
+    currentStory: null,  // Track which story the audio was generated for
+    isPlaying: false
+};
+
+/**
+ * Toggle play/pause for listening comprehension story audio.
+ */
+window.toggleListeningComprehensionAudio = async function(btn) {
+    const container = btn.closest('.listening-comprehension-container');
+    const story = container.dataset.story;
+    const playIcon = btn.querySelector('.play-icon');
+    const playText = btn.querySelector('.play-text');
+    const replayBtn = container.querySelector('.lc-replay-btn');
+    
+    if (!story) return;
+    
+    // Check if the story has changed - if so, invalidate the cached audio
+    if (listeningComprehensionAudioState.currentStory !== story) {
+        // Story changed, clear old audio
+        if (listeningComprehensionAudioState.audio) {
+            listeningComprehensionAudioState.audio.pause();
+        }
+        if (listeningComprehensionAudioState.audioUrl) {
+            URL.revokeObjectURL(listeningComprehensionAudioState.audioUrl);
+        }
+        listeningComprehensionAudioState.audio = null;
+        listeningComprehensionAudioState.audioUrl = null;
+        listeningComprehensionAudioState.currentStory = null;
+        listeningComprehensionAudioState.isPlaying = false;
+    }
+    
+    // If audio is playing, pause it
+    if (listeningComprehensionAudioState.isPlaying && listeningComprehensionAudioState.audio) {
+        listeningComprehensionAudioState.audio.pause();
+        listeningComprehensionAudioState.isPlaying = false;
+        playIcon.textContent = '▶️';
+        playText.textContent = 'Resume';
+        btn.dataset.playing = 'false';
+        return;
+    }
+    
+    // If we have a paused audio FOR THE SAME STORY, resume it
+    if (listeningComprehensionAudioState.audio && 
+        listeningComprehensionAudioState.currentStory === story && 
+        !listeningComprehensionAudioState.isPlaying) {
+        try {
+            await listeningComprehensionAudioState.audio.play();
+            listeningComprehensionAudioState.isPlaying = true;
+            playIcon.textContent = '⏸️';
+            playText.textContent = 'Pause';
+            btn.dataset.playing = 'true';
+            return;
+        } catch (e) {
+            console.error('Failed to resume audio:', e);
+        }
+    }
+    
+    // Otherwise, generate and play new audio
+    btn.disabled = true;
+    playIcon.textContent = '⏳';
+    playText.textContent = 'Loading...';
+    
+    try {
+        const { api } = await import('../api/client.js');
+        const targetLanguage = window.APP_CONFIG?.TARGET_LANGUAGE || 'de';
+        
+        const audioBlob = await api.speech.synthesize(story, targetLanguage, false);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.onended = () => {
+            listeningComprehensionAudioState.isPlaying = false;
+            playIcon.textContent = '▶️';
+            playText.textContent = 'Play Again';
+            btn.dataset.playing = 'false';
+            replayBtn.disabled = false;
+        };
+        
+        audio.onerror = () => {
+            console.error('Audio playback error');
+            listeningComprehensionAudioState.isPlaying = false;
+            playIcon.textContent = '▶️';
+            playText.textContent = 'Play Story';
+            btn.dataset.playing = 'false';
+        };
+        
+        listeningComprehensionAudioState.audio = audio;
+        listeningComprehensionAudioState.audioUrl = audioUrl;
+        listeningComprehensionAudioState.currentStory = story;  // Track which story this audio is for
+        listeningComprehensionAudioState.isPlaying = true;
+        
+        btn.disabled = false;
+        playIcon.textContent = '⏸️';
+        playText.textContent = 'Pause';
+        btn.dataset.playing = 'true';
+        replayBtn.disabled = false;
+        
+        await audio.play();
+        
+    } catch (error) {
+        console.error('Failed to play story:', error);
+        btn.disabled = false;
+        playIcon.textContent = '▶️';
+        playText.textContent = 'Play Story';
+        
+        if (window.showToast) {
+            window.showToast('Failed to play audio', 'error');
+        }
+    }
+};
+
+/**
+ * Replay the listening comprehension audio from the beginning.
+ */
+window.replayListeningComprehensionAudio = async function(btn) {
+    const container = btn.closest('.listening-comprehension-container');
+    const playBtn = container.querySelector('.lc-play-btn');
+    
+    // Stop current audio if playing
+    if (listeningComprehensionAudioState.audio) {
+        listeningComprehensionAudioState.audio.pause();
+        listeningComprehensionAudioState.audio.currentTime = 0;
+        listeningComprehensionAudioState.isPlaying = false;
+    }
+    
+    // Trigger play from the main play button
+    if (playBtn) {
+        // Reset audio state to force regeneration
+        listeningComprehensionAudioState.audio = null;
+        await window.toggleListeningComprehensionAudio(playBtn);
+    }
+};
+
+/**
+ * Toggle visibility of story text in listening comprehension.
+ */
+window.toggleListeningComprehensionText = function(btn) {
+    const container = btn.closest('.listening-comprehension-container');
+    const storyText = container.querySelector('.lc-story-text');
+    const isShowing = btn.dataset.showing === 'true';
+    
+    if (isShowing) {
+        storyText.classList.add('hidden');
+        btn.textContent = `👁️ ${t('exercises.lcShowStoryText')}`;
+        btn.dataset.showing = 'false';
+    } else {
+        storyText.classList.remove('hidden');
+        btn.textContent = `🙈 ${t('exercises.lcHideStoryText')}`;
+        btn.dataset.showing = 'true';
+    }
+};
+
+/**
+ * Toggle visibility of translation in listening comprehension.
+ */
+window.toggleListeningComprehensionTranslation = function(btn) {
+    const container = btn.closest('.listening-comprehension-container');
+    const translationDiv = container.querySelector('.lc-story-translation');
+    const isShowing = btn.dataset.showing === 'true';
+    
+    if (isShowing) {
+        translationDiv.classList.add('hidden');
+        btn.textContent = `📖 ${t('exercises.lcShowTranslation')}`;
+        btn.dataset.showing = 'false';
+    } else {
+        translationDiv.classList.remove('hidden');
+        btn.textContent = `📖 ${t('exercises.lcHideTranslation')}`;
+        btn.dataset.showing = 'true';
+    }
+};
+
+/**
+ * Answer a true/false question in listening comprehension.
+ */
+window.answerListeningComprehension = function(btn, userAnswer) {
+    const item = btn.closest('.lc-statement-item');
+    const container = item.closest('.listening-comprehension-container');
+    const correctAnswer = item.dataset.answer === 'true';
+    const index = parseInt(item.dataset.index);
+    
+    // Disable both buttons
+    const trueBtn = item.querySelector('.lc-true-btn');
+    const falseBtn = item.querySelector('.lc-false-btn');
+    trueBtn.disabled = true;
+    falseBtn.disabled = true;
+    
+    // Highlight selected button
+    if (userAnswer) {
+        trueBtn.classList.add('selected');
+    } else {
+        falseBtn.classList.add('selected');
+    }
+    
+    // Check answer
+    const isCorrect = userAnswer === correctAnswer;
+    const feedback = item.querySelector('.lc-statement-feedback');
+    const feedbackIcon = feedback.querySelector('.lc-feedback-icon');
+    const feedbackText = feedback.querySelector('.lc-feedback-text');
+    
+    feedback.classList.remove('hidden');
+    
+    if (isCorrect) {
+        feedback.classList.add('correct');
+        feedbackIcon.textContent = '✅';
+        feedbackText.textContent = t('exercises.lcCorrect');
+        item.classList.add('answered-correct');
+    } else {
+        feedback.classList.add('incorrect');
+        feedbackIcon.textContent = '❌';
+        feedbackText.textContent = correctAnswer ? t('exercises.lcStatementTrue') : t('exercises.lcStatementFalse');
+        item.classList.add('answered-incorrect');
+    }
+    
+    // Show explanation
+    const explanation = item.querySelector('.lc-statement-explanation');
+    if (explanation) {
+        explanation.classList.remove('hidden');
+    }
+    
+    // Update progress
+    const answered = parseInt(container.dataset.answered) + 1;
+    const correct = parseInt(container.dataset.correct) + (isCorrect ? 1 : 0);
+    const total = parseInt(container.dataset.total);
+    
+    container.dataset.answered = answered;
+    container.dataset.correct = correct;
+    container.querySelector('.lc-progress').textContent = `${answered} / ${total} answered`;
+    
+    // Check if all answered
+    if (answered === total) {
+        showListeningComprehensionSummary(container, correct, total);
+    }
+};
+
+/**
+ * Show summary after all questions answered.
+ */
+function showListeningComprehensionSummary(container, correct, total) {
+    const summary = container.querySelector('.lc-summary');
+    const summaryScore = summary.querySelector('.lc-summary-score');
+    const summaryMessage = summary.querySelector('.lc-summary-message');
+    
+    const percentage = Math.round((correct / total) * 100);
+    summaryScore.textContent = `${correct} / ${total} correct (${percentage}%)`;
+    
+    if (percentage === 100) {
+        summaryMessage.textContent = '🎉 ' + t('exercises.lcPerfect');
+    } else if (percentage >= 80) {
+        summaryMessage.textContent = '👏 ' + t('exercises.lcGreat');
+    } else if (percentage >= 60) {
+        summaryMessage.textContent = '👍 ' + t('exercises.lcGood');
+    } else {
+        summaryMessage.textContent = '💪 ' + t('exercises.lcKeepPracticing');
+    }
+    
+    summary.classList.remove('hidden');
 }
 
 /**

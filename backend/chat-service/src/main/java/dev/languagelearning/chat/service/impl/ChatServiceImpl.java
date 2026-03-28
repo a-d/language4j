@@ -365,6 +365,7 @@ public class ChatServiceImpl implements ChatService {
             case "DRAG_DROP" -> contentGenerationService.generateDragDropExercises(topic, 5);
             case "TRANSLATION" -> contentGenerationService.generateTranslationExercises(topic, 5);
             case "LISTENING" -> contentGenerationService.generateListeningExercises(topic, 5);
+            case "LISTENING_COMPREHENSION" -> contentGenerationService.generateListeningComprehension(topic, 100, 5);
             case "SPEAKING" -> contentGenerationService.generateSpeakingExercises(topic, 5);
             case "LESSON" -> contentGenerationService.generateLesson(topic);
             case "SCENARIO" -> contentGenerationService.generateRoleplayScenario(topic);
@@ -382,6 +383,7 @@ public class ChatServiceImpl implements ChatService {
             case "DRAG_DROP" -> EmbeddedActivityType.DRAG_DROP;
             case "TRANSLATION" -> EmbeddedActivityType.TRANSLATION;
             case "LISTENING" -> EmbeddedActivityType.LISTENING;
+            case "LISTENING_COMPREHENSION" -> EmbeddedActivityType.LISTENING_COMPREHENSION;
             case "SPEAKING" -> EmbeddedActivityType.SPEAKING;
             case "LESSON" -> EmbeddedActivityType.LESSON;
             case "SCENARIO" -> EmbeddedActivityType.SCENARIO;

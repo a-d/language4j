@@ -271,4 +271,24 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         // Use LlmJsonGenerator for validated JSON with retry
         return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_VISUAL_VOCABULARY, variables);
     }
+
+    @Override
+    @Nonnull
+    public String generateListeningComprehension(@Nonnull String topic, int wordCount, int statementCount) {
+        User user = userService.getCurrentUser();
+        log.info("Generating listening comprehension on topic '{}' ({} words, {} statements) for level {}",
+                topic, wordCount, statementCount, user.getSkillLevel());
+
+        Map<String, Object> variables = Map.of(
+                "nativeLanguage", languageConfig.getNativeName(),
+                "targetLanguage", languageConfig.getTargetName(),
+                "skillLevel", user.getSkillLevel().name(),
+                "topic", topic,
+                "wordCount", wordCount,
+                "statementCount", statementCount
+        );
+
+        // Use LlmJsonGenerator for validated JSON with retry
+        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_LISTENING_COMPREHENSION, variables);
+    }
 }

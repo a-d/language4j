@@ -175,10 +175,16 @@ export const api = {
             body: { topic, questionCount } 
         }),
         
-        /** Generate listening comprehension exercises */
+        /** Generate listening transcription exercises (listen and type) */
         generateListening: (topic, questionCount = 5) => request('/v1/exercises/listening', { 
             method: 'POST', 
             body: { topic, questionCount } 
+        }),
+        
+        /** Generate listening comprehension exercises (story + true/false statements) */
+        generateListeningComprehension: (topic, wordCount = 100, statementCount = 5) => request('/v1/exercises/listening-comprehension', { 
+            method: 'POST', 
+            body: { topic, wordCount, statementCount } 
         }),
         
         /** Generate speaking/pronunciation exercises */

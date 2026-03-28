@@ -4,11 +4,11 @@ This document lists all learning activities supported by the Language Learning P
 
 ## Overview
 
-The platform supports **14 activity types** across different learning modalities:
+The platform supports **15 activity types** across different learning modalities:
 - **Vocabulary & Review**: Basic word learning and memorization
 - **Interactive Exercises**: Fill-in-blank, translation, word order
 - **Game-based Learning**: Pair matching, memory game
-- **Audio/Speech**: Listening comprehension, pronunciation practice
+- **Audio/Speech**: Listening comprehension, pronunciation practice, story listening
 - **Rich Content**: Lessons, scenarios, visual cards
 
 ---
@@ -365,6 +365,57 @@ The platform supports **14 activity types** across different learning modalities
 
 ---
 
+### 15. LISTENING_COMPREHENSION ⭐ NEW
+**Description**: Listen to a story and answer true/false comprehension questions. Audio plays with text hidden by default to encourage active listening.
+
+**Access Methods**:
+- ✅ Chat: "Listening comprehension about [topic]"
+- ✅ Navigation: Exercises page
+
+**Trigger Phrases** (Chat):
+- "Listening comprehension"
+- "Listen and understand"
+- "Story listening"
+- "Comprehension test"
+
+**Data Format**:
+```json
+{
+  "title": "A Day at the Market",
+  "story": "Marie geht heute zum Markt...",
+  "storyTranslation": "Marie goes to the market today...",
+  "wordCount": 100,
+  "skillLevel": "A2",
+  "statements": [
+    {
+      "statement": "Marie geht zum Supermarkt.",
+      "statementTranslation": "Marie goes to the supermarket.",
+      "isTrue": false,
+      "explanation": "Marie geht zum Markt, nicht zum Supermarkt."
+    }
+  ]
+}
+```
+
+**UI Features**:
+- Play/pause toggle button for story audio
+- Text visibility toggle (hidden by default)
+- True/False radio buttons for each statement
+- Progressive feedback after each answer
+- Final score summary
+- Replay audio option
+
+**User Flow**:
+1. User sees exercise title and play button (story text hidden)
+2. User clicks play - audio starts playing
+3. User can pause/resume audio at any time
+4. Optionally toggle to show the story text (for assistance)
+5. User answers true/false statements one by one
+6. Each answer reveals explanation immediately
+7. After all statements: final score and option to replay
+
+---
+
 ## Chat Integration
 
 ### How to Trigger Activities in Chat
@@ -380,6 +431,8 @@ The chat moderator recognizes natural language requests and automatically genera
 | "Let's try some translation exercises" | TRANSLATION |
 | "Teach me about past tense" | LESSON |
 | "Let's roleplay ordering at a restaurant" | SCENARIO |
+| "Listening comprehension about travel" | LISTENING_COMPREHENSION |
+| "Story listening practice" | LISTENING_COMPREHENSION |
 
 ### Activity Tag Format
 
@@ -393,6 +446,7 @@ Examples:
 - `[ACTIVITY:PAIR_MATCHING:colors]`
 - `[ACTIVITY:MEMORY_GAME:animals]`
 - `[ACTIVITY:SCENARIO:ordering food at a restaurant]`
+- `[ACTIVITY:LISTENING_COMPREHENSION:daily routines:100]` (with word count)
 
 ---
 
@@ -405,7 +459,7 @@ Examples:
 | **Lessons** | LESSON, SCENARIO |
 | **Vocabulary** | VOCABULARY |
 | **Cards** | FLASHCARDS, VISUAL_CARDS |
-| **Exercises** | TEXT_COMPLETION, DRAG_DROP, TRANSLATION, PAIR_MATCHING, MEMORY_GAME, LISTENING, SPEAKING |
+| **Exercises** | TEXT_COMPLETION, DRAG_DROP, TRANSLATION, PAIR_MATCHING, MEMORY_GAME, LISTENING, LISTENING_COMPREHENSION, SPEAKING |
 | **Progress** | Statistics and history |
 
 ---
@@ -424,6 +478,7 @@ ContentType = {
     DRAG_DROP: 'drag-drop',
     TRANSLATION: 'translation',
     LISTENING: 'listening',
+    LISTENING_COMPREHENSION: 'listening-comprehension',
     SPEAKING: 'speaking',
     EVALUATION: 'evaluation',
     PRONUNCIATION_EVALUATION: 'pronunciation-evaluation',
@@ -442,6 +497,7 @@ enum EmbeddedActivityType {
     DRAG_DROP,
     TRANSLATION,
     LISTENING,
+    LISTENING_COMPREHENSION,
     SPEAKING,
     LESSON,
     SCENARIO,
@@ -477,7 +533,7 @@ The following activities are planned for future implementation. Each includes a 
 
 ---
 
-### 15. WORD_SCRAMBLE 🚧
+### 16. WORD_SCRAMBLE 🚧
 **Status**: Not Implemented  
 **Feasibility**: ⭐⭐⭐⭐⭐ Very Easy
 
@@ -508,7 +564,7 @@ The following activities are planned for future implementation. Each includes a 
 
 ---
 
-### 16. HANGMAN 🚧
+### 17. HANGMAN 🚧
 **Status**: Not Implemented  
 **Feasibility**: ⭐⭐⭐⭐ Easy
 
@@ -536,7 +592,7 @@ The following activities are planned for future implementation. Each includes a 
 
 ---
 
-### 17. CROSSWORD_MINI 🚧
+### 18. CROSSWORD_MINI 🚧
 **Status**: Not Implemented  
 **Feasibility**: ⭐⭐ Hard
 
@@ -566,7 +622,7 @@ The following activities are planned for future implementation. Each includes a 
 
 ---
 
-### 18. WORD_CHAIN 🚧
+### 19. WORD_CHAIN 🚧
 **Status**: Not Implemented  
 **Feasibility**: ⭐⭐⭐ Medium
 
@@ -591,41 +647,6 @@ The following activities are planned for future implementation. Each includes a 
 - Requires vocabulary validation (is the word real? is it in topic?)
 - Could use dictionary API or LLM validation
 - State management for turn-based play
-
----
-
-### 19. READING_COMPREHENSION 🚧
-**Status**: Not Implemented  
-**Feasibility**: ⭐⭐⭐ Medium
-
-**Description**: Read a passage and answer comprehension questions.
-
-**Proposed Trigger Phrases**:
-- "Reading practice"
-- "Comprehension exercise"
-- "Read and answer"
-
-**Proposed Data Format**:
-```json
-{
-  "passage": "Jean va au marché...",
-  "passageTranslation": "Jean goes to the market...",
-  "questions": [
-    {
-      "question": "Où va Jean?",
-      "type": "multiple_choice",
-      "options": ["Au marché", "À l'école", "Au parc"],
-      "correctAnswer": "Au marché"
-    }
-  ]
-}
-```
-
-**Implementation Notes**:
-- LLM generates passage + questions
-- Multiple question types (MC, short answer, true/false)
-- Audio playback option for the passage
-- Good for intermediate+ learners
 
 ---
 

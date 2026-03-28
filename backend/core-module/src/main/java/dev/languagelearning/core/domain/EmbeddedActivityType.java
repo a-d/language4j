@@ -38,9 +38,15 @@ public enum EmbeddedActivityType {
     TRANSLATION,
 
     /**
-     * Listening comprehension exercises.
+     * Listening comprehension exercises (transcription).
      */
     LISTENING,
+
+    /**
+     * Listening comprehension story with true/false statements.
+     * User listens to a story and answers comprehension questions.
+     */
+    LISTENING_COMPREHENSION,
 
     /**
      * Speaking/pronunciation exercises.

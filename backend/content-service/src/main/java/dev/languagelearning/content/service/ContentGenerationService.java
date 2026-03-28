@@ -146,4 +146,18 @@ public interface ContentGenerationService {
      */
     @Nonnull
     String generateVisualVocabulary(@Nonnull String topic, int wordCount);
+
+    /**
+     * Generates a listening comprehension exercise.
+     * <p>
+     * Creates a short story with true/false comprehension statements.
+     * The story is designed to be played via TTS, with text hidden by default.
+     *
+     * @param topic the topic for the story
+     * @param wordCount approximate word count for the story (default: 100)
+     * @param statementCount number of true/false statements (default: 5)
+     * @return JSON string with story and statements
+     */
+    @Nonnull
+    String generateListeningComprehension(@Nonnull String topic, int wordCount, int statementCount);
 }
