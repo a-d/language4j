@@ -302,7 +302,13 @@ Contributions are welcome! Please read the [Development Workflow](.clinerules/de
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+This means:
+- ✅ You can use, modify, and distribute this software freely
+- ✅ You must keep the source code open if you distribute it
+- ✅ Any derivative works must also be licensed under GPL-3.0
+- ✅ Changes must be documented
 
 ---
 
