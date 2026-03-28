@@ -57,6 +57,10 @@ async function init() {
     // Initialize theme early to prevent flash of wrong theme
     initTheme();
     
+    // Initialize i18n with English as default before any UI renders
+    // This ensures user selector modal has proper translations
+    await setLanguage('en');
+    
     setupNavigation();
     setupEventListeners();
     

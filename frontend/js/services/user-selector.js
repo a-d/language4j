@@ -38,7 +38,7 @@ const AVAILABLE_LANGUAGES = [
  * @param {string} name - Display name
  * @returns {string} First character uppercase
  */
-function getInitial(name) {
+export function getInitial(name) {
     return name ? name.charAt(0).toUpperCase() : '?';
 }
 
@@ -47,7 +47,7 @@ function getInitial(name) {
  * @param {string} userId - User ID
  * @returns {string} CSS hsl color
  */
-function getUserColor(userId) {
+export function getUserColor(userId) {
     // Simple hash to generate hue
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
