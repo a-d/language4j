@@ -93,13 +93,10 @@ public class ChatServiceImpl implements ChatService {
         log.info("Creating new chat session for user: {}", user.getDisplayName());
         
         ChatSession session = ChatSession.forUser(user);
-        session = sessionRepository.save(session);
-        
-        // Generate and add greeting message
-        ChatContext context = contextService.buildContext(user);
-        ChatResponse greeting = generateGreeting(session, context);
-        
-        return session;
+        // Don't generate greeting here - frontend will request it via __START_SESSION__
+        // This prevents duplicate greetings caused by race conditions between
+        // session creation and message fetching
+        return sessionRepository.save(session);
     }
 
     @Override
