@@ -276,10 +276,46 @@ Located in `backend/api-module/src/main/java/dev/languagelearning/api/controller
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/text-completion` | POST | Generate fill-in-blank exercises |
-| `/drag-drop` | POST | Generate word-order exercises |
-| `/translation` | POST | Generate translation exercises |
+| `/generate` | POST | Generate exercises (unified API) |
 | `/evaluate` | POST | Evaluate user response |
+| `/evaluate-pronunciation` | POST | Evaluate pronunciation |
+| `/results` | GET, POST | Get history / save result |
+| `/results/recent` | GET | Get recent results |
+| `/statistics` | GET | Get exercise statistics |
+
+#### Exercise Generation
+
+All exercise generation is done through a single unified endpoint:
+
+```
+POST /api/v1/exercises/generate
+{
+  "type": "TEXT_COMPLETION",  // Required: exercise type
+  "topic": "past tense verbs", // Required: topic for exercises
+  "count": 5,                  // Optional: number of exercises (type default if omitted)
+  "options": { ... }           // Optional: type-specific options
+}
+```
+
+**Supported types:**
+- `TEXT_COMPLETION` - Fill-in-the-blank exercises (default count: 5)
+- `DRAG_DROP` - Word-ordering exercises (default count: 5)
+- `TRANSLATION` - Translation exercises (default count: 5)
+- `LISTENING` - Listen and transcribe exercises (default count: 5)
+- `LISTENING_COMPREHENSION` - Story with true/false statements (default count: 1)
+  - Options: `wordCount` (default: 100), `statementCount` (default: 5)
+- `SPEAKING` - Pronunciation exercises (default count: 5)
+
+**Planned types (not yet implemented):**
+- `WORD_SCRAMBLE`, `HANGMAN`, `CONJUGATION_DRILL`, `ARTICLE_PRACTICE`, `MULTIPLE_CHOICE`, `SENTENCE_CORRECTION`, `DICTATION`
+
+**Examples:**
+```javascript
+// Frontend usage
+api.exercises.generate('TEXT_COMPLETION', 'past tense verbs');
+api.exercises.generate('TRANSLATION', 'restaurant phrases', 10);
+api.exercises.generate('LISTENING_COMPREHENSION', 'daily routines', 1, { wordCount: 150, statementCount: 6 });
+```
 
 ### SpeechController
 **Path**: `/api/v1/speech`

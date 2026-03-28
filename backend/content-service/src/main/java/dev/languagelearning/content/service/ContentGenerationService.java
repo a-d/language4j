@@ -1,8 +1,8 @@
 package dev.languagelearning.content.service;
 
+import dev.languagelearning.core.domain.ExerciseGenerationType;
 import jakarta.annotation.Nonnull;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,34 +30,33 @@ public interface ContentGenerationService {
     String generateVocabulary(@Nonnull String topic, int wordCount);
 
     /**
-     * Generates fill-in-the-blank exercises.
+     * Generates exercises of any type using the unified generation API.
+     * <p>
+     * This is the single method for all exercise generation, supporting multiple types:
+     * <ul>
+     *   <li>{@link ExerciseGenerationType#TEXT_COMPLETION} - Fill-in-the-blank exercises</li>
+     *   <li>{@link ExerciseGenerationType#DRAG_DROP} - Word-ordering exercises</li>
+     *   <li>{@link ExerciseGenerationType#TRANSLATION} - Translation exercises</li>
+     *   <li>{@link ExerciseGenerationType#LISTENING} - Listen and transcribe exercises</li>
+     *   <li>{@link ExerciseGenerationType#LISTENING_COMPREHENSION} - Story with true/false statements</li>
+     *   <li>{@link ExerciseGenerationType#SPEAKING} - Pronunciation exercises</li>
+     * </ul>
      *
+     * @param type the type of exercise to generate
      * @param topic the exercise topic
-     * @param questionCount number of questions
+     * @param count number of exercises to generate
+     * @param options type-specific options (may be null). For LISTENING_COMPREHENSION,
+     *                supports "wordCount" and "statementCount" options.
      * @return JSON string with exercises
+     * @throws UnsupportedOperationException if the exercise type is not yet implemented
      */
     @Nonnull
-    String generateTextCompletionExercises(@Nonnull String topic, int questionCount);
-
-    /**
-     * Generates word-ordering (drag-drop) exercises.
-     *
-     * @param topic the exercise topic
-     * @param sentenceCount number of sentences
-     * @return JSON string with exercises
-     */
-    @Nonnull
-    String generateDragDropExercises(@Nonnull String topic, int sentenceCount);
-
-    /**
-     * Generates translation exercises.
-     *
-     * @param topic the exercise topic
-     * @param sentenceCount number of sentences
-     * @return JSON string with exercises
-     */
-    @Nonnull
-    String generateTranslationExercises(@Nonnull String topic, int sentenceCount);
+    String generateExercises(
+            @Nonnull ExerciseGenerationType type,
+            @Nonnull String topic,
+            int count,
+            Map<String, Object> options
+    );
 
     /**
      * Generates flashcard data for vocabulary.
@@ -101,30 +100,6 @@ public interface ContentGenerationService {
     String evaluateResponse(@Nonnull String exercise, @Nonnull String userResponse, @Nonnull String expectedAnswer);
 
     /**
-     * Generates listening comprehension exercises.
-     * <p>
-     * Each exercise includes a sentence to be spoken via TTS, translation, and hint.
-     *
-     * @param topic the exercise topic
-     * @param exerciseCount number of exercises
-     * @return JSON string with exercises
-     */
-    @Nonnull
-    String generateListeningExercises(@Nonnull String topic, int exerciseCount);
-
-    /**
-     * Generates speaking/pronunciation exercises.
-     * <p>
-     * Each exercise includes text to speak, translation, pronunciation tips, and common mistakes.
-     *
-     * @param topic the exercise topic
-     * @param exerciseCount number of exercises
-     * @return JSON string with exercises
-     */
-    @Nonnull
-    String generateSpeakingExercises(@Nonnull String topic, int exerciseCount);
-
-    /**
      * Evaluates pronunciation by comparing expected text with transcription.
      *
      * @param expectedText the text the student was supposed to say
@@ -146,18 +121,4 @@ public interface ContentGenerationService {
      */
     @Nonnull
     String generateVisualVocabulary(@Nonnull String topic, int wordCount);
-
-    /**
-     * Generates a listening comprehension exercise.
-     * <p>
-     * Creates a short story with true/false comprehension statements.
-     * The story is designed to be played via TTS, with text hidden by default.
-     *
-     * @param topic the topic for the story
-     * @param wordCount approximate word count for the story (default: 100)
-     * @param statementCount number of true/false statements (default: 5)
-     * @return JSON string with story and statements
-     */
-    @Nonnull
-    String generateListeningComprehension(@Nonnull String topic, int wordCount, int statementCount);
 }

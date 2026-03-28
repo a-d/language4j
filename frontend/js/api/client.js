@@ -157,41 +157,37 @@ export const api = {
     
     // ==================== Exercises ====================
     exercises: {
-        /** Generate text completion (fill-in-the-blank) exercises */
-        generateTextCompletion: (topic, questionCount = 5) => request('/v1/exercises/text-completion', { 
-            method: 'POST', 
-            body: { topic, questionCount } 
-        }),
-        
-        /** Generate drag-and-drop (word order) exercises */
-        generateDragDrop: (topic, questionCount = 5) => request('/v1/exercises/drag-drop', { 
-            method: 'POST', 
-            body: { topic, questionCount } 
-        }),
-        
-        /** Generate translation exercises */
-        generateTranslation: (topic, questionCount = 5) => request('/v1/exercises/translation', { 
-            method: 'POST', 
-            body: { topic, questionCount } 
-        }),
-        
-        /** Generate listening transcription exercises (listen and type) */
-        generateListening: (topic, questionCount = 5) => request('/v1/exercises/listening', { 
-            method: 'POST', 
-            body: { topic, questionCount } 
-        }),
-        
-        /** Generate listening comprehension exercises (story + true/false statements) */
-        generateListeningComprehension: (topic, wordCount = 100, statementCount = 5) => request('/v1/exercises/listening-comprehension', { 
-            method: 'POST', 
-            body: { topic, wordCount, statementCount } 
-        }),
-        
-        /** Generate speaking/pronunciation exercises */
-        generateSpeaking: (topic, questionCount = 5) => request('/v1/exercises/speaking', { 
-            method: 'POST', 
-            body: { topic, questionCount } 
-        }),
+        /**
+         * Unified exercise generation API
+         * 
+         * Generates exercises of any supported type using a single endpoint.
+         * 
+         * @param {string} type - Exercise type: TEXT_COMPLETION, DRAG_DROP, TRANSLATION, 
+         *                        LISTENING, LISTENING_COMPREHENSION, SPEAKING
+         * @param {string} topic - Topic for exercise generation
+         * @param {number} [count] - Number of exercises (uses type default if not specified)
+         * @param {Object} [options] - Type-specific options (e.g., {wordCount, statementCount} for LISTENING_COMPREHENSION)
+         * @returns {Promise<{content: string, type: string}>} Generated exercises in JSON format
+         * 
+         * @example
+         * // Simple text completion
+         * api.exercises.generate('TEXT_COMPLETION', 'past tense verbs')
+         * 
+         * // Translation with custom count
+         * api.exercises.generate('TRANSLATION', 'restaurant phrases', 10)
+         * 
+         * // Listening comprehension with options
+         * api.exercises.generate('LISTENING_COMPREHENSION', 'daily routines', 1, { wordCount: 150, statementCount: 6 })
+         */
+        generate: (type, topic, count = null, options = null) => {
+            const body = { type, topic };
+            if (count !== null) body.count = count;
+            if (options !== null) body.options = options;
+            return request('/v1/exercises/generate', { 
+                method: 'POST', 
+                body 
+            });
+        },
         
         /** Evaluate a user's exercise response */
         evaluate: (exercise, userResponse, expectedAnswer) => request('/v1/exercises/evaluate', { 

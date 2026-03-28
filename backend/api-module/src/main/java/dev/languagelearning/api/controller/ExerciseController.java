@@ -24,6 +24,14 @@ import java.util.List;
 
 /**
  * REST controller for exercise operations.
+ * <p>
+ * Provides endpoints for:
+ * <ul>
+ *   <li>Exercise generation (unified API)</li>
+ *   <li>Response evaluation</li>
+ *   <li>Exercise result tracking</li>
+ *   <li>Statistics and history</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/v1/exercises")
@@ -34,48 +42,47 @@ public class ExerciseController {
     private final ContentGenerationService contentService;
     private final ExerciseResultService exerciseResultService;
 
-    /**
-     * Generates text completion (fill-in-the-blank) exercises.
-     */
-    @PostMapping("/text-completion")
-    @Operation(
-            summary = "Generate text completion exercises",
-            description = "Generates fill-in-the-blank exercises for the specified topic. Each exercise includes a sentence with a blank and the expected answer."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Exercises generated successfully",
-                    content = @Content(schema = @Schema(implementation = GeneratedContentResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Exercise generation failed",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<GeneratedContentResponse> getTextCompletionExercises(
-            @RequestBody GenerateExerciseRequest request
-    ) {
-        String content = contentService.generateTextCompletionExercises(
-                request.topic(),
-                request.questionCount()
-        );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "text-completion"));
-    }
+    // ==================== Exercise Generation ====================
 
     /**
-     * Generates drag-and-drop (word order) exercises.
+     * Unified endpoint for generating any type of exercise.
+     * <p>
+     * This endpoint consolidates all exercise types into a single flexible API.
+     *
+     * @param request the generation request containing type, topic, count, and options
+     * @return generated exercises in JSON format
      */
-    @PostMapping("/drag-drop")
+    @PostMapping("/generate")
     @Operation(
-            summary = "Generate drag-and-drop exercises",
-            description = "Generates word-ordering exercises where users arrange words to form sentences. Includes shuffled words and the correct sentence order."
+            summary = "Generate exercises",
+            description = """
+                    Generates exercises of any supported type using a single unified API.
+                    
+                    **Supported types:**
+                    - TEXT_COMPLETION: Fill-in-the-blank exercises
+                    - DRAG_DROP: Word-ordering exercises
+                    - TRANSLATION: Translation exercises
+                    - LISTENING: Listen and transcribe exercises
+                    - LISTENING_COMPREHENSION: Story with true/false statements
+                    - SPEAKING: Pronunciation exercises
+                    
+                    **Future types (not yet implemented):**
+                    WORD_SCRAMBLE, HANGMAN, CONJUGATION_DRILL, ARTICLE_PRACTICE, MULTIPLE_CHOICE, 
+                    SENTENCE_CORRECTION, DICTATION
+                    
+                    **Example requests:**
+                    ```json
+                    // Simple text completion
+                    { "type": "TEXT_COMPLETION", "topic": "past tense verbs" }
+                    
+                    // Translation with custom count
+                    { "type": "TRANSLATION", "topic": "restaurant phrases", "count": 10 }
+                    
+                    // Listening comprehension with options
+                    { "type": "LISTENING_COMPREHENSION", "topic": "daily routines",
+                      "options": { "wordCount": 150, "statementCount": 6 } }
+                    ```
+                    """
     )
     @ApiResponses({
             @ApiResponse(
@@ -85,7 +92,12 @@ public class ExerciseController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid request",
+                    description = "Invalid request (unknown type, missing topic)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "501",
+                    description = "Exercise type not yet implemented",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -94,50 +106,19 @@ public class ExerciseController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<GeneratedContentResponse> getDragDropExercises(
-            @RequestBody GenerateExerciseRequest request
+    public ResponseEntity<GeneratedContentResponse> generateExercises(
+            @Valid @RequestBody GenerateExercisesRequest request
     ) {
-        String content = contentService.generateDragDropExercises(
+        String content = contentService.generateExercises(
+                request.type(),
                 request.topic(),
-                request.questionCount()
+                request.getEffectiveCount(),
+                request.options()
         );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "drag-drop"));
+        return ResponseEntity.ok(new GeneratedContentResponse(content, request.type().name().toLowerCase().replace('_', '-')));
     }
 
-    /**
-     * Generates translation exercises.
-     */
-    @PostMapping("/translation")
-    @Operation(
-            summary = "Generate translation exercises",
-            description = "Generates translation exercises from native language to target language. Includes the source sentence, expected translation, and key vocabulary."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Exercises generated successfully",
-                    content = @Content(schema = @Schema(implementation = GeneratedContentResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Exercise generation failed",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<GeneratedContentResponse> getTranslationExercises(
-            @RequestBody GenerateExerciseRequest request
-    ) {
-        String content = contentService.generateTranslationExercises(
-                request.topic(),
-                request.questionCount()
-        );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "translation"));
-    }
+    // ==================== Evaluation ====================
 
     /**
      * Evaluates a user's exercise response.
@@ -173,113 +154,6 @@ public class ExerciseController {
                 request.expectedAnswer()
         );
         return ResponseEntity.ok(new GeneratedContentResponse(content, "evaluation"));
-    }
-
-    /**
-     * Generates listening transcription exercises (listen and type what you hear).
-     */
-    @PostMapping("/listening")
-    @Operation(
-            summary = "Generate listening exercises",
-            description = "Generates listening transcription exercises where users listen to audio and type what they hear. Each exercise includes text for TTS, translation, and hints."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Exercises generated successfully",
-                    content = @Content(schema = @Schema(implementation = GeneratedContentResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Exercise generation failed",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<GeneratedContentResponse> getListeningExercises(
-            @RequestBody GenerateExerciseRequest request
-    ) {
-        String content = contentService.generateListeningExercises(
-                request.topic(),
-                request.questionCount()
-        );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "listening"));
-    }
-
-    /**
-     * Generates listening comprehension story with true/false statements.
-     */
-    @PostMapping("/listening-comprehension")
-    @Operation(
-            summary = "Generate listening comprehension exercise",
-            description = "Generates a listening comprehension exercise with a short story and true/false statements. " +
-                    "Users listen to the story (text hidden by default) and answer comprehension questions."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Exercise generated successfully",
-                    content = @Content(schema = @Schema(implementation = GeneratedContentResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Exercise generation failed",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<GeneratedContentResponse> getListeningComprehensionExercise(
-            @RequestBody GenerateListeningComprehensionRequest request
-    ) {
-        String content = contentService.generateListeningComprehension(
-                request.topic(),
-                request.wordCount(),
-                request.statementCount()
-        );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "listening-comprehension"));
-    }
-
-    /**
-     * Generates speaking/pronunciation exercises.
-     */
-    @PostMapping("/speaking")
-    @Operation(
-            summary = "Generate speaking exercises",
-            description = "Generates speaking and pronunciation exercises where users speak phrases and get feedback. Each exercise includes text to speak, pronunciation tips, and common mistakes to avoid."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Exercises generated successfully",
-                    content = @Content(schema = @Schema(implementation = GeneratedContentResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Exercise generation failed",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public ResponseEntity<GeneratedContentResponse> getSpeakingExercises(
-            @RequestBody GenerateExerciseRequest request
-    ) {
-        String content = contentService.generateSpeakingExercises(
-                request.topic(),
-                request.questionCount()
-        );
-        return ResponseEntity.ok(new GeneratedContentResponse(content, "speaking"));
     }
 
     /**

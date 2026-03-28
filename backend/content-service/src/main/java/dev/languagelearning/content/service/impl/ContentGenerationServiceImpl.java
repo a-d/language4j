@@ -3,8 +3,10 @@ package dev.languagelearning.content.service.impl;
 import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
 import dev.languagelearning.content.util.VocabularyJsonValidator;
+import dev.languagelearning.core.domain.ExerciseGenerationType;
 import dev.languagelearning.core.domain.User;
 import dev.languagelearning.llm.LlmService;
+import dev.languagelearning.llm.PromptTemplate;
 import dev.languagelearning.llm.prompts.LanguageLearningPrompts;
 import dev.languagelearning.llm.service.LlmJsonGenerator;
 import dev.languagelearning.learning.service.UserService;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,6 +37,104 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
     private final LlmJsonGenerator llmJsonGenerator;
     private final UserService userService;
     private final LanguageConfig languageConfig;
+
+    // ==================== Exercise Generation ====================
+
+    @Override
+    @Nonnull
+    public String generateExercises(
+            @Nonnull ExerciseGenerationType type,
+            @Nonnull String topic,
+            int count,
+            Map<String, Object> options
+    ) {
+        User user = userService.getCurrentUser();
+        log.info("Generating {} {} exercise(s) on topic '{}' for level {}",
+                count, type.name(), topic, user.getSkillLevel());
+
+        // Build base variables
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("nativeLanguage", languageConfig.getNativeName());
+        variables.put("targetLanguage", languageConfig.getTargetName());
+        variables.put("skillLevel", user.getSkillLevel().name());
+        variables.put("topic", topic);
+
+        // Add count with type-specific parameter name
+        addCountVariable(type, count, variables);
+
+        // Add type-specific options
+        if (options != null) {
+            addTypeSpecificOptions(type, options, variables);
+        }
+
+        // Get the appropriate prompt template
+        PromptTemplate prompt = getPromptForExerciseType(type);
+
+        // Generate and return
+        return llmJsonGenerator.generateJson(prompt, variables);
+    }
+
+    /**
+     * Adds the count variable with the appropriate parameter name for the exercise type.
+     */
+    private void addCountVariable(ExerciseGenerationType type, int count, Map<String, Object> variables) {
+        switch (type) {
+            case TEXT_COMPLETION -> variables.put("questionCount", count);
+            case DRAG_DROP, TRANSLATION -> variables.put("sentenceCount", count);
+            case LISTENING, SPEAKING -> variables.put("exerciseCount", count);
+            case LISTENING_COMPREHENSION -> variables.put("statementCount", count);
+            default -> variables.put("count", count);
+        }
+    }
+
+    /**
+     * Adds type-specific options to the variables map.
+     */
+    private void addTypeSpecificOptions(ExerciseGenerationType type, Map<String, Object> options, Map<String, Object> variables) {
+        switch (type) {
+            case LISTENING_COMPREHENSION -> {
+                // Listening comprehension has wordCount and statementCount options
+                if (options.containsKey("wordCount")) {
+                    variables.put("wordCount", options.get("wordCount"));
+                } else {
+                    variables.put("wordCount", 100); // default
+                }
+                if (options.containsKey("statementCount")) {
+                    variables.put("statementCount", options.get("statementCount"));
+                }
+            }
+            // Add more type-specific option handling as needed
+            default -> {
+                // For other types, pass through any options that match prompt variables
+                variables.putAll(options);
+            }
+        }
+    }
+
+    /**
+     * Maps exercise types to their corresponding prompt templates.
+     *
+     * @throws UnsupportedOperationException if the exercise type is not yet implemented
+     */
+    private PromptTemplate getPromptForExerciseType(ExerciseGenerationType type) {
+        return switch (type) {
+            case TEXT_COMPLETION -> LanguageLearningPrompts.GENERATE_TEXT_COMPLETION;
+            case DRAG_DROP -> LanguageLearningPrompts.GENERATE_DRAG_DROP;
+            case TRANSLATION -> LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE;
+            case LISTENING -> LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE;
+            case LISTENING_COMPREHENSION -> LanguageLearningPrompts.GENERATE_LISTENING_COMPREHENSION;
+            case SPEAKING -> LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE;
+            // Future types - not yet implemented
+            case WORD_SCRAMBLE, HANGMAN, CONJUGATION_DRILL, ARTICLE_PRACTICE,
+                 MULTIPLE_CHOICE, SENTENCE_CORRECTION, DICTATION ->
+                    throw new UnsupportedOperationException(
+                            "Exercise type " + type.name() + " is not yet implemented. " +
+                            "See LEARNING-ACTIVITIES.md for planned implementation details."
+                    );
+        };
+    }
+
+    // ==================== Lesson Generation ====================
 
     @Override
     @Nonnull
@@ -72,59 +173,7 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         return VocabularyJsonValidator.validateAndNormalize(json);
     }
 
-    @Override
-    @Nonnull
-    public String generateTextCompletionExercises(@Nonnull String topic, int questionCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating {} text completion exercises on topic '{}'", questionCount, topic);
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "questionCount", questionCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION, variables);
-    }
-
-    @Override
-    @Nonnull
-    public String generateDragDropExercises(@Nonnull String topic, int sentenceCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating {} drag-drop exercises on topic '{}'", sentenceCount, topic);
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "sentenceCount", sentenceCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_DRAG_DROP, variables);
-    }
-
-    @Override
-    @Nonnull
-    public String generateTranslationExercises(@Nonnull String topic, int sentenceCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating {} translation exercises on topic '{}'", sentenceCount, topic);
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "sentenceCount", sentenceCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE, variables);
-    }
+    // ==================== Flashcards ====================
 
     @Override
     @Nonnull
@@ -144,6 +193,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_FLASHCARDS, variables);
     }
 
+    // ==================== Roleplay ====================
+
     @Override
     @Nonnull
     public String generateRoleplayScenario(@Nonnull String scenario) {
@@ -159,6 +210,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
 
         return llmService.generate(LanguageLearningPrompts.GENERATE_ROLEPLAY_SCENARIO, variables);
     }
+
+    // ==================== Learning Plan ====================
 
     @Override
     @Nonnull
@@ -177,6 +230,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
 
         return llmService.generate(LanguageLearningPrompts.CREATE_LEARNING_PLAN, variables);
     }
+
+    // ==================== Evaluation ====================
 
     @Override
     @Nonnull
@@ -199,44 +254,6 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
 
     @Override
     @Nonnull
-    public String generateListeningExercises(@Nonnull String topic, int exerciseCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating {} listening exercises on topic '{}' for level {}", 
-                exerciseCount, topic, user.getSkillLevel());
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "exerciseCount", exerciseCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_LISTENING_EXERCISE, variables);
-    }
-
-    @Override
-    @Nonnull
-    public String generateSpeakingExercises(@Nonnull String topic, int exerciseCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating {} speaking exercises on topic '{}' for level {}", 
-                exerciseCount, topic, user.getSkillLevel());
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "exerciseCount", exerciseCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_SPEAKING_EXERCISE, variables);
-    }
-
-    @Override
-    @Nonnull
     public String evaluatePronunciation(@Nonnull String expectedText, @Nonnull String transcription) {
         User user = userService.getCurrentUser();
         log.info("Evaluating pronunciation for user {}", user.getId());
@@ -252,6 +269,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         // Use LlmJsonGenerator for validated JSON with retry
         return llmJsonGenerator.generateJson(LanguageLearningPrompts.EVALUATE_PRONUNCIATION, variables);
     }
+
+    // ==================== Visual Vocabulary ====================
 
     @Override
     @Nonnull
@@ -270,25 +289,5 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
 
         // Use LlmJsonGenerator for validated JSON with retry
         return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_VISUAL_VOCABULARY, variables);
-    }
-
-    @Override
-    @Nonnull
-    public String generateListeningComprehension(@Nonnull String topic, int wordCount, int statementCount) {
-        User user = userService.getCurrentUser();
-        log.info("Generating listening comprehension on topic '{}' ({} words, {} statements) for level {}",
-                topic, wordCount, statementCount, user.getSkillLevel());
-
-        Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
-                "skillLevel", user.getSkillLevel().name(),
-                "topic", topic,
-                "wordCount", wordCount,
-                "statementCount", statementCount
-        );
-
-        // Use LlmJsonGenerator for validated JSON with retry
-        return llmJsonGenerator.generateJson(LanguageLearningPrompts.GENERATE_LISTENING_COMPREHENSION, variables);
     }
 }

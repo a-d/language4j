@@ -4,9 +4,16 @@ import dev.languagelearning.chat.model.ChatContext;
 import dev.languagelearning.chat.prompts.ChatPrompts;
 import dev.languagelearning.chat.service.ChatContextService;
 import dev.languagelearning.chat.service.ChatService;
+import dev.languagelearning.chat.service.ChatService.ChatResponse;
+import dev.languagelearning.chat.service.ChatService.ChatResponseChunk;
 import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
-import dev.languagelearning.core.domain.*;
+import dev.languagelearning.core.domain.ChatMessage;
+import dev.languagelearning.core.domain.ChatSession;
+import dev.languagelearning.core.domain.EmbeddedActivityType;
+import dev.languagelearning.core.domain.ExerciseGenerationType;
+import dev.languagelearning.core.domain.MessageRole;
+import dev.languagelearning.core.domain.User;
 import dev.languagelearning.core.exception.EntityNotFoundException;
 import dev.languagelearning.core.repository.ChatMessageRepository;
 import dev.languagelearning.core.repository.ChatSessionRepository;
@@ -358,12 +365,19 @@ public class ChatServiceImpl implements ChatService {
             case "VOCABULARY" -> contentGenerationService.generateVocabulary(topic, 8);
             case "FLASHCARDS" -> contentGenerationService.generateFlashcards(topic, 8);
             case "VISUAL_CARDS" -> contentGenerationService.generateVisualVocabulary(topic, 6);
-            case "TEXT_COMPLETION" -> contentGenerationService.generateTextCompletionExercises(topic, 5);
-            case "DRAG_DROP" -> contentGenerationService.generateDragDropExercises(topic, 5);
-            case "TRANSLATION" -> contentGenerationService.generateTranslationExercises(topic, 5);
-            case "LISTENING" -> contentGenerationService.generateListeningExercises(topic, 5);
-            case "LISTENING_COMPREHENSION" -> contentGenerationService.generateListeningComprehension(topic, 100, 5);
-            case "SPEAKING" -> contentGenerationService.generateSpeakingExercises(topic, 5);
+            case "TEXT_COMPLETION" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.TEXT_COMPLETION, topic, 5, null);
+            case "DRAG_DROP" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.DRAG_DROP, topic, 5, null);
+            case "TRANSLATION" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.TRANSLATION, topic, 5, null);
+            case "LISTENING" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.LISTENING, topic, 5, null);
+            case "LISTENING_COMPREHENSION" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.LISTENING_COMPREHENSION, topic, 1, 
+                    Map.of("wordCount", 100, "statementCount", 5));
+            case "SPEAKING" -> contentGenerationService.generateExercises(
+                    ExerciseGenerationType.SPEAKING, topic, 5, null);
             case "LESSON" -> contentGenerationService.generateLesson(topic);
             case "SCENARIO" -> contentGenerationService.generateRoleplayScenario(topic);
             case "PAIR_MATCHING", "MEMORY_GAME" -> contentGenerationService.generateVocabulary(topic, 8);
