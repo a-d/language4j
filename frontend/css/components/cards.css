@@ -97,9 +97,9 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Taller inner card for bilingual cards with images */
+/* Taller inner card for bilingual cards with images - fixed height for consistent front/back */
 .bilingual-card .visual-card-inner {
-    min-height: 520px;
+    height: calc(520px + 3em);
 }
 
 .visual-card.flipped .visual-card-inner {
@@ -407,13 +407,15 @@
 
 /* ==================== Bilingual Card Styles ==================== */
 
-/* Bilingual Card Layout */
+/* Bilingual Card Layout - both sides must have identical dimensions */
 .bilingual-card .visual-card-front,
 .bilingual-card .visual-card-back {
     display: flex;
     flex-direction: column;
     padding: 1.25rem;
     justify-content: flex-start;
+    height: 100%;
+    overflow: hidden;
 }
 
 /* Image sizing - let image determine its natural size up to constraints */
@@ -440,6 +442,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow-y: auto;
+    min-height: 0; /* Allow flex child to shrink below content size */
 }
 
 /* Native word (front side) */
