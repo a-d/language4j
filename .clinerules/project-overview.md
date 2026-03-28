@@ -17,14 +17,16 @@ A deployable, AI-powered language learning platform that adapts to user configur
 2. **core-module**: Domain models, entities, shared utilities
 3. **llm-module**: Spring AI abstraction for multi-provider support
 4. **api-module**: Spring Boot REST API
-5. **content-service**: Learning content generation and management
-6. **learning-service**: Lesson planning, progress tracking, skill assessment
-7. **speech-service**: Audio transcription and text-to-speech integration
-8. **image-service**: Learning card image generation
-9. **frontend**: Vanilla JS web application
-10. **mcp-server**: MCP server for tool integration
+5. **chat-service**: AI chat coach with streaming responses and embedded activities
+6. **content-service**: Learning content generation and management
+7. **learning-service**: Lesson planning, progress tracking, skill assessment
+8. **speech-service**: Audio transcription and text-to-speech integration
+9. **image-service**: Learning card image generation
+10. **frontend**: Vanilla JS web application
+11. **mcp-server**: MCP server for tool integration
 
 ## Key Features
+- AI Chat Coach with streaming responses and embedded activities
 - Personalized learning plan generation via LLM
 - Goal setting (daily, weekly, monthly, yearly)
 - Skill level assessment and adaptive difficulty
@@ -44,6 +46,7 @@ language-learning/
 │   ├── core-module/
 │   ├── llm-module/
 │   ├── api-module/
+│   ├── chat-service/
 │   ├── content-service/
 │   ├── learning-service/
 │   ├── speech-service/

@@ -7,23 +7,28 @@
                     │   api-module    │ (Spring Boot Application)
                     └────────┬────────┘
                              │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-        ▼                    ▼                    ▼
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│content-service│   │learning-service│  │ speech-service│
-└───────┬───────┘   └───────┬───────┘   └───────┬───────┘
-        │                   │                   │
-        └─────────┬─────────┴─────────┬─────────┘
-                  │                   │
-                  ▼                   ▼
-          ┌─────────────┐     ┌─────────────┐
-          │  llm-module │     │image-service│
-          └──────┬──────┘     └──────┬──────┘
-                 │                   │
-                 └─────────┬─────────┘
+     ┌───────────────────────┼───────────────────────┐
+     │                       │                       │
+     ▼                       ▼                       ▼
+┌────────────┐   ┌───────────────────┐   ┌───────────────┐
+│chat-service│   │  content-service  │   │learning-service│
+└─────┬──────┘   └─────────┬─────────┘   └───────┬───────┘
+      │                    │                     │
+      │          ┌─────────┴─────────┐           │
+      │          │                   │           │
+      │          ▼                   ▼           │
+      │   ┌─────────────┐     ┌─────────────┐    │
+      │   │speech-service│    │image-service│    │
+      │   └──────┬──────┘     └──────┬──────┘    │
+      │          │                   │           │
+      └──────────┴─────────┬─────────┴───────────┘
                            │
                            ▼
+                   ┌─────────────┐
+                   │  llm-module │
+                   └──────┬──────┘
+                          │
+                          ▼
                    ┌───────────────┐
                    │  core-module  │
                    └───────┬───────┘
@@ -83,6 +88,13 @@
 - Image storage and retrieval
 - Visual content management
 
+### chat-service
+- AI chat coach for interactive learning
+- Session management and conversation history
+- Embedded learning activities within chat messages
+- Streaming response support (Server-Sent Events)
+- Activity completion tracking and summaries
+
 ## Design Patterns
 
 ### Service Layer Pattern
@@ -102,6 +114,11 @@ Content generation uses factories to create different types of learning material
 ### REST Endpoints Structure (Current Implementation)
 ```
 /api/v1/
+├── chat/             # AI Chat Coach
+│   ├── session      # Get/create active session (GET)
+│   └── session/{id}/
+│       ├── messages      # Get/send messages (GET, POST)
+│       └── messages/stream # Stream responses (POST, SSE)
 ├── users/            # User management
 │   └── me           # Current user profile (GET, PUT)
 ├── goals/            # Learning goals

@@ -45,6 +45,44 @@ See [development-workflow.md](development-workflow.md#openapi-specification-mana
 
 ## Service Modules
 
+### chat-service
+
+Located in `backend/chat-service/`
+
+#### ChatService
+**Interface**: `dev.languagelearning.chat.service.ChatService`
+**Implementation**: `dev.languagelearning.chat.service.impl.ChatServiceImpl`
+
+**Responsibilities**:
+- Manage chat sessions and conversation history
+- Generate AI responses with embedded learning activities
+- Support streaming responses via Server-Sent Events
+- Track activity completion within chat messages
+
+**Key Methods**:
+| Method | Description |
+|--------|-------------|
+| `getOrCreateSession()` | Gets or creates an active chat session with greeting |
+| `getSession(sessionId)` | Gets a chat session by ID |
+| `getMessages(sessionId)` | Gets all messages for a session |
+| `sendMessage(sessionId, content)` | Sends a user message and gets AI response |
+| `sendMessageStream(sessionId, content)` | Sends a message with streaming response |
+| `generateGreeting(session, context)` | Generates a greeting for new sessions |
+| `completeActivity(messageId, score, feedback)` | Marks an embedded activity as completed |
+| `clearSession(sessionId)` | Clears all messages from a session |
+
+**Response Types**:
+- `ChatResponse` - Complete response with message and suggestions
+- `ChatResponseChunk` - Streaming chunk with type (TEXT, ACTIVITY_START, ACTIVITY_DATA, ACTIVITY_END, DONE)
+
+**Embedded Activity Types**:
+- Fill-in-the-blank exercises
+- Word order (drag-and-drop) exercises
+- Translation exercises
+- Vocabulary quizzes
+
+---
+
 ### learning-service
 
 Located in `backend/learning-service/`
@@ -187,6 +225,19 @@ Located in `backend/image-service/`
 ## API Controllers
 
 Located in `backend/api-module/src/main/java/dev/languagelearning/api/controller/`
+
+### ChatController
+**Path**: `/api/v1/chat`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/session` | GET | Get or create active session |
+| `/session/{sessionId}` | GET | Get session by ID |
+| `/session/{sessionId}/messages` | GET | Get all messages in a session |
+| `/session/{sessionId}/messages` | POST | Send a message and get AI response |
+| `/session/{sessionId}/messages/stream` | POST | Send message with streaming response (SSE) |
+| `/messages/{messageId}/complete` | POST | Complete an embedded activity |
+| `/session/{sessionId}` | DELETE | Clear session (start fresh) |
 
 ### UserController
 **Path**: `/api/v1/users`

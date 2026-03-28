@@ -4,6 +4,7 @@ An AI-powered, deployable language learning platform that adapts to user configu
 
 ## ✨ Features
 
+- **AI Chat Coach** - Interactive learning assistant with streaming responses and embedded exercises
 - **Personalized Learning Plans** - AI-generated learning paths based on your goals and skill level
 - **Interactive Exercises** - Fill-in-the-blank, drag-and-drop, translation, listening, and speaking exercises
 - **Flashcards with Images** - AI-generated vocabulary cards with visual aids
@@ -144,6 +145,7 @@ backend/
 ├── core-module/        # Domain entities and repositories
 ├── llm-module/         # Spring AI LLM integration
 ├── api-module/         # REST API controllers
+├── chat-service/       # AI chat coach with embedded activities
 ├── content-service/    # Lesson and content generation
 ├── learning-service/   # Progress and goal tracking
 ├── speech-service/     # TTS/STT integration
@@ -242,6 +244,9 @@ To regenerate the spec file after API changes:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/v1/chat/session` | Get or create active chat session |
+| POST | `/api/v1/chat/session/{id}/messages` | Send message to chat coach |
+| POST | `/api/v1/chat/session/{id}/messages/stream` | Stream chat response (SSE) |
 | GET | `/api/v1/users/me` | Get current user |
 | PUT | `/api/v1/users/me` | Update current user |
 | GET | `/api/v1/goals` | List learning goals |
