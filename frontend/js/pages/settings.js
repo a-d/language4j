@@ -83,6 +83,9 @@ export function loadSettingsData(user) {
     
     // Setup delete user button if not already set up
     setupDeleteUserButton();
+    
+    // Setup demo mode toggle
+    setupDemoModeToggle();
 }
 
 /**
@@ -104,6 +107,44 @@ function setupDeleteUserButton() {
         deleteBtn.textContent = `🗑️ ${t('users.deleteAccount')}`;
         deleteBtn.onclick = () => window.deleteCurrentUser();
         editBtn.parentNode.appendChild(deleteBtn);
+    }
+}
+
+/**
+ * Setup demo mode toggle in settings.
+ * Shows the toggle only if demo data is available.
+ */
+function setupDemoModeToggle() {
+    const preferencesCard = document.getElementById('settings-preferences-card');
+    if (!preferencesCard) return;
+    
+    // Check if demo toggle already exists
+    if (document.getElementById('demo-mode-toggle')) return;
+    
+    // Only show if demo data is available
+    if (!window.hasDemoData || !window.hasDemoData()) return;
+    
+    // Create demo mode option
+    const demoOption = document.createElement('div');
+    demoOption.className = 'settings-option';
+    demoOption.id = 'demo-mode-option';
+    demoOption.innerHTML = `
+        <div class="settings-option-info">
+            <h4>📴 ${t('settings.demoMode') || 'Demo Mode'}</h4>
+            <p>${t('settings.demoModeDesc') || 'Use offline sample data when backend is unavailable'}</p>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="demo-mode-toggle" ${window.isDemoMode && window.isDemoMode() ? 'checked' : ''} onchange="window.toggleDemoMode()">
+            <span class="toggle-slider"></span>
+        </label>
+    `;
+    
+    // Add after dark mode toggle
+    const existingOptions = preferencesCard.querySelectorAll('.settings-option');
+    if (existingOptions.length > 0) {
+        existingOptions[0].after(demoOption);
+    } else {
+        preferencesCard.appendChild(demoOption);
     }
 }
 

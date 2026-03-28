@@ -6,10 +6,20 @@
  * Multi-user support: The client includes the X-User-Id header with all
  * requests, identifying the currently selected user. The user ID is stored
  * in localStorage and can be changed via the user selector.
+ * 
+ * Demo Mode: When the backend is unavailable or demo mode is manually enabled,
+ * the client automatically falls back to using pre-generated offline data.
+ * @see frontend/js/services/demo-mode.js
  */
+
+import { demoMode } from '../services/demo-mode.js';
 
 const API_BASE = window.APP_CONFIG?.API_URL || '/api';
 const USER_ID_STORAGE_KEY = 'llp_selected_user_id';
+
+/** Track consecutive network failures for auto-fallback */
+let consecutiveFailures = 0;
+const FALLBACK_THRESHOLD = 2;
 
 /**
  * Get the currently selected user ID from localStorage
@@ -39,9 +49,29 @@ function clearSelectedUserId() {
 }
 
 /**
+ * Check if error should trigger demo mode fallback
+ */
+function shouldFallbackToDemo(error) {
+    // Network errors (fetch failed)
+    if (error.status === 0) return true;
+    if (error.message?.includes('Failed to fetch')) return true;
+    if (error.message?.includes('NetworkError')) return true;
+    if (error.message?.includes('Network error')) return true;
+    // Connection refused
+    if (error.message?.includes('ECONNREFUSED')) return true;
+    return false;
+}
+
+/**
  * Make an HTTP request to the API
+ * Falls back to demo mode when backend is unavailable
  */
 async function request(endpoint, options = {}) {
+    // If demo mode is already enabled, use demo handler
+    if (demoMode.isEnabled()) {
+        return demoMode.handleRequest(endpoint, options);
+    }
+    
     const url = `${API_BASE}${endpoint}`;
     
     const headers = {
@@ -76,6 +106,9 @@ async function request(endpoint, options = {}) {
             );
         }
         
+        // Success - reset failure counter
+        consecutiveFailures = 0;
+        
         // Handle empty responses (204 No Content)
         if (response.status === 204) {
             return null;
@@ -84,10 +117,20 @@ async function request(endpoint, options = {}) {
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch (error) {
-        if (error instanceof ApiError) {
-            throw error;
+        const apiError = error instanceof ApiError ? error : new ApiError(error.message || 'Network error', 0);
+        
+        // Check if we should fallback to demo mode
+        if (shouldFallbackToDemo(apiError) && demoMode.hasData()) {
+            consecutiveFailures++;
+            
+            if (consecutiveFailures >= FALLBACK_THRESHOLD) {
+                console.warn('Backend unreachable, enabling demo mode');
+                demoMode.enable();
+                return demoMode.handleRequest(endpoint, options);
+            }
         }
-        throw new ApiError(error.message || 'Network error', 0);
+        
+        throw apiError;
     }
 }
 
