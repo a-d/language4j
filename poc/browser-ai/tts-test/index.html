@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS Comparison Test - Language Learning POC</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.not-supported {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        select, textarea, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--card-bg);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .voice-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .voice-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .voice-item:last-child {
+            border-bottom: none;
+        }
+        
+        .voice-item:hover {
+            background: var(--bg);
+        }
+        
+        .voice-item.selected {
+            background: #e0e7ff;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .voice-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .voice-lang {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .sample-phrases {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .phrase-chip {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .phrase-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .control-item label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .control-item input {
+            width: 100px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .comparison-table td {
+            font-size: 0.875rem;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .info-box.warning {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+        
+        .waveform {
+            width: 100%;
+            height: 60px;
+            background: var(--bg);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 TTS Comparison Test - Language Learning POC</h1>
+        <p class="subtitle">Comparing Web Speech API vs Piper WASM for text-to-speech in language learning</p>
+        
+        <div class="grid">
+            <!-- Web Speech API Card -->
+            <div class="card">
+                <div class="card-title">
+                    🌐 Web Speech API (Native)
+                    <span id="webspeech-status" class="status-badge not-supported">Checking...</span>
+                </div>
+                
+                <div class="info-box">
+                    <strong>Pros:</strong> Zero download, instant availability, uses system voices<br>
+                    <strong>Cons:</strong> Quality varies by OS/browser, limited control
+                </div>
+                
+                <div class="form-group">
+                    <label>Available Voices (<span id="voice-count">0</span> found)</label>
+                    <input type="text" id="voice-filter" placeholder="Filter voices..." oninput="filterVoices()">
+                </div>
+                
+                <div class="voice-list" id="voice-list">
+                    <div class="voice-item">Loading voices...</div>
+                </div>
+                
+                <div class="controls">
+                    <div class="control-item">
+                        <label>Rate</label>
+                        <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+                        <span id="rate-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label>Pitch</label>
+                        <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+                        <span id="pitch-value">1.0</span>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="speakWebSpeech()">🔊 Speak</button>
+                    <button class="secondary" onclick="stopWebSpeech()">⏹️ Stop</button>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="ws-latency">-</div>
+                        <div class="metric-label">Latency (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="ws-download">0</div>
+                        <div class="metric-label">Download (MB)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="ws-quality">-</div>
+                        <div class="metric-label">Quality</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Piper WASM Card -->
+            <div class="card">
+                <div class="card-title">
+                    🎙️ Piper WASM (Neural TTS)
+                    <span id="piper-status" class="status-badge not-supported">Not Loaded</span>
+                </div>
+                
+                <div class="info-box warning">
+                    <strong>Note:</strong> Piper WASM integration is for future implementation. 
+                    This section outlines the expected interface and requirements.
+                </div>
+                
+                <div class="form-group">
+                    <label>Available Piper Voices</label>
+                    <select id="piper-voice">
+                        <option value="">-- Select Language --</option>
+                        <option value="fr_FR-siwis-medium">French (fr_FR-siwis-medium) ~60MB</option>
+                        <option value="de_DE-thorsten-medium">German (de_DE-thorsten-medium) ~60MB</option>
+                        <option value="es_ES-sharvard-medium">Spanish (es_ES-sharvard-medium) ~60MB</option>
+                        <option value="en_US-lessac-medium">English US (en_US-lessac-medium) ~60MB</option>
+                        <option value="en_GB-alba-medium">English UK (en_GB-alba-medium) ~60MB</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Voice Model Status</label>
+                    <div id="piper-download-status" style="font-size: 0.875rem; color: var(--text-muted);">
+                        No voice model loaded. Select a voice and click "Download Voice".
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="downloadPiperVoice()" disabled>📥 Download Voice</button>
+                    <button onclick="speakPiper()" disabled>🔊 Speak</button>
+                    <button class="secondary" onclick="unloadPiperVoice()" disabled>🗑️ Unload</button>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="piper-latency">-</div>
+                        <div class="metric-label">Latency (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="piper-download">~60</div>
+                        <div class="metric-label">Download (MB)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="piper-quality">High</div>
+                        <div class="metric-label">Quality</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Input Card -->
+            <div class="card full-width">
+                <div class="card-title">📝 Test Text Input</div>
+                
+                <div class="form-group">
+                    <label>Sample Phrases (Click to Load)</label>
+                    <div class="sample-phrases">
+                        <span class="phrase-chip" onclick="setSampleText('fr-greeting')">🇫🇷 Greeting</span>
+                        <span class="phrase-chip" onclick="setSampleText('fr-question')">🇫🇷 Question</span>
+                        <span class="phrase-chip" onclick="setSampleText('fr-directions')">🇫🇷 Directions</span>
+                        <span class="phrase-chip" onclick="setSampleText('de-greeting')">🇩🇪 Greeting</span>
+                        <span class="phrase-chip" onclick="setSampleText('de-question')">🇩🇪 Question</span>
+                        <span class="phrase-chip" onclick="setSampleText('es-greeting')">🇪🇸 Greeting</span>
+                        <span class="phrase-chip" onclick="setSampleText('long-fr')">🇫🇷 Long Text</span>
+                        <span class="phrase-chip" onclick="setSampleText('numbers-fr')">🇫🇷 Numbers</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="text-input">Text to Speak</label>
+                    <textarea id="text-input" placeholder="Enter text to convert to speech...">Bonjour! Comment allez-vous aujourd'hui? Je suis très heureux de vous rencontrer.</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lang-hint">Language Hint</label>
+                    <select id="lang-hint">
+                        <option value="fr-FR">French (fr-FR)</option>
+                        <option value="de-DE">German (de-DE)</option>
+                        <option value="es-ES">Spanish (es-ES)</option>
+                        <option value="en-US">English US (en-US)</option>
+                        <option value="en-GB">English UK (en-GB)</option>
+                        <option value="it-IT">Italian (it-IT)</option>
+                        <option value="pt-PT">Portuguese (pt-PT)</option>
+                        <option value="nl-NL">Dutch (nl-NL)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Comparison Results Card -->
+            <div class="card full-width">
+                <div class="card-title">📊 Comparison Summary</div>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Criteria</th>
+                            <th>Web Speech API</th>
+                            <th>Piper WASM</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Initial Download</strong></td>
+                            <td>0 MB (built-in)</td>
+                            <td>~50-150 MB per voice</td>
+                            <td>Web Speech for quick start</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Voice Quality</strong></td>
+                            <td>Varies by system</td>
+                            <td>Consistent, neural quality</td>
+                            <td>Piper for learning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Language Support</strong></td>
+                            <td>Depends on OS voices</td>
+                            <td>Curated language models</td>
+                            <td>Hybrid approach</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Offline Support</strong></td>
+                            <td>Usually yes</td>
+                            <td>Yes (after download)</td>
+                            <td>Both work offline</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Latency</strong></td>
+                            <td>Very low (~10-50ms)</td>
+                            <td>Low (~50-200ms)</td>
+                            <td>Web Speech for instant</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mobile Support</strong></td>
+                            <td>Excellent</td>
+                            <td>Good (WASM supported)</td>
+                            <td>Web Speech on mobile</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pronunciation Accuracy</strong></td>
+                            <td>Good to Excellent</td>
+                            <td>Excellent</td>
+                            <td>Piper for learning</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="info-box" style="margin-top: 1rem;">
+                    <strong>Recommended Strategy:</strong><br>
+                    1. <strong>Primary:</strong> Web Speech API for instant playback and mobile devices<br>
+                    2. <strong>Enhanced:</strong> Piper WASM as optional download for quality-focused users<br>
+                    3. <strong>Fallback:</strong> Backend TTS if browser options fail
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample texts for testing
+        const sampleTexts = {
+            'fr-greeting': "Bonjour! Comment allez-vous aujourd'hui?",
+            'fr-question': "Pourriez-vous me dire où se trouve la gare, s'il vous plaît?",
+            'fr-directions': "Tournez à gauche au prochain feu, puis continuez tout droit pendant deux cents mètres.",
+            'de-greeting': "Guten Tag! Wie geht es Ihnen heute?",
+            'de-question': "Könnten Sie mir bitte sagen, wo der Bahnhof ist?",
+            'es-greeting': "¡Hola! ¿Cómo está usted hoy?",
+            'long-fr': "Je suis en train d'apprendre le français depuis six mois maintenant. C'est une langue très belle mais parfois difficile. J'aime particulièrement la prononciation et la musicalité de la langue. Mon objectif est de pouvoir avoir une conversation fluide avec des locuteurs natifs d'ici la fin de l'année.",
+            'numbers-fr': "Un, deux, trois, quatre, cinq, six, sept, huit, neuf, dix. Vingt et un, trente-deux, quarante-trois."
+        };
+        
+        // Voice state
+        let voices = [];
+        let selectedVoice = null;
+        
+        // Initialize Web Speech API
+        function initWebSpeech() {
+            if (!('speechSynthesis' in window)) {
+                document.getElementById('webspeech-status').textContent = 'Not Supported';
+                document.getElementById('webspeech-status').className = 'status-badge error';
+                return;
+            }
+            
+            document.getElementById('webspeech-status').textContent = 'Ready';
+            document.getElementById('webspeech-status').className = 'status-badge ready';
+            
+            // Load voices
+            loadVoices();
+            
+            // Chrome loads voices asynchronously
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+            
+            // Setup rate/pitch sliders
+            document.getElementById('rate').addEventListener('input', (e) => {
+                document.getElementById('rate-value').textContent = e.target.value;
+            });
+            
+            document.getElementById('pitch').addEventListener('input', (e) => {
+                document.getElementById('pitch-value').textContent = e.target.value;
+            });
+        }
+        
+        // Load available voices
+        function loadVoices() {
+            voices = speechSynthesis.getVoices();
+            document.getElementById('voice-count').textContent = voices.length;
+            
+            const voiceList = document.getElementById('voice-list');
+            voiceList.innerHTML = '';
+            
+            // Group voices by language
+            const langHint = document.getElementById('lang-hint').value;
+            const langCode = langHint.split('-')[0];
+            
+            // Sort: matching language first, then alphabetically
+            const sortedVoices = [...voices].sort((a, b) => {
+                const aMatch = a.lang.startsWith(langCode);
+                const bMatch = b.lang.startsWith(langCode);
+                if (aMatch && !bMatch) return -1;
+                if (!aMatch && bMatch) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            sortedVoices.forEach((voice, index) => {
+                const div = document.createElement('div');
+                div.className = 'voice-item';
+                div.innerHTML = `
+                    <div class="voice-name">${voice.name}</div>
+                    <div class="voice-lang">${voice.lang} ${voice.localService ? '(Local)' : '(Network)'}</div>
+                `;
+                div.onclick = () => selectVoice(voice, div);
+                voiceList.appendChild(div);
+                
+                // Auto-select first matching voice
+                if (!selectedVoice && voice.lang.startsWith(langCode)) {
+                    selectVoice(voice, div);
+                }
+            });
+            
+            if (voices.length === 0) {
+                voiceList.innerHTML = '<div class="voice-item">No voices available</div>';
+            }
+        }
+        
+        // Select a voice
+        function selectVoice(voice, element) {
+            selectedVoice = voice;
+            
+            // Update UI
+            document.querySelectorAll('.voice-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+        
+        // Filter voices
+        function filterVoices() {
+            const filter = document.getElementById('voice-filter').value.toLowerCase();
+            document.querySelectorAll('.voice-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(filter) ? 'block' : 'none';
+            });
+        }
+        
+        // Speak using Web Speech API
+        function speakWebSpeech() {
+            const text = document.getElementById('text-input').value;
+            if (!text) return;
+            
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            utterance.rate = parseFloat(document.getElementById('rate').value);
+            utterance.pitch = parseFloat(document.getElementById('pitch').value);
+            
+            const startTime = performance.now();
+            
+            utterance.onstart = () => {
+                const latency = Math.round(performance.now() - startTime);
+                document.getElementById('ws-latency').textContent = latency;
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('Speech error:', event);
+            };
+            
+            speechSynthesis.speak(utterance);
+        }
+        
+        // Stop Web Speech
+        function stopWebSpeech() {
+            speechSynthesis.cancel();
+        }
+        
+        // Set sample text
+        function setSampleText(key) {
+            const text = sampleTexts[key];
+            if (text) {
+                document.getElementById('text-input').value = text;
+                
+                // Auto-select language based on key
+                const langMap = {
+                    'fr': 'fr-FR',
+                    'de': 'de-DE',
+                    'es': 'es-ES',
+                    'en': 'en-US'
+                };
+                const langPrefix = key.split('-')[0];
+                if (langMap[langPrefix]) {
+                    document.getElementById('lang-hint').value = langMap[langPrefix];
+                    loadVoices(); // Reload to prioritize matching voices
+                }
+            }
+        }
+        
+        // Placeholder functions for Piper WASM (to be implemented)
+        function downloadPiperVoice() {
+            alert('Piper WASM integration coming soon!\n\nThis will download the selected voice model (~60MB) and enable high-quality neural TTS.');
+        }
+        
+        function speakPiper() {
+            alert('Piper WASM not yet loaded.');
+        }
+        
+        function unloadPiperVoice() {
+            alert('No Piper voice loaded.');
+        }
+        
+        // Update voices when language hint changes
+        document.getElementById('lang-hint').addEventListener('change', loadVoices);
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initWebSpeech);
+    </script>
+</body>
+</html>

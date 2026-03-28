@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebLLM Test - Language Learning POC</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.not-supported {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .progress-container {
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+            border-radius: 9999px;
+        }
+        
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--card-bg);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .output-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+        
+        .output-box.streaming {
+            border: 2px solid var(--primary);
+        }
+        
+        .metrics {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .prompt-templates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .prompt-chip {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .prompt-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .logs {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: var(--text-muted);
+        }
+        
+        .log-info { color: var(--primary); }
+        .log-success { color: var(--success); }
+        .log-warning { color: var(--warning); }
+        .log-error { color: var(--error); }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 WebLLM Test - Language Learning POC</h1>
+        <p class="subtitle">Testing browser-based LLM inference for language learning content generation</p>
+        
+        <div class="grid">
+            <!-- System Status Card -->
+            <div class="card">
+                <div class="card-title">
+                    📊 System Status
+                    <span id="webgpu-status" class="status-badge loading">Checking...</span>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">WebGPU</div>
+                        <div class="info-value" id="webgpu-support">Checking...</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">GPU Adapter</div>
+                        <div class="info-value" id="gpu-adapter">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Browser</div>
+                        <div class="info-value" id="browser-info">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Device Memory</div>
+                        <div class="info-value" id="device-memory">-</div>
+                    </div>
+                </div>
+                
+                <div class="logs" id="logs">
+                    <div class="log-entry"><span class="log-time">[--:--:--]</span> <span class="log-info">Initializing...</span></div>
+                </div>
+            </div>
+            
+            <!-- Model Management Card -->
+            <div class="card">
+                <div class="card-title">
+                    🤖 Model Management
+                    <span id="model-status" class="status-badge not-supported">Not Loaded</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="model-select">Select Model</label>
+                    <select id="model-select">
+                        <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B-Instruct (q4f16) - ~900MB</option>
+                        <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5-0.5B-Instruct (q4f16) - ~400MB</option>
+                        <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B-Instruct (q4f16) - ~1GB</option>
+                        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini-instruct (q4f16) - ~2.2GB</option>
+                        <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma-2-2B-IT (q4f16) - ~1.5GB</option>
+                    </select>
+                </div>
+                
+                <div class="progress-container" id="download-progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="download-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="download-text">Preparing download...</div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="load-btn" onclick="loadModel()">Load Model</button>
+                    <button id="unload-btn" class="secondary" onclick="unloadModel()" disabled>Unload</button>
+                </div>
+            </div>
+            
+            <!-- Prompt Testing Card -->
+            <div class="card full-width">
+                <div class="card-title">✍️ Language Learning Prompt Testing</div>
+                
+                <div class="prompt-templates">
+                    <span class="prompt-chip" onclick="setPrompt('vocabulary')">📚 Vocabulary</span>
+                    <span class="prompt-chip" onclick="setPrompt('exercise')">📝 Exercise</span>
+                    <span class="prompt-chip" onclick="setPrompt('translation')">🔄 Translation</span>
+                    <span class="prompt-chip" onclick="setPrompt('conversation')">💬 Conversation</span>
+                    <span class="prompt-chip" onclick="setPrompt('grammar')">📖 Grammar</span>
+                    <span class="prompt-chip" onclick="setPrompt('evaluation')">✅ Evaluation</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" placeholder="Enter system prompt...">You are a helpful language learning assistant. Generate educational content for learning French. Always respond in a structured JSON format when requested.</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-prompt">User Prompt</label>
+                    <textarea id="user-prompt" placeholder="Enter user prompt...">Generate 3 vocabulary words for the topic "food" in French. Include the French word, English translation, pronunciation guide, and an example sentence.
+
+Respond in this JSON format:
+{"vocabulary": [{"french": "...", "english": "...", "pronunciation": "...", "example": "..."}]}</textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="generate-btn" onclick="generate()" disabled>Generate</button>
+                    <button id="stream-btn" onclick="generateStream()" disabled>Generate (Streaming)</button>
+                    <button class="secondary" onclick="clearOutput()">Clear Output</button>
+                </div>
+            </div>
+            
+            <!-- Output Card -->
+            <div class="card full-width">
+                <div class="card-title">
+                    📤 Output
+                    <span id="output-status" class="status-badge" style="display: none;">Generating...</span>
+                </div>
+                
+                <div class="output-box" id="output">Waiting for generation...</div>
+                
+                <div class="metrics" id="metrics" style="display: none;">
+                    <div class="metric">
+                        <div class="metric-value" id="metric-tokens">-</div>
+                        <div class="metric-label">Tokens Generated</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metric-time">-</div>
+                        <div class="metric-label">Time (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metric-speed">-</div>
+                        <div class="metric-label">Tokens/sec</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metric-first">-</div>
+                        <div class="metric-label">First Token (ms)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WebLLM Script (loaded from CDN) -->
+    <script type="module">
+        import * as webllm from 'https://esm.run/@mlc-ai/web-llm';
+        
+        // Make webllm available globally
+        window.webllm = webllm;
+        window.engine = null;
+        
+        // Prompt templates for language learning
+        window.promptTemplates = {
+            vocabulary: {
+                system: 'You are a helpful language learning assistant. Generate vocabulary content for learning French. Always respond in valid JSON format.',
+                user: `Generate 5 vocabulary words for the topic "kitchen items" in French.
+
+For each word include: French word, English translation, pronunciation guide (IPA), gender (m/f), and an example sentence.
+
+Respond ONLY with this JSON format:
+{"vocabulary": [{"french": "...", "english": "...", "pronunciation": "...", "gender": "...", "example": "..."}]}`
+            },
+            exercise: {
+                system: 'You are a language learning exercise generator. Create fill-in-the-blank exercises for French learners at A2 level. Respond only in valid JSON.',
+                user: `Create 3 fill-in-the-blank exercises about French past tense (passé composé).
+
+Each exercise should have a sentence with one blank (marked with ___), the correct answer, and a hint.
+
+Respond ONLY with this JSON format:
+{"exercises": [{"sentence": "Hier, j'___ un film.", "answer": "ai regardé", "hint": "regarder (to watch)"}]}`
+            },
+            translation: {
+                system: 'You are a translation assistant for language learners. Provide translations with explanations.',
+                user: `Translate these 3 English sentences to French and explain any grammar points:
+
+1. "I have been living in Paris for two years."
+2. "If I had known, I would have come."
+3. "She wants me to help her."
+
+Respond in JSON format:
+{"translations": [{"english": "...", "french": "...", "explanation": "..."}]}`
+            },
+            conversation: {
+                system: 'You are a French conversation tutor. Create realistic dialogue scenarios for practice.',
+                user: `Create a short conversation (4-6 exchanges) between a customer and a waiter at a French restaurant.
+
+Include both French dialogue and English translations.
+
+Respond in JSON format:
+{"scenario": "At a restaurant", "dialogue": [{"speaker": "Waiter", "french": "...", "english": "..."}]}`
+            },
+            grammar: {
+                system: 'You are a French grammar teacher. Explain grammar concepts clearly with examples.',
+                user: `Explain the difference between "passé composé" and "imparfait" in French.
+
+Provide:
+1. Brief explanation of each tense
+2. When to use each
+3. 2 example sentences for each
+
+Respond in JSON format:
+{"topic": "...", "explanation": {...}, "examples": [...]}`
+            },
+            evaluation: {
+                system: 'You are a language learning evaluator. Assess student responses and provide feedback.',
+                user: `Evaluate this student's French translation:
+
+Original English: "I would like to buy some bread"
+Student's answer: "Je voudrais achete du pain"
+Correct answer: "Je voudrais acheter du pain"
+
+Provide:
+1. Score (0-100)
+2. Whether it's correct
+3. Specific feedback on errors
+4. Tips for improvement
+
+Respond in JSON format:
+{"score": 85, "correct": false, "feedback": "...", "tips": ["..."]}`
+            }
+        };
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSystemCapabilities();
+        });
+    </script>
+    
+    <script>
+        // Logging utility
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Check system capabilities
+        async function checkSystemCapabilities() {
+            log('Checking system capabilities...');
+            
+            // Browser info
+            const browserInfo = navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'Unknown';
+            document.getElementById('browser-info').textContent = browserInfo;
+            
+            // Device memory
+            const memory = navigator.deviceMemory;
+            document.getElementById('device-memory').textContent = memory ? `${memory} GB` : 'Unknown';
+            
+            // Check WebGPU
+            if (!navigator.gpu) {
+                document.getElementById('webgpu-support').textContent = 'Not Available';
+                document.getElementById('webgpu-status').textContent = 'Not Supported';
+                document.getElementById('webgpu-status').className = 'status-badge error';
+                log('WebGPU is not available in this browser', 'error');
+                return;
+            }
+            
+            try {
+                const adapter = await navigator.gpu.requestAdapter();
+                if (!adapter) {
+                    throw new Error('No GPU adapter found');
+                }
+                
+                const adapterInfo = await adapter.requestAdapterInfo();
+                document.getElementById('webgpu-support').textContent = 'Available ✓';
+                document.getElementById('gpu-adapter').textContent = adapterInfo.description || adapterInfo.vendor || 'Unknown GPU';
+                document.getElementById('webgpu-status').textContent = 'Ready';
+                document.getElementById('webgpu-status').className = 'status-badge ready';
+                
+                log(`WebGPU available: ${adapterInfo.description || adapterInfo.vendor}`, 'success');
+                
+            } catch (e) {
+                document.getElementById('webgpu-support').textContent = 'Error';
+                document.getElementById('webgpu-status').textContent = 'Error';
+                document.getElementById('webgpu-status').className = 'status-badge error';
+                log(`WebGPU error: ${e.message}`, 'error');
+            }
+        }
+        
+        // Load model
+        async function loadModel() {
+            const modelId = document.getElementById('model-select').value;
+            const loadBtn = document.getElementById('load-btn');
+            const unloadBtn = document.getElementById('unload-btn');
+            const generateBtn = document.getElementById('generate-btn');
+            const streamBtn = document.getElementById('stream-btn');
+            const progressContainer = document.getElementById('download-progress-container');
+            const progressFill = document.getElementById('download-progress');
+            const progressText = document.getElementById('download-text');
+            const modelStatus = document.getElementById('model-status');
+            
+            loadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            modelStatus.textContent = 'Loading...';
+            modelStatus.className = 'status-badge loading';
+            
+            log(`Loading model: ${modelId}...`);
+            
+            try {
+                const initProgressCallback = (progress) => {
+                    const percentage = Math.round(progress.progress * 100);
+                    progressFill.style.width = `${percentage}%`;
+                    progressText.textContent = progress.text || `Loading... ${percentage}%`;
+                    
+                    if (progress.text) {
+                        log(progress.text);
+                    }
+                };
+                
+                window.engine = await window.webllm.CreateMLCEngine(modelId, {
+                    initProgressCallback
+                });
+                
+                modelStatus.textContent = 'Ready';
+                modelStatus.className = 'status-badge ready';
+                unloadBtn.disabled = false;
+                generateBtn.disabled = false;
+                streamBtn.disabled = false;
+                
+                log(`Model loaded successfully: ${modelId}`, 'success');
+                
+            } catch (e) {
+                modelStatus.textContent = 'Error';
+                modelStatus.className = 'status-badge error';
+                log(`Failed to load model: ${e.message}`, 'error');
+                loadBtn.disabled = false;
+            }
+            
+            progressContainer.style.display = 'none';
+        }
+        
+        // Unload model
+        async function unloadModel() {
+            if (window.engine) {
+                await window.engine.unload();
+                window.engine = null;
+                
+                document.getElementById('model-status').textContent = 'Not Loaded';
+                document.getElementById('model-status').className = 'status-badge not-supported';
+                document.getElementById('unload-btn').disabled = true;
+                document.getElementById('generate-btn').disabled = true;
+                document.getElementById('stream-btn').disabled = true;
+                document.getElementById('load-btn').disabled = false;
+                
+                log('Model unloaded', 'info');
+            }
+        }
+        
+        // Set prompt template
+        function setPrompt(templateName) {
+            const template = window.promptTemplates[templateName];
+            if (template) {
+                document.getElementById('system-prompt').value = template.system;
+                document.getElementById('user-prompt').value = template.user;
+                log(`Loaded prompt template: ${templateName}`);
+            }
+        }
+        
+        // Generate (non-streaming)
+        async function generate() {
+            if (!window.engine) {
+                log('Model not loaded', 'error');
+                return;
+            }
+            
+            const systemPrompt = document.getElementById('system-prompt').value;
+            const userPrompt = document.getElementById('user-prompt').value;
+            const output = document.getElementById('output');
+            const outputStatus = document.getElementById('output-status');
+            const metrics = document.getElementById('metrics');
+            
+            output.textContent = 'Generating...';
+            output.classList.remove('streaming');
+            outputStatus.style.display = 'inline-flex';
+            outputStatus.textContent = 'Generating...';
+            outputStatus.className = 'status-badge loading';
+            metrics.style.display = 'none';
+            
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('stream-btn').disabled = true;
+            
+            log('Starting generation...');
+            const startTime = performance.now();
+            
+            try {
+                const response = await window.engine.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    max_tokens: 1024,
+                    temperature: 0.7
+                });
+                
+                const endTime = performance.now();
+                const totalTime = Math.round(endTime - startTime);
+                const text = response.choices[0].message.content;
+                const tokens = response.usage?.completion_tokens || text.split(/\s+/).length;
+                const tokensPerSec = (tokens / (totalTime / 1000)).toFixed(1);
+                
+                output.textContent = text;
+                outputStatus.textContent = 'Complete';
+                outputStatus.className = 'status-badge ready';
+                
+                // Show metrics
+                metrics.style.display = 'flex';
+                document.getElementById('metric-tokens').textContent = tokens;
+                document.getElementById('metric-time').textContent = totalTime;
+                document.getElementById('metric-speed').textContent = tokensPerSec;
+                document.getElementById('metric-first').textContent = '-';
+                
+                log(`Generation complete: ${tokens} tokens in ${totalTime}ms (${tokensPerSec} tok/s)`, 'success');
+                
+            } catch (e) {
+                output.textContent = `Error: ${e.message}`;
+                outputStatus.textContent = 'Error';
+                outputStatus.className = 'status-badge error';
+                log(`Generation failed: ${e.message}`, 'error');
+            }
+            
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('stream-btn').disabled = false;
+        }
+        
+        // Generate (streaming)
+        async function generateStream() {
+            if (!window.engine) {
+                log('Model not loaded', 'error');
+                return;
+            }
+            
+            const systemPrompt = document.getElementById('system-prompt').value;
+            const userPrompt = document.getElementById('user-prompt').value;
+            const output = document.getElementById('output');
+            const outputStatus = document.getElementById('output-status');
+            const metrics = document.getElementById('metrics');
+            
+            output.textContent = '';
+            output.classList.add('streaming');
+            outputStatus.style.display = 'inline-flex';
+            outputStatus.textContent = 'Streaming...';
+            outputStatus.className = 'status-badge loading';
+            metrics.style.display = 'none';
+            
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('stream-btn').disabled = true;
+            
+            log('Starting streaming generation...');
+            const startTime = performance.now();
+            let firstTokenTime = null;
+            let tokenCount = 0;
+            
+            try {
+                const stream = await window.engine.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    max_tokens: 1024,
+                    temperature: 0.7,
+                    stream: true
+                });
+                
+                for await (const chunk of stream) {
+                    const delta = chunk.choices[0]?.delta?.content || '';
+                    if (delta) {
+                        if (firstTokenTime === null) {
+                            firstTokenTime = performance.now() - startTime;
+                        }
+                        output.textContent += delta;
+                        tokenCount++;
+                    }
+                }
+                
+                const endTime = performance.now();
+                const totalTime = Math.round(endTime - startTime);
+                const tokensPerSec = (tokenCount / (totalTime / 1000)).toFixed(1);
+                
+                output.classList.remove('streaming');
+                outputStatus.textContent = 'Complete';
+                outputStatus.className = 'status-badge ready';
+                
+                // Show metrics
+                metrics.style.display = 'flex';
+                document.getElementById('metric-tokens').textContent = tokenCount;
+                document.getElementById('metric-time').textContent = totalTime;
+                document.getElementById('metric-speed').textContent = tokensPerSec;
+                document.getElementById('metric-first').textContent = Math.round(firstTokenTime || 0);
+                
+                log(`Streaming complete: ${tokenCount} chunks in ${totalTime}ms (${tokensPerSec} tok/s, first token: ${Math.round(firstTokenTime || 0)}ms)`, 'success');
+                
+            } catch (e) {
+                output.textContent = `Error: ${e.message}`;
+                output.classList.remove('streaming');
+                outputStatus.textContent = 'Error';
+                outputStatus.className = 'status-badge error';
+                log(`Streaming failed: ${e.message}`, 'error');
+            }
+            
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('stream-btn').disabled = false;
+        }
+        
+        // Clear output
+        function clearOutput() {
+            document.getElementById('output').textContent = 'Waiting for generation...';
+            document.getElementById('output').classList.remove('streaming');
+            document.getElementById('output-status').style.display = 'none';
+            document.getElementById('metrics').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

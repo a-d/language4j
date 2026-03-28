@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STT Comparison Test - Language Learning POC</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.recording {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.not-supported {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .status-badge.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        select, textarea, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--card-bg);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+        
+        button.recording {
+            background: var(--error);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .info-box.warning {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+        
+        .output-box {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            min-height: 100px;
+            border: 1px solid var(--border);
+        }
+        
+        .output-box.active {
+            border-color: var(--primary);
+            background: #f0f9ff;
+        }
+        
+        .transcript {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .interim {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .comparison-table td {
+            font-size: 0.875rem;
+        }
+        
+        .visualizer {
+            width: 100%;
+            height: 60px;
+            background: var(--bg);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .visualizer canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .progress-container {
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+            border-radius: 9999px;
+        }
+        
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        .sample-phrases {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .phrase-chip {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .phrase-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 STT Comparison Test - Language Learning POC</h1>
+        <p class="subtitle">Comparing Web Speech API vs Whisper WASM for speech-to-text in language learning</p>
+        
+        <div class="grid">
+            <!-- Web Speech API Card -->
+            <div class="card">
+                <div class="card-title">
+                    🌐 Web Speech API (Native)
+                    <span id="webspeech-status" class="status-badge not-supported">Checking...</span>
+                </div>
+                
+                <div class="info-box">
+                    <strong>Pros:</strong> Zero download, instant start, real-time streaming<br>
+                    <strong>Cons:</strong> Often requires internet, limited language support, privacy concerns
+                </div>
+                
+                <div class="form-group">
+                    <label for="ws-language">Language</label>
+                    <select id="ws-language">
+                        <option value="fr-FR">French (fr-FR)</option>
+                        <option value="de-DE">German (de-DE)</option>
+                        <option value="es-ES">Spanish (es-ES)</option>
+                        <option value="en-US">English US (en-US)</option>
+                        <option value="en-GB">English UK (en-GB)</option>
+                        <option value="it-IT">Italian (it-IT)</option>
+                        <option value="pt-PT">Portuguese (pt-PT)</option>
+                    </select>
+                </div>
+                
+                <div class="visualizer" id="ws-visualizer">
+                    <canvas id="ws-canvas"></canvas>
+                </div>
+                
+                <div class="button-group">
+                    <button id="ws-start-btn" onclick="startWebSpeech()">🎤 Start Recording</button>
+                    <button id="ws-stop-btn" class="secondary" onclick="stopWebSpeech()" disabled>⏹️ Stop</button>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Transcription Result</label>
+                    <div class="output-box" id="ws-output">
+                        <span class="transcript" id="ws-transcript">Click "Start Recording" and speak...</span>
+                        <span class="interim" id="ws-interim"></span>
+                    </div>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="ws-latency">-</div>
+                        <div class="metric-label">First Word (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="ws-download">0</div>
+                        <div class="metric-label">Download (MB)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="ws-confidence">-</div>
+                        <div class="metric-label">Confidence</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Whisper WASM Card -->
+            <div class="card">
+                <div class="card-title">
+                    🤖 Whisper WASM (Local AI)
+                    <span id="whisper-status" class="status-badge not-supported">Not Loaded</span>
+                </div>
+                
+                <div class="info-box warning">
+                    <strong>Note:</strong> Whisper WASM integration is for future implementation.
+                    This section outlines the expected interface and model options.
+                </div>
+                
+                <div class="form-group">
+                    <label for="whisper-model">Whisper Model</label>
+                    <select id="whisper-model">
+                        <option value="tiny">Whisper Tiny (~39MB) - Fast, basic accuracy</option>
+                        <option value="base" selected>Whisper Base (~74MB) - Good balance</option>
+                        <option value="small">Whisper Small (~244MB) - Better accuracy</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="whisper-language">Language Hint</label>
+                    <select id="whisper-language">
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="es">Spanish</option>
+                        <option value="en">English</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="auto">Auto-detect</option>
+                    </select>
+                </div>
+                
+                <div class="progress-container" id="whisper-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="whisper-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="whisper-progress-text">Downloading model...</div>
+                </div>
+                
+                <div class="visualizer" id="whisper-visualizer">
+                    <canvas id="whisper-canvas"></canvas>
+                </div>
+                
+                <div class="button-group">
+                    <button id="whisper-load-btn" onclick="loadWhisperModel()">📥 Load Model</button>
+                    <button id="whisper-start-btn" onclick="startWhisper()" disabled>🎤 Record</button>
+                    <button id="whisper-stop-btn" class="secondary" onclick="stopWhisper()" disabled>⏹️ Stop</button>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Transcription Result</label>
+                    <div class="output-box" id="whisper-output">
+                        <span class="transcript" id="whisper-transcript">Load model first, then record audio...</span>
+                    </div>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="whisper-latency">-</div>
+                        <div class="metric-label">Processing (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="whisper-download">~74</div>
+                        <div class="metric-label">Download (MB)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="whisper-confidence">-</div>
+                        <div class="metric-label">Quality</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Phrases Card -->
+            <div class="card full-width">
+                <div class="card-title">📝 Reference Phrases for Testing</div>
+                
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Try speaking these phrases to test transcription accuracy. Click to copy.
+                </p>
+                
+                <div class="sample-phrases">
+                    <span class="phrase-chip" onclick="copyPhrase('Bonjour, comment allez-vous?')">🇫🇷 Greeting</span>
+                    <span class="phrase-chip" onclick="copyPhrase('Je voudrais réserver une table pour deux personnes')">🇫🇷 Restaurant</span>
+                    <span class="phrase-chip" onclick="copyPhrase('Où se trouve la gare, s\\'il vous plaît?')">🇫🇷 Directions</span>
+                    <span class="phrase-chip" onclick="copyPhrase('Guten Tag, wie geht es Ihnen?')">🇩🇪 Greeting</span>
+                    <span class="phrase-chip" onclick="copyPhrase('Ich möchte ein Zimmer für zwei Nächte buchen')">🇩🇪 Hotel</span>
+                    <span class="phrase-chip" onclick="copyPhrase('¿Cuánto cuesta esto?')">🇪🇸 Shopping</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Expected Text (for accuracy comparison)</label>
+                    <textarea id="expected-text" placeholder="Enter the expected transcription to compare accuracy..."></textarea>
+                </div>
+                
+                <button class="secondary" onclick="compareAccuracy()">📊 Compare Accuracy</button>
+            </div>
+            
+            <!-- Comparison Results Card -->
+            <div class="card full-width">
+                <div class="card-title">📊 Comparison Summary</div>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Criteria</th>
+                            <th>Web Speech API</th>
+                            <th>Whisper WASM</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Initial Download</strong></td>
+                            <td>0 MB (built-in)</td>
+                            <td>~39-244 MB</td>
+                            <td>Web Speech for quick start</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Accuracy</strong></td>
+                            <td>Good (varies)</td>
+                            <td>Excellent (consistent)</td>
+                            <td>Whisper for learning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Language Support</strong></td>
+                            <td>Depends on browser</td>
+                            <td>99+ languages</td>
+                            <td>Whisper for rare languages</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Offline Support</strong></td>
+                            <td>Usually no</td>
+                            <td>Yes (after download)</td>
+                            <td>Whisper for offline</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Real-time Streaming</strong></td>
+                            <td>Yes (native)</td>
+                            <td>Limited (batch)</td>
+                            <td>Web Speech for real-time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privacy</strong></td>
+                            <td>Cloud processed</td>
+                            <td>100% local</td>
+                            <td>Whisper for privacy</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pronunciation Scoring</strong></td>
+                            <td>Not available</td>
+                            <td>Can compare with expected</td>
+                            <td>Whisper for assessment</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="info-box" style="margin-top: 1rem;">
+                    <strong>Recommended Strategy:</strong><br>
+                    1. <strong>Real-time feedback:</strong> Web Speech API for immediate partial results<br>
+                    2. <strong>Final transcription:</strong> Whisper WASM for accurate pronunciation assessment<br>
+                    3. <strong>Offline/Privacy:</strong> Whisper WASM exclusively<br>
+                    4. <strong>Fallback:</strong> Backend STT if browser options fail
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let recognition = null;
+        let isRecording = false;
+        let audioContext = null;
+        let analyser = null;
+        let mediaStream = null;
+        
+        // Initialize Web Speech API
+        function initWebSpeech() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                document.getElementById('webspeech-status').textContent = 'Not Supported';
+                document.getElementById('webspeech-status').className = 'status-badge error';
+                document.getElementById('ws-start-btn').disabled = true;
+                return;
+            }
+            
+            document.getElementById('webspeech-status').textContent = 'Ready';
+            document.getElementById('webspeech-status').className = 'status-badge ready';
+            
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('webspeech-status').textContent = 'Recording';
+                document.getElementById('webspeech-status').className = 'status-badge recording';
+                document.getElementById('ws-start-btn').disabled = true;
+                document.getElementById('ws-stop-btn').disabled = false;
+                document.getElementById('ws-output').classList.add('active');
+                startTime = performance.now();
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('webspeech-status').textContent = 'Ready';
+                document.getElementById('webspeech-status').className = 'status-badge ready';
+                document.getElementById('ws-start-btn').disabled = false;
+                document.getElementById('ws-stop-btn').disabled = true;
+                document.getElementById('ws-output').classList.remove('active');
+                stopVisualizer();
+            };
+            
+            let startTime = 0;
+            let firstResultReceived = false;
+            
+            recognition.onresult = (event) => {
+                if (!firstResultReceived) {
+                    firstResultReceived = true;
+                    const latency = Math.round(performance.now() - startTime);
+                    document.getElementById('ws-latency').textContent = latency;
+                }
+                
+                let finalTranscript = '';
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    if (result.isFinal) {
+                        finalTranscript += result[0].transcript;
+                        const confidence = Math.round(result[0].confidence * 100);
+                        document.getElementById('ws-confidence').textContent = confidence + '%';
+                    } else {
+                        interimTranscript += result[0].transcript;
+                    }
+                }
+                
+                document.getElementById('ws-transcript').textContent = finalTranscript || 'Listening...';
+                document.getElementById('ws-interim').textContent = interimTranscript;
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                document.getElementById('ws-transcript').textContent = `Error: ${event.error}`;
+            };
+        }
+        
+        // Start Web Speech recognition
+        async function startWebSpeech() {
+            if (!recognition) return;
+            
+            const language = document.getElementById('ws-language').value;
+            recognition.lang = language;
+            
+            // Clear previous results
+            document.getElementById('ws-transcript').textContent = 'Listening...';
+            document.getElementById('ws-interim').textContent = '';
+            document.getElementById('ws-latency').textContent = '-';
+            document.getElementById('ws-confidence').textContent = '-';
+            
+            // Start visualizer
+            await startVisualizer('ws-canvas');
+            
+            recognition.start();
+        }
+        
+        // Stop Web Speech recognition
+        function stopWebSpeech() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+        }
+        
+        // Audio visualizer
+        async function startVisualizer(canvasId) {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                source.connect(analyser);
+                
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                function draw() {
+                    if (!isRecording) return;
+                    
+                    requestAnimationFrame(draw);
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+                    
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = (dataArray[i] / 255) * canvas.height;
+                        ctx.fillStyle = `rgb(79, 70, 229)`;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                }
+                
+                draw();
+            } catch (e) {
+                console.error('Error accessing microphone:', e);
+            }
+        }
+        
+        function stopVisualizer() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+        }
+        
+        // Copy phrase to clipboard and expected text
+        function copyPhrase(phrase) {
+            navigator.clipboard.writeText(phrase);
+            document.getElementById('expected-text').value = phrase;
+            
+            // Visual feedback
+            const chips = document.querySelectorAll('.phrase-chip');
+            chips.forEach(chip => {
+                if (chip.textContent.includes(phrase.substring(0, 10))) {
+                    chip.style.background = 'var(--success)';
+                    chip.style.color = 'white';
+                    setTimeout(() => {
+                        chip.style.background = '';
+                        chip.style.color = '';
+                    }, 1000);
+                }
+            });
+        }
+        
+        // Compare accuracy between expected and actual transcription
+        function compareAccuracy() {
+            const expected = document.getElementById('expected-text').value.trim().toLowerCase();
+            const wsActual = document.getElementById('ws-transcript').textContent.trim().toLowerCase();
+            
+            if (!expected) {
+                alert('Please enter expected text first.');
+                return;
+            }
+            
+            // Simple word-level accuracy
+            const expectedWords = expected.split(/\s+/);
+            const actualWords = wsActual.split(/\s+/);
+            
+            let matches = 0;
+            expectedWords.forEach(word => {
+                if (actualWords.includes(word)) matches++;
+            });
+            
+            const accuracy = Math.round((matches / expectedWords.length) * 100);
+            
+            alert(`Word Accuracy: ${accuracy}%\n\nExpected words: ${expectedWords.length}\nMatched words: ${matches}\n\nNote: This is a simple word-matching comparison. Real WER (Word Error Rate) calculation would be more sophisticated.`);
+        }
+        
+        // Placeholder functions for Whisper WASM
+        function loadWhisperModel() {
+            const model = document.getElementById('whisper-model').value;
+            const sizes = { tiny: 39, base: 74, small: 244 };
+            
+            document.getElementById('whisper-progress').style.display = 'block';
+            document.getElementById('whisper-status').textContent = 'Loading...';
+            document.getElementById('whisper-status').className = 'status-badge loading';
+            document.getElementById('whisper-download').textContent = sizes[model];
+            
+            // Simulate download progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    setTimeout(() => {
+                        alert('Whisper WASM integration coming soon!\n\nThis will download the Whisper model and enable offline, privacy-preserving speech recognition.\n\nFor now, this is a placeholder demonstration.');
+                        
+                        document.getElementById('whisper-progress').style.display = 'none';
+                        document.getElementById('whisper-status').textContent = 'Not Loaded';
+                        document.getElementById('whisper-status').className = 'status-badge not-supported';
+                    }, 500);
+                }
+                
+                document.getElementById('whisper-progress-fill').style.width = `${progress}%`;
+                document.getElementById('whisper-progress-text').textContent = `Downloading ${model} model... ${Math.round(progress)}%`;
+            }, 200);
+        }
+        
+        function startWhisper() {
+            alert('Whisper WASM not loaded yet.');
+        }
+        
+        function stopWhisper() {
+            alert('Whisper WASM not active.');
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initWebSpeech);
+    </script>
+</body>
+</html>
