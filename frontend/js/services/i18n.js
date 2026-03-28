@@ -312,7 +312,14 @@ export async function reloadTranslations(langCode = currentLanguage) {
     delete translations[lang];
     
     // Reload
-    return await loadLanguage(lang);
+    const success = await loadLanguage(lang);
+    
+    // Apply translations if this is the current language
+    if (lang === currentLanguage) {
+        applyTranslations();
+    }
+    
+    return success;
 }
 
 // Export the i18n object for convenience

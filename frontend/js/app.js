@@ -7,16 +7,30 @@
  * - services/* - Shared services (i18n, toast, ui, goals, etc.)
  * - api/client.js - Backend API communication
  * 
+ * Multi-user support: On startup, checks if a user is selected. If not,
+ * shows the user selector modal. User selection is stored in localStorage.
+ * 
  * @see frontend/README.md for architecture overview
  */
 
-import { api } from './api/client.js';
+import { api, getSelectedUserId, setSelectedUserId } from './api/client.js';
 import { toast } from './services/toast.js';
 import { setLanguage, t, getLanguageName } from './services/i18n.js';
 import { showLoading, hideLoading, openModal, closeModal, speakText } from './services/ui.js';
 import { renderContent, ContentType } from './services/content-renderer.js';
 import * as goals from './services/goals.js';
 import { initTheme, toggleDarkMode } from './services/theme.js';
+import { cache } from './services/cache.js';
+import { 
+    showUserSelector, 
+    toggleCreateUserForm, 
+    submitCreateUser, 
+    selectUser,
+    showUserSwitcher,
+    deleteUser,
+    getInitial,
+    getUserColor
+} from './services/user-selector.js';
 
 // Page modules
 import { loadDashboardData, getCachedGoal as getDashboardCachedGoal } from './pages/dashboard.js';
@@ -45,11 +59,98 @@ async function init() {
     
     setupNavigation();
     setupEventListeners();
-    await loadUserData();
+    
+    // Check for user selection - show selector if no user selected
+    await initUserSelection();
+    
+    console.log('Application initialized');
+}
+
+/**
+ * Initialize user selection.
+ * If no user is selected, show the user selector modal.
+ * If a user is selected, load their data.
+ */
+async function initUserSelection() {
+    const selectedUserId = getSelectedUserId();
+    
+    if (selectedUserId) {
+        // Try to load the selected user
+        try {
+            const user = await api.users.getById(selectedUserId);
+            await onUserSelected(user);
+            return;
+        } catch (error) {
+            console.warn('Selected user not found, showing selector:', error);
+            // User doesn't exist anymore, show selector
+        }
+    }
+    
+    // No user selected or user not found - show selector
+    await showUserSelector(openModalForUserSelector, false);
+}
+
+/**
+ * Open modal with special handling for user selector (non-closable initially)
+ */
+function openModalForUserSelector(content, options = {}) {
+    const modalContainer = document.getElementById('modal-container');
+    const modalContent = document.querySelector('.modal-content');
+    const modalBackdrop = document.querySelector('.modal-backdrop');
+    
+    if (!modalContainer || !modalContent) return;
+    
+    modalContent.innerHTML = content;
+    modalContainer.classList.remove('hidden');
+    
+    // Handle closable option
+    if (options.closable === false) {
+        modalBackdrop?.removeEventListener('click', closeModal);
+    } else {
+        modalBackdrop?.addEventListener('click', closeModal);
+    }
+}
+
+/**
+ * Called when a user is selected or created.
+ * Loads user data and initializes the app for that user.
+ */
+async function onUserSelected(user) {
+    state.user = user;
+    
+    // Set language based on user's native language
+    await setLanguage(user.nativeLanguage);
+    
+    // Update global config
+    updateAppConfig(user);
+    
+    // Update UI
+    updateUserDisplay();
+    
+    // Handle routing
     handleRoute();
     
+    // Listen for hash changes
+    window.removeEventListener('hashchange', handleRoute);
     window.addEventListener('hashchange', handleRoute);
-    console.log('Application initialized');
+    
+    console.log('User loaded:', user.displayName);
+}
+
+/**
+ * Handle user switch - reload to dashboard with new user.
+ */
+async function handleUserSwitch(user) {
+    // Clear cache for clean state
+    cache.clearAll();
+    
+    // Update state and UI
+    await onUserSelected(user);
+    
+    // Navigate to dashboard
+    navigateTo('dashboard');
+    
+    toast.success(t('users.switchedTo', { name: user.displayName }));
 }
 
 // ==================== User Management ====================
@@ -122,9 +223,53 @@ function setupNavigation() {
     const navbarUserBtn = document.getElementById('navbar-user-btn');
     if (navbarUserBtn) {
         navbarUserBtn.addEventListener('click', () => {
-            showEditProfileModal(state.user, openModal);
+            showUserMenu();
         });
     }
+}
+
+/**
+ * Show user menu with options to edit profile or switch users
+ */
+function showUserMenu() {
+    // Remove any existing menu
+    const existingMenu = document.querySelector('.user-menu-dropdown');
+    if (existingMenu) {
+        existingMenu.remove();
+        return;
+    }
+    
+    const menu = document.createElement('div');
+    menu.className = 'user-menu-dropdown';
+    menu.innerHTML = `
+        <div class="user-menu-item" onclick="window.showEditProfileModal()">
+            ✏️ ${t('profile.editTitle')}
+        </div>
+        <div class="user-menu-item" onclick="window.showUserSwitcher()">
+            👥 ${t('users.switchUser')}
+        </div>
+    `;
+    
+    // Position menu near the user button
+    const userBtn = document.getElementById('navbar-user-btn');
+    if (userBtn) {
+        const rect = userBtn.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = `${rect.bottom + 5}px`;
+        menu.style.right = `${window.innerWidth - rect.right}px`;
+    }
+    
+    document.body.appendChild(menu);
+    
+    // Close menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', closeUserMenu, { once: true });
+    }, 0);
+}
+
+function closeUserMenu() {
+    const menu = document.querySelector('.user-menu-dropdown');
+    if (menu) menu.remove();
 }
 
 function navigateTo(page) {
@@ -261,6 +406,33 @@ window.closeModal = closeModal;
 window.closeExercise = closeExercise;
 window.speakText = (text, languageCode, btn) => speakText(text, languageCode || state.user?.targetLanguage, btn);
 
+// User selector functions
+window.selectUser = (userId) => selectUser(userId, closeModal, handleUserSwitch);
+window.toggleCreateUserForm = toggleCreateUserForm;
+window.submitCreateUser = () => submitCreateUser(closeModal, handleUserSwitch);
+window.showUserSwitcher = () => {
+    closeUserMenu();
+    showUserSwitcher(openModal, handleUserSwitch);
+};
+window.deleteCurrentUser = async () => {
+    if (!state.user) return;
+    
+    if (!confirm(t('users.deleteConfirm', { name: state.user.displayName }))) {
+        return;
+    }
+    
+    const deleted = await deleteUser(state.user.id, (wasCurrentUser) => {
+        if (wasCurrentUser) {
+            // Show user selector since we deleted the current user
+            showUserSelector(openModalForUserSelector, false);
+        }
+    });
+    
+    if (deleted) {
+        toast.success(t('users.deleted'));
+    }
+};
+
 // Page generation functions
 window.generateLesson = () => generateLesson(showLoading, hideLoading, goals.incrementLessonGoal);
 window.generateVocabulary = () => generateVocabulary(showLoading, hideLoading, goals.incrementWordsGoal);
@@ -366,7 +538,10 @@ window.closeGoalMenu = () => {
 };
 
 // Profile functions
-window.showEditProfileModal = () => showEditProfileModal(state.user, openModal);
+window.showEditProfileModal = () => {
+    closeUserMenu();
+    showEditProfileModal(state.user, openModal);
+};
 window.submitProfileUpdate = () => submitProfileUpdate(
     (user) => { 
         state.user = user; 

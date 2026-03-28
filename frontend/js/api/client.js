@@ -2,9 +2,41 @@
  * API Client for Language Learning Platform
  * ==========================================
  * Handles all HTTP requests to the backend API.
+ * 
+ * Multi-user support: The client includes the X-User-Id header with all
+ * requests, identifying the currently selected user. The user ID is stored
+ * in localStorage and can be changed via the user selector.
  */
 
 const API_BASE = window.APP_CONFIG?.API_URL || '/api';
+const USER_ID_STORAGE_KEY = 'llp_selected_user_id';
+
+/**
+ * Get the currently selected user ID from localStorage
+ * @returns {string|null} The user ID or null if not set
+ */
+function getSelectedUserId() {
+    return localStorage.getItem(USER_ID_STORAGE_KEY);
+}
+
+/**
+ * Set the currently selected user ID in localStorage
+ * @param {string|null} userId - The user ID to set, or null to clear
+ */
+function setSelectedUserId(userId) {
+    if (userId) {
+        localStorage.setItem(USER_ID_STORAGE_KEY, userId);
+    } else {
+        localStorage.removeItem(USER_ID_STORAGE_KEY);
+    }
+}
+
+/**
+ * Clear the selected user ID from localStorage
+ */
+function clearSelectedUserId() {
+    localStorage.removeItem(USER_ID_STORAGE_KEY);
+}
 
 /**
  * Make an HTTP request to the API
@@ -12,11 +44,19 @@ const API_BASE = window.APP_CONFIG?.API_URL || '/api';
 async function request(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
     
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    
+    // Add X-User-Id header if a user is selected
+    const userId = getSelectedUserId();
+    if (userId) {
+        headers['X-User-Id'] = userId;
+    }
+    
     const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        },
+        headers,
         ...options
     };
     
@@ -75,11 +115,38 @@ class ApiError extends Error {
 export const api = {
     // ==================== Users ====================
     users: {
-        /** Get current user profile */
+        /** List all users */
+        list: () => request('/v1/users'),
+        
+        /** Create a new user */
+        create: (data) => request('/v1/users', { method: 'POST', body: data }),
+        
+        /** Get a user by ID */
+        getById: (userId) => request(`/v1/users/${userId}`),
+        
+        /** Get current user profile (based on X-User-Id header) */
         getCurrent: () => request('/v1/users/me'),
         
         /** Update current user profile */
-        update: (data) => request('/v1/users/me', { method: 'PUT', body: data })
+        update: (data) => request('/v1/users/me', { method: 'PUT', body: data }),
+        
+        /** Update a user by ID */
+        updateById: (userId, data) => request(`/v1/users/${userId}`, { method: 'PUT', body: data }),
+        
+        /** Delete a user by ID */
+        delete: (userId) => request(`/v1/users/${userId}`, { method: 'DELETE' }),
+        
+        /** Check if any users exist */
+        checkExists: () => request('/v1/users/exists'),
+        
+        /** Get the currently selected user ID from localStorage */
+        getSelectedId: getSelectedUserId,
+        
+        /** Set the selected user ID in localStorage */
+        setSelectedId: setSelectedUserId,
+        
+        /** Clear the selected user ID */
+        clearSelectedId: clearSelectedUserId
     },
     
     // ==================== Learning Goals ====================
@@ -256,9 +323,16 @@ export const api = {
          */
         synthesize: async (text, languageCode, slow = false, voice = null) => {
             const url = `${API_BASE}/v1/speech/synthesize`;
+            
+            const headers = { 'Content-Type': 'application/json' };
+            const userId = getSelectedUserId();
+            if (userId) {
+                headers['X-User-Id'] = userId;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ text, languageCode, slow, voice })
             });
             
@@ -284,8 +358,15 @@ export const api = {
                 formData.append('languageHint', languageHint);
             }
             
+            const headers = {};
+            const userId = getSelectedUserId();
+            if (userId) {
+                headers['X-User-Id'] = userId;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
+                headers,
                 body: formData
             });
             
@@ -345,9 +426,16 @@ export const api = {
          */
         selectRandomTopic: async (category) => {
             const url = `${API_BASE}/v1/chat/topics/random?category=${encodeURIComponent(category)}`;
+            
+            const headers = { 'Content-Type': 'application/json' };
+            const userId = getSelectedUserId();
+            if (userId) {
+                headers['X-User-Id'] = userId;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers
             });
             
             if (!response.ok) {
@@ -443,4 +531,4 @@ export const api = {
 // Legacy alias for backwards compatibility
 export const apiClient = api;
 
-export { ApiError };
+export { ApiError, getSelectedUserId, setSelectedUserId, clearSelectedUserId };

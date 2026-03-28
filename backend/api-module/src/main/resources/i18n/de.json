@@ -145,6 +145,10 @@
   "profile.skillLevel": "Sprachniveau (GER)",
   "profile.languages": "Sprachen",
   "profile.languagesNote": "(Sprachen werden bei der Einrichtung konfiguriert)",
+  "profile.nativeLanguage": "Muttersprache",
+  "profile.nativeLanguageHint": "Sprache für Erklärungen und Benutzeroberfläche",
+  "profile.targetLanguage": "Zielsprache",
+  "profile.targetLanguageHint": "Sprache, die du lernst",
   "profile.save": "Änderungen speichern",
   "profile.cancel": "Abbrechen",
 
@@ -230,6 +234,8 @@
   "toast.transcriptionComplete": "Transkription abgeschlossen",
   "toast.transcriptionFailed": "Transkription fehlgeschlagen",
   "toast.cacheCleared": "Inhalt gelöscht",
+  "toast.languagesMustBeDifferent": "Muttersprache und Zielsprache müssen unterschiedlich sein",
+  "toast.reloadingTranslations": "Übersetzungen werden neu geladen...",
 
   "activity.completedGoal": "Ziel abgeschlossen",
   "activity.today": "Heute",
@@ -240,6 +246,7 @@
   "misc.comingSoon": "kommt bald!",
   "misc.roleplayTitle": "🎭 Rollenspiel:",
   "misc.clearCache": "Löschen",
+  "misc.cancel": "Abbrechen",
 
   "cards.title": "Visuelle Lernkarten",
   "cards.generateTitle": "Visuelle Karten generieren",
@@ -334,5 +341,26 @@
   "lang.ru": "Russisch",
   "lang.ja": "Japanisch",
   "lang.zh": "Chinesisch",
-  "lang.ko": "Koreanisch"
+  "lang.ko": "Koreanisch",
+
+  "users.selectUser": "Benutzer wählen",
+  "users.selectUserDesc": "Wähle dein Profil, um weiterzulernen",
+  "users.createNew": "Neues Profil erstellen",
+  "users.createTitle": "Profil erstellen",
+  "users.noUsers": "Noch keine Profile. Erstelle dein erstes, um loszulegen!",
+  "users.name": "Name",
+  "users.namePlaceholder": "Gib deinen Namen ein",
+  "users.nativeLanguage": "Ich spreche",
+  "users.targetLanguage": "Ich möchte lernen",
+  "users.create": "Profil erstellen",
+  "users.nameRequired": "Bitte gib einen Namen ein",
+  "users.languagesMustDiffer": "Muttersprache und Zielsprache müssen unterschiedlich sein",
+  "users.createFailed": "Profil konnte nicht erstellt werden",
+  "users.selectFailed": "Profil konnte nicht ausgewählt werden",
+  "users.switchUser": "Benutzer wechseln",
+  "users.switchedTo": "Gewechselt zu {name}",
+  "users.deleteAccount": "Konto löschen",
+  "users.deleteConfirm": "Bist du sicher, dass du das Konto \"{name}\" löschen möchtest? Alle Daten gehen unwiderruflich verloren.",
+  "users.deleted": "Konto gelöscht",
+  "users.deleteFailed": "Konto konnte nicht gelöscht werden"
 }

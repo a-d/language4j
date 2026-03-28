@@ -1,6 +1,5 @@
 package dev.languagelearning.content.service.impl;
 
-import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
 import dev.languagelearning.content.util.VocabularyJsonValidator;
 import dev.languagelearning.core.domain.ExerciseGenerationType;
@@ -27,6 +26,8 @@ import java.util.Map;
  *   <li>Automatic retry on JSON parse failures</li>
  *   <li>Validation that output is parseable JSON</li>
  * </ul>
+ * <p>
+ * Language settings are retrieved from the current user's profile, not from static configuration.
  */
 @Slf4j
 @Service
@@ -36,7 +37,6 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
     private final LlmService llmService;
     private final LlmJsonGenerator llmJsonGenerator;
     private final UserService userService;
-    private final LanguageConfig languageConfig;
 
     // ==================== Exercise Generation ====================
 
@@ -52,10 +52,10 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Generating {} {} exercise(s) on topic '{}' for level {}",
                 count, type.name(), topic, user.getSkillLevel());
 
-        // Build base variables
+        // Build base variables - use user's language settings
         Map<String, Object> variables = new HashMap<>();
-        variables.put("nativeLanguage", languageConfig.getNativeName());
-        variables.put("targetLanguage", languageConfig.getTargetName());
+        variables.put("nativeLanguage", user.getNativeLanguageName());
+        variables.put("targetLanguage", user.getTargetLanguageName());
         variables.put("skillLevel", user.getSkillLevel().name());
         variables.put("topic", topic);
 
@@ -144,8 +144,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 topic, user.getId(), user.getSkillLevel());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "topic", topic
         );
@@ -161,8 +161,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 wordCount, topic, user.getSkillLevel());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "topic", topic,
                 "wordCount", wordCount
@@ -182,8 +182,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Generating {} flashcards on topic '{}'", cardCount, topic);
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "topic", topic,
                 "cardCount", cardCount
@@ -202,8 +202,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Generating roleplay scenario: '{}'", scenario);
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "scenario", scenario
         );
@@ -220,8 +220,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Generating learning plan for user {}", user.getId());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "dailyGoal", dailyGoal,
                 "weeklyGoal", weeklyGoal,
@@ -240,8 +240,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Evaluating response for user {}", user.getId());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "exercise", exercise,
                 "response", userResponse,
@@ -259,8 +259,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
         log.info("Evaluating pronunciation for user {}", user.getId());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "expected", expectedText,
                 "transcription", transcription
@@ -280,8 +280,8 @@ public class ContentGenerationServiceImpl implements ContentGenerationService {
                 wordCount, topic, user.getSkillLevel());
 
         Map<String, Object> variables = Map.of(
-                "nativeLanguage", languageConfig.getNativeName(),
-                "targetLanguage", languageConfig.getTargetName(),
+                "nativeLanguage", user.getNativeLanguageName(),
+                "targetLanguage", user.getTargetLanguageName(),
                 "skillLevel", user.getSkillLevel().name(),
                 "topic", topic,
                 "wordCount", wordCount

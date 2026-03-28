@@ -145,6 +145,10 @@
   "profile.skillLevel": "Skill Level (CEFR)",
   "profile.languages": "Languages",
   "profile.languagesNote": "(Languages are configured at deployment time)",
+  "profile.nativeLanguage": "Native Language",
+  "profile.nativeLanguageHint": "Language for explanations and interface",
+  "profile.targetLanguage": "Target Language",
+  "profile.targetLanguageHint": "Language you are learning",
   "profile.save": "Save Changes",
   "profile.cancel": "Cancel",
 
@@ -230,6 +234,8 @@
   "toast.transcriptionComplete": "Transcription complete",
   "toast.transcriptionFailed": "Transcription failed",
   "toast.cacheCleared": "Content cleared",
+  "toast.languagesMustBeDifferent": "Native and target languages must be different",
+  "toast.reloadingTranslations": "Reloading translations...",
 
   "activity.completedGoal": "Completed goal",
   "activity.today": "Today",
@@ -240,6 +246,7 @@
   "misc.comingSoon": "coming soon!",
   "misc.roleplayTitle": "🎭 Roleplay:",
   "misc.clearCache": "Clear",
+  "misc.cancel": "Cancel",
 
   "cards.title": "Visual Learning Cards",
   "cards.generateTitle": "Generate Visual Cards",
@@ -334,5 +341,26 @@
   "lang.ru": "Russian",
   "lang.ja": "Japanese",
   "lang.zh": "Chinese",
-  "lang.ko": "Korean"
+  "lang.ko": "Korean",
+
+  "users.selectUser": "Select User",
+  "users.selectUserDesc": "Choose your profile to continue learning",
+  "users.createNew": "Create New Profile",
+  "users.createTitle": "Create Profile",
+  "users.noUsers": "No profiles yet. Create your first one to get started!",
+  "users.name": "Name",
+  "users.namePlaceholder": "Enter your name",
+  "users.nativeLanguage": "I speak",
+  "users.targetLanguage": "I want to learn",
+  "users.create": "Create Profile",
+  "users.nameRequired": "Please enter a name",
+  "users.languagesMustDiffer": "Native and target languages must be different",
+  "users.createFailed": "Failed to create profile",
+  "users.selectFailed": "Failed to select profile",
+  "users.switchUser": "Switch User",
+  "users.switchedTo": "Switched to {name}",
+  "users.deleteAccount": "Delete Account",
+  "users.deleteConfirm": "Are you sure you want to delete the account \"{name}\"? All data will be permanently lost.",
+  "users.deleted": "Account deleted",
+  "users.deleteFailed": "Failed to delete account"
 }

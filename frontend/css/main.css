@@ -2537,3 +2537,145 @@ h3 {
     align-items: center;
     justify-content: center;
 }
+
+/* ==================== User Selector Modal ==================== */
+
+.user-selector-modal {
+    text-align: center;
+    padding: var(--spacing-md);
+}
+
+.user-selector-header h2 {
+    margin-bottom: var(--spacing-xs);
+}
+
+.user-selector-header p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: var(--spacing-lg);
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-color);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+.user-card:hover {
+    border-color: var(--primary-color);
+    background: var(--surface-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.user-info {
+    text-align: left;
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-xs);
+}
+
+.user-languages {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.user-level {
+    font-size: var(--font-size-xs);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.no-users {
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.user-create-form {
+    text-align: left;
+}
+
+.user-create-form h3 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.user-selector-footer {
+    margin-top: var(--spacing-md);
+}
+
+/* User Menu Dropdown (navbar) */
+.user-menu-dropdown {
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    z-index: 1000;
+    min-width: 180px;
+    overflow: hidden;
+}
+
+.user-menu-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.user-menu-item:hover {
+    background: var(--bg-color);
+}
+
+.user-menu-item:first-child {
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Dark mode adjustments for user selector */
+.dark-mode .user-card {
+    background: #2d3748;
+}
+
+.dark-mode .user-card:hover {
+    background: var(--surface-color);
+}
+
+.dark-mode .user-menu-dropdown {
+    background: var(--surface-color);
+}
+
+.dark-mode .user-menu-item:hover {
+    background: #2d3748;
+}

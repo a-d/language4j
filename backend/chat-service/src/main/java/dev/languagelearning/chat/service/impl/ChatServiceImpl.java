@@ -6,7 +6,6 @@ import dev.languagelearning.chat.service.ChatContextService;
 import dev.languagelearning.chat.service.ChatService;
 import dev.languagelearning.chat.service.ChatService.ChatResponse;
 import dev.languagelearning.chat.service.ChatService.ChatResponseChunk;
-import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
 import dev.languagelearning.core.domain.ChatMessage;
 import dev.languagelearning.core.domain.ChatSession;
@@ -54,7 +53,6 @@ public class ChatServiceImpl implements ChatService {
     private final ChatContextService contextService;
     private final LlmService llmService;
     private final ContentGenerationService contentGenerationService;
-    private final LanguageConfig languageConfig;
     
     /**
      * Suggestion translations by language code.
@@ -408,7 +406,8 @@ public class ChatServiceImpl implements ChatService {
         List<String> suggestions = new ArrayList<>();
         
         // Get translations for user's native language
-        String nativeLang = languageConfig.getNativeCode();
+        User user = userService.getCurrentUser();
+        String nativeLang = user.getNativeLanguage();
         Map<String, String> translations = SUGGESTION_TRANSLATIONS.getOrDefault(
                 nativeLang, 
                 SUGGESTION_TRANSLATIONS.get("en") // Fallback to English

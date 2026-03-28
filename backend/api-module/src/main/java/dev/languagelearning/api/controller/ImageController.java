@@ -1,8 +1,9 @@
 package dev.languagelearning.api.controller;
 
 import dev.languagelearning.api.dto.*;
-import dev.languagelearning.config.LanguageConfig;
+import dev.languagelearning.core.domain.User;
 import dev.languagelearning.image.service.ImageService;
+import dev.languagelearning.learning.service.UserService;
 import dev.languagelearning.image.service.ImageService.GeneratedImage;
 import dev.languagelearning.image.service.ImageService.ImageGenerationOptions;
 import dev.languagelearning.image.service.ImageService.ImageSize;
@@ -40,7 +41,7 @@ import java.util.Optional;
 public class ImageController {
 
     private final ObjectProvider<ImageService> imageServiceProvider;
-    private final LanguageConfig languageConfig;
+    private final UserService userService;
 
     private ImageService getImageService() {
         ImageService service = imageServiceProvider.getIfAvailable();
@@ -120,7 +121,8 @@ public class ImageController {
             @RequestBody GenerateFlashcardImageRequest request) {
         log.debug("Generating flashcard image for word: {}", request.word());
 
-        String targetLang = languageConfig.getTargetCode();
+        User user = userService.getCurrentUser();
+        String targetLang = user.getTargetLanguage();
         GeneratedImage result = getImageService().generateFlashcardImage(
                 request.word(),
                 targetLang,
@@ -163,7 +165,8 @@ public class ImageController {
 
         log.debug("Generating batch of {} flashcard images", requests.length);
 
-        String targetLang = languageConfig.getTargetCode();
+        User user = userService.getCurrentUser();
+        String targetLang = user.getTargetLanguage();
         GeneratedImageResponse[] responses = new GeneratedImageResponse[requests.length];
 
         ImageService imageService = getImageService();

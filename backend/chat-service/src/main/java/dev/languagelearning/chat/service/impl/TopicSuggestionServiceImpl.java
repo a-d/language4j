@@ -7,7 +7,6 @@ import dev.languagelearning.chat.model.ChatContext;
 import dev.languagelearning.chat.prompts.ChatPrompts;
 import dev.languagelearning.chat.service.ChatContextService;
 import dev.languagelearning.chat.service.TopicSuggestionService;
-import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.core.domain.LearningGoal;
 import dev.languagelearning.core.domain.TopicHistory;
 import dev.languagelearning.core.domain.TopicHistory.ActivityCategory;
@@ -41,7 +40,6 @@ public class TopicSuggestionServiceImpl implements TopicSuggestionService {
     private final GoalService goalService;
     private final ChatContextService contextService;
     private final LlmService llmService;
-    private final LanguageConfig languageConfig;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -59,21 +57,21 @@ public class TopicSuggestionServiceImpl implements TopicSuggestionService {
         // Get daily goals for context
         String goalsContext = formatGoalsForPrompt(context);
         
-        // Build the prompt
+        // Build the prompt using user's language settings
         String activityName = formatActivityCategory(category);
         String prompt = String.format(
                 ChatPrompts.TOPIC_SUGGESTIONS_PROMPT,
                 count,
                 activityName,
-                languageConfig.getTargetName(),
+                user.getTargetLanguageName(),
                 user.getSkillLevel().name(),
-                languageConfig.getTargetCode(),
-                languageConfig.getNativeCode(),
+                user.getTargetLanguage(),
+                user.getNativeLanguage(),
                 avoidTopics,
                 goalsContext,
-                languageConfig.getNativeCode(),
+                user.getNativeLanguage(),
                 count,
-                languageConfig.getNativeCode(),
+                user.getNativeLanguage(),
                 user.getSkillLevel().name(),
                 avoidTopics
         );
@@ -107,18 +105,18 @@ public class TopicSuggestionServiceImpl implements TopicSuggestionService {
         // Get daily goals for context
         String goalsContext = formatGoalsForPrompt(context);
         
-        // Build the prompt
+        // Build the prompt using user's language settings
         String activityName = formatActivityCategory(category);
         String prompt = String.format(
                 ChatPrompts.RANDOM_TOPIC_PROMPT,
                 activityName,
                 user.getSkillLevel().name(),
-                languageConfig.getTargetCode(),
-                languageConfig.getNativeCode(),
+                user.getTargetLanguage(),
+                user.getNativeLanguage(),
                 avoidTopics,
                 goalsContext,
                 user.getSkillLevel().name(),
-                languageConfig.getNativeCode()
+                user.getNativeLanguage()
         );
         
         log.debug("Selecting random topic for {} activity", category);

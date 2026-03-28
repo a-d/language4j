@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.languagelearning.api.dto.*;
-import dev.languagelearning.config.LanguageConfig;
 import dev.languagelearning.content.service.ContentGenerationService;
+import dev.languagelearning.core.domain.User;
 import dev.languagelearning.image.service.ImageService;
+import dev.languagelearning.learning.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,7 +38,7 @@ public class ContentController {
 
     private final ContentGenerationService contentService;
     private final ObjectProvider<ImageService> imageServiceProvider;
-    private final LanguageConfig languageConfig;
+    private final UserService userService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -297,10 +298,11 @@ public class ContentController {
         log.info("Generated {} visual cards ({} with images, {} failed)",
                 cards.size(), cards.size() - failedCount, failedCount);
         
+        User user = userService.getCurrentUser();
         return ResponseEntity.ok(new VisualCardsResponse(
                 request.topic(),
-                languageConfig.getNativeCode(),
-                languageConfig.getTargetCode(),
+                user.getNativeLanguage(),
+                user.getTargetLanguage(),
                 cards,
                 cards.size(),
                 failedCount

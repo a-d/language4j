@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Locale;
+import java.util.Map;
+
 /**
  * Represents a user of the language learning platform.
  * <p>
@@ -87,5 +90,85 @@ public class User extends BaseEntity {
         user.setNativeLanguage(nativeLanguage);
         user.setTargetLanguage(targetLanguage);
         return user;
+    }
+
+    /**
+     * Map of ISO 639-1 codes to English language names.
+     * Used when Java's Locale doesn't have the language name.
+     */
+    private static final Map<String, String> LANGUAGE_NAMES = Map.ofEntries(
+            Map.entry("de", "German"),
+            Map.entry("en", "English"),
+            Map.entry("es", "Spanish"),
+            Map.entry("fr", "French"),
+            Map.entry("it", "Italian"),
+            Map.entry("ja", "Japanese"),
+            Map.entry("ko", "Korean"),
+            Map.entry("nl", "Dutch"),
+            Map.entry("pl", "Polish"),
+            Map.entry("pt", "Portuguese"),
+            Map.entry("ru", "Russian"),
+            Map.entry("zh", "Chinese"),
+            Map.entry("ar", "Arabic"),
+            Map.entry("hi", "Hindi"),
+            Map.entry("tr", "Turkish"),
+            Map.entry("sv", "Swedish"),
+            Map.entry("da", "Danish"),
+            Map.entry("fi", "Finnish"),
+            Map.entry("no", "Norwegian"),
+            Map.entry("cs", "Czech"),
+            Map.entry("el", "Greek"),
+            Map.entry("he", "Hebrew"),
+            Map.entry("hu", "Hungarian"),
+            Map.entry("id", "Indonesian"),
+            Map.entry("th", "Thai"),
+            Map.entry("uk", "Ukrainian"),
+            Map.entry("vi", "Vietnamese")
+    );
+
+    /**
+     * Gets the human-readable name of the native language.
+     *
+     * @return the native language name in English (e.g., "German")
+     */
+    public String getNativeLanguageName() {
+        return getLanguageName(nativeLanguage);
+    }
+
+    /**
+     * Gets the human-readable name of the target language.
+     *
+     * @return the target language name in English (e.g., "French")
+     */
+    public String getTargetLanguageName() {
+        return getLanguageName(targetLanguage);
+    }
+
+    /**
+     * Converts an ISO 639-1 language code to a human-readable name.
+     *
+     * @param languageCode the ISO 639-1 code (e.g., "de", "fr")
+     * @return the language name in English
+     */
+    private static String getLanguageName(String languageCode) {
+        if (languageCode == null || languageCode.isBlank()) {
+            return "Unknown";
+        }
+
+        // Check our map first
+        String name = LANGUAGE_NAMES.get(languageCode.toLowerCase());
+        if (name != null) {
+            return name;
+        }
+
+        // Fall back to Java's Locale
+        Locale locale = Locale.forLanguageTag(languageCode);
+        String displayName = locale.getDisplayLanguage(Locale.ENGLISH);
+        if (displayName != null && !displayName.isEmpty() && !displayName.equals(languageCode)) {
+            return displayName;
+        }
+
+        // Last resort: return the code itself
+        return languageCode.toUpperCase();
     }
 }

@@ -432,6 +432,18 @@
   "profile.languagesNote": {
     "context": "Note explaining languages are configured at deployment"
   },
+  "profile.nativeLanguage": {
+    "context": "Form field label for user's native language"
+  },
+  "profile.nativeLanguageHint": {
+    "context": "Help text explaining native language is used for UI and explanations"
+  },
+  "profile.targetLanguage": {
+    "context": "Form field label for the language being learned"
+  },
+  "profile.targetLanguageHint": {
+    "context": "Help text explaining target language is the one being learned"
+  },
   "profile.save": {
     "context": "Button label to save profile changes"
   },
@@ -680,6 +692,12 @@
   },
   "toast.cacheCleared": {
     "context": "Success notification when cached content is cleared"
+  },
+  "toast.languagesMustBeDifferent": {
+    "context": "Validation error when native and target languages are the same"
+  },
+  "toast.reloadingTranslations": {
+    "context": "Info notification while UI language is being changed"
   },
 
   "activity.completedGoal": {
@@ -1002,5 +1020,74 @@
   },
   "lang.ko": {
     "context": "Language name - Korean"
+  },
+
+  "users.selectUser": {
+    "context": "Modal title for user/profile selection screen"
+  },
+  "users.selectUserDesc": {
+    "context": "Subtitle explaining the user selection modal"
+  },
+  "users.createNew": {
+    "context": "Button label to create a new user profile"
+  },
+  "users.createTitle": {
+    "context": "Modal title for creating a new profile"
+  },
+  "users.noUsers": {
+    "context": "Message when no user profiles exist yet"
+  },
+  "users.name": {
+    "context": "Form field label for user name"
+  },
+  "users.namePlaceholder": {
+    "context": "Placeholder text for name input"
+  },
+  "users.nativeLanguage": {
+    "context": "Form field label for selecting native language in user creation"
+  },
+  "users.targetLanguage": {
+    "context": "Form field label for selecting target language in user creation"
+  },
+  "users.create": {
+    "context": "Button label to submit and create the profile"
+  },
+  "users.nameRequired": {
+    "context": "Validation error when name is empty"
+  },
+  "users.languagesMustDiffer": {
+    "context": "Validation error when native and target languages are the same"
+  },
+  "users.createFailed": {
+    "context": "Error notification when profile creation fails"
+  },
+  "users.selectFailed": {
+    "context": "Error notification when profile selection fails"
+  },
+  "users.switchUser": {
+    "context": "Menu item to switch to a different user profile"
+  },
+  "users.switchedTo": {
+    "context": "Success notification after switching profiles",
+    "parameters": ["name"],
+    "example": "Switched to Alice"
+  },
+  "users.deleteAccount": {
+    "context": "Button label to delete the current user account"
+  },
+  "users.deleteConfirm": {
+    "context": "Confirmation message before deleting an account",
+    "parameters": ["name"],
+    "example": "Are you sure you want to delete Alice's account?"
+  },
+  "users.deleted": {
+    "context": "Success notification after account is deleted"
+  },
+  "users.deleteFailed": {
+    "context": "Error notification when account deletion fails"
+  },
+
+  "misc.cancel": {
+    "context": "Generic cancel button label"
   }
 }
