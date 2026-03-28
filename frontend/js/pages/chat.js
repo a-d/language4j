@@ -1,12 +1,46 @@
 /**
  * Chat Page Module
  * Manages the chat interface for AI-powered learning moderation
+ * with layered activity and topic selection dialog
  */
 
 import { apiClient } from '../api/client.js';
 import { contentRenderer } from '../services/content-renderer.js';
 import { t, applyTranslations } from '../services/i18n.js';
 import { showToast } from '../services/toast.js';
+
+/**
+ * Selection states for the layered dialog
+ */
+const SelectionState = {
+    IDLE: 'IDLE',                       // Normal chat mode
+    SELECTING_ACTIVITY: 'SELECTING_ACTIVITY', // Layer 1: Activity type selection
+    LOADING_TOPICS: 'LOADING_TOPICS',   // Fetching topic suggestions
+    SELECTING_TOPIC: 'SELECTING_TOPIC', // Layer 2: Topic selection
+    CUSTOM_TOPIC: 'CUSTOM_TOPIC'        // Custom topic input
+};
+
+/**
+ * Activity categories matching backend ActivityCategory enum
+ */
+const ActivityCategory = {
+    VOCABULARY: 'VOCABULARY',
+    EXERCISE: 'EXERCISE',
+    LESSON: 'LESSON',
+    SCENARIO: 'SCENARIO',
+    AUDIO: 'AUDIO'
+};
+
+/**
+ * Maps user-facing activity types to backend categories and activity types
+ */
+const ActivityMapping = {
+    vocabulary: { category: ActivityCategory.VOCABULARY, activityType: 'VOCABULARY', label: 'chat.activityVocabulary' },
+    exercise: { category: ActivityCategory.EXERCISE, activityType: 'TEXT_COMPLETION', label: 'chat.activityExercise' },
+    lesson: { category: ActivityCategory.LESSON, activityType: 'LESSON', label: 'chat.activityLesson' },
+    scenario: { category: ActivityCategory.SCENARIO, activityType: 'SCENARIO', label: 'chat.activityScenario' },
+    audio: { category: ActivityCategory.AUDIO, activityType: 'LISTENING', label: 'chat.activityAudio' }
+};
 
 /**
  * Chat page state
@@ -17,7 +51,12 @@ const state = {
     suggestions: [],
     isLoading: false,
     isStreaming: false,
-    eventSource: null
+    eventSource: null,
+    // Layered dialog state
+    selectionState: SelectionState.IDLE,
+    selectedActivity: null,
+    topicSuggestions: [],
+    randomTopic: null
 };
 
 /**
@@ -183,9 +222,134 @@ function renderEmbeddedActivity(message) {
 }
 
 /**
- * Render quick suggestions
+ * Render suggestions based on current selection state
  */
 function renderSuggestions() {
+    switch (state.selectionState) {
+        case SelectionState.SELECTING_ACTIVITY:
+            return renderActivitySuggestions();
+        case SelectionState.LOADING_TOPICS:
+            return renderLoadingTopics();
+        case SelectionState.SELECTING_TOPIC:
+            return renderTopicSuggestions();
+        case SelectionState.CUSTOM_TOPIC:
+            return renderCustomTopicInput();
+        default:
+            return renderDefaultSuggestions();
+    }
+}
+
+/**
+ * Render Layer 1: Activity type selection
+ */
+function renderActivitySuggestions() {
+    return `
+        <div class="suggestion-layer activity-selection">
+            <div class="suggestion-label">${t('chat.selectActivity')}</div>
+            <div class="suggestion-buttons">
+                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('vocabulary')">
+                    ${t('chat.activityVocabulary')}
+                </button>
+                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('exercise')">
+                    ${t('chat.activityExercise')}
+                </button>
+                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('lesson')">
+                    ${t('chat.activityLesson')}
+                </button>
+                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('scenario')">
+                    ${t('chat.activityScenario')}
+                </button>
+                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('audio')">
+                    ${t('chat.activityAudio')}
+                </button>
+                <button class="chat-suggestion-btn surprise-btn" onclick="window.chatPage.surpriseMe()">
+                    ${t('chat.activitySurprise')}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render loading state while fetching topics
+ */
+function renderLoadingTopics() {
+    return `
+        <div class="suggestion-layer loading-topics">
+            <div class="suggestion-label">
+                <span class="loading-spinner-small"></span>
+                ${t('chat.loadingTopics')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render Layer 2: Topic selection
+ */
+function renderTopicSuggestions() {
+    const topicButtons = state.topicSuggestions.map((topic, index) => `
+        <button class="chat-suggestion-btn topic-btn ${topic.alignsWithGoals ? 'aligned-goal' : ''}" 
+                onclick="window.chatPage.selectTopic(${index})"
+                title="${topic.description || ''}">
+            <span class="topic-emoji">${topic.emoji || '📝'}</span>
+            <span class="topic-text">${escapeHtml(topic.topic)}</span>
+            ${topic.alignsWithGoals ? `<span class="goal-badge" title="${t('chat.topicAlignedGoal')}">⭐</span>` : ''}
+        </button>
+    `).join('');
+    
+    return `
+        <div class="suggestion-layer topic-selection">
+            <div class="suggestion-header">
+                <button class="back-btn" onclick="window.chatPage.backToActivities()">
+                    ${t('chat.backToActivities')}
+                </button>
+                <span class="suggestion-label">${t('chat.selectTopic')}</span>
+            </div>
+            <div class="suggestion-buttons topic-buttons">
+                ${topicButtons}
+                <button class="chat-suggestion-btn choose-for-me-btn" onclick="window.chatPage.chooseForMe()">
+                    ${t('chat.chooseForMe')}
+                </button>
+                <button class="chat-suggestion-btn custom-topic-btn" onclick="window.chatPage.showCustomTopicInput()">
+                    ${t('chat.customTopic')}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render custom topic input
+ */
+function renderCustomTopicInput() {
+    return `
+        <div class="suggestion-layer custom-topic-input">
+            <div class="suggestion-header">
+                <button class="back-btn" onclick="window.chatPage.backToTopics()">
+                    ${t('chat.backToActivities')}
+                </button>
+                <span class="suggestion-label">${t('chat.enterCustomTopic')}</span>
+            </div>
+            <div class="custom-topic-row">
+                <input type="text" 
+                       class="custom-topic-field" 
+                       id="customTopicInput"
+                       placeholder="${t('chat.customTopicPlaceholder')}"
+                       onkeydown="window.chatPage.handleCustomTopicKeyDown(event)"
+                       autofocus />
+                <button class="chat-suggestion-btn start-btn" onclick="window.chatPage.startWithCustomTopic()">
+                    ${t('chat.startWithTopic')}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render default suggestions
+ */
+function renderDefaultSuggestions() {
     if (state.suggestions.length === 0) {
         return '';
     }
@@ -218,11 +382,8 @@ async function loadOrCreateSession() {
             return; // initiateConversation will handle UI update
         }
         
-        // Extract suggestions from the last assistant message
-        const lastAssistant = messages.filter(m => m.role === 'ASSISTANT').pop();
-        if (lastAssistant && !lastAssistant.embeddedActivityType) {
-            state.suggestions = extractSuggestions(lastAssistant.content);
-        }
+        // Show activity selection by default for returning users
+        showActivitySelection();
         
         state.isLoading = false;
         refreshUI();
@@ -245,8 +406,9 @@ async function initiateConversation() {
         
         // Only add the assistant response, not the "start" message
         state.messages = [response.message];
-        // Always use frontend-translated suggestions (ignore backend English suggestions)
-        state.suggestions = extractSuggestions(response.message.content);
+        
+        // Show activity selection after greeting
+        showActivitySelection();
         
         state.isLoading = false;
         refreshUI();
@@ -256,6 +418,231 @@ async function initiateConversation() {
         state.isLoading = false;
         refreshUI();
         showToast(t('chat.connectionError'), 'error');
+    }
+}
+
+/**
+ * Show activity selection (Layer 1)
+ */
+function showActivitySelection() {
+    state.selectionState = SelectionState.SELECTING_ACTIVITY;
+    state.selectedActivity = null;
+    state.topicSuggestions = [];
+    state.randomTopic = null;
+    state.suggestions = [];
+    refreshSuggestionsUI();
+}
+
+/**
+ * Handle activity selection (Layer 1 -> Layer 2)
+ */
+export async function selectActivity(activityKey) {
+    const mapping = ActivityMapping[activityKey];
+    if (!mapping) {
+        console.error('Unknown activity:', activityKey);
+        return;
+    }
+    
+    state.selectedActivity = { key: activityKey, ...mapping };
+    state.selectionState = SelectionState.LOADING_TOPICS;
+    refreshSuggestionsUI();
+    
+    try {
+        // Fetch topic suggestions from backend
+        const response = await apiClient.chat.getTopicSuggestions(mapping.category, 5, true);
+        
+        state.topicSuggestions = response.suggestions || [];
+        state.randomTopic = response.randomTopic;
+        state.selectionState = SelectionState.SELECTING_TOPIC;
+        refreshSuggestionsUI();
+        
+    } catch (error) {
+        console.error('Failed to get topic suggestions:', error);
+        // Fallback to activity selection
+        showActivitySelection();
+        showToast(t('chat.error'), 'error');
+    }
+}
+
+/**
+ * Handle "Surprise me!" - random activity with random topic
+ */
+export async function surpriseMe() {
+    state.isLoading = true;
+    refreshUI();
+    showTypingIndicator();
+    
+    try {
+        // Pick a random activity
+        const activityKeys = Object.keys(ActivityMapping);
+        const randomActivityKey = activityKeys[Math.floor(Math.random() * activityKeys.length)];
+        const mapping = ActivityMapping[randomActivityKey];
+        
+        // Get a random topic for this activity
+        const topic = await apiClient.chat.selectRandomTopic(mapping.category);
+        
+        // Send the request to the coach
+        await executeActivityWithTopic(randomActivityKey, topic);
+        
+    } catch (error) {
+        console.error('Failed to surprise:', error);
+        hideTypingIndicator();
+        state.isLoading = false;
+        refreshUI();
+        showToast(t('chat.error'), 'error');
+    }
+}
+
+/**
+ * Handle topic selection (Layer 2)
+ */
+export function selectTopic(index) {
+    const topic = state.topicSuggestions[index];
+    if (topic) {
+        executeActivityWithTopic(state.selectedActivity.key, topic.topic);
+    }
+}
+
+/**
+ * Handle "Choose for me" - use random topic
+ */
+export function chooseForMe() {
+    if (state.randomTopic) {
+        executeActivityWithTopic(state.selectedActivity.key, state.randomTopic);
+    } else {
+        // Fallback: select first topic suggestion
+        if (state.topicSuggestions.length > 0) {
+            selectTopic(0);
+        }
+    }
+}
+
+/**
+ * Show custom topic input
+ */
+export function showCustomTopicInput() {
+    state.selectionState = SelectionState.CUSTOM_TOPIC;
+    refreshSuggestionsUI();
+    
+    // Focus the input after render
+    setTimeout(() => {
+        const input = document.getElementById('customTopicInput');
+        if (input) input.focus();
+    }, 50);
+}
+
+/**
+ * Handle custom topic key down
+ */
+export function handleCustomTopicKeyDown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        startWithCustomTopic();
+    } else if (event.key === 'Escape') {
+        backToTopics();
+    }
+}
+
+/**
+ * Start activity with custom topic
+ */
+export function startWithCustomTopic() {
+    const input = document.getElementById('customTopicInput');
+    const topic = input?.value?.trim();
+    
+    if (!topic) {
+        return;
+    }
+    
+    executeActivityWithTopic(state.selectedActivity.key, topic);
+}
+
+/**
+ * Go back to activity selection
+ */
+export function backToActivities() {
+    showActivitySelection();
+}
+
+/**
+ * Go back to topic selection
+ */
+export function backToTopics() {
+    state.selectionState = SelectionState.SELECTING_TOPIC;
+    refreshSuggestionsUI();
+}
+
+/**
+ * Execute activity with selected topic
+ */
+async function executeActivityWithTopic(activityKey, topic) {
+    const mapping = ActivityMapping[activityKey];
+    if (!mapping || !topic) return;
+    
+    // Record topic usage for history
+    try {
+        await apiClient.chat.recordTopicUsage(topic, mapping.category);
+    } catch (e) {
+        console.warn('Failed to record topic usage:', e);
+    }
+    
+    // Build the message for the coach using i18n translations (user's native language)
+    const activityRequestKeys = {
+        vocabulary: 'chat.requestVocabulary',
+        exercise: 'chat.requestExercise',
+        lesson: 'chat.requestLesson',
+        scenario: 'chat.requestScenario',
+        audio: 'chat.requestAudio'
+    };
+    
+    const requestKey = activityRequestKeys[activityKey] || 'chat.requestDefault';
+    const message = t(requestKey, { topic });
+    
+    // Reset selection state
+    state.selectionState = SelectionState.IDLE;
+    state.selectedActivity = null;
+    state.topicSuggestions = [];
+    state.randomTopic = null;
+    
+    // Send as user message
+    state.isLoading = true;
+    refreshUI();
+    
+    // Add user message to UI immediately
+    const userMessage = {
+        id: 'temp-' + Date.now(),
+        role: 'USER',
+        content: message,
+        createdAt: new Date().toISOString()
+    };
+    state.messages.push(userMessage);
+    refreshUI();
+    scrollToBottom();
+    showTypingIndicator();
+    
+    try {
+        const response = await apiClient.chat.sendMessage(state.sessionId, message);
+        
+        // Remove temp message and add real messages
+        state.messages = state.messages.filter(m => !m.id.toString().startsWith('temp-'));
+        state.messages.push(userMessage);
+        state.messages.push(response.message);
+        
+        hideTypingIndicator();
+        state.isLoading = false;
+        
+        // Show activity selection again after completing
+        showActivitySelection();
+        refreshUI();
+        
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        hideTypingIndicator();
+        state.isLoading = false;
+        state.messages = state.messages.filter(m => !m.id.toString().startsWith('temp-'));
+        showActivitySelection();
+        refreshUI();
+        showToast(t('chat.error'), 'error');
     }
 }
 
@@ -273,6 +660,7 @@ export async function newSession() {
         }
         state.messages = [];
         state.suggestions = [];
+        state.selectionState = SelectionState.IDLE;
         await loadOrCreateSession();
     } catch (error) {
         console.error('Failed to create new session:', error);
@@ -281,7 +669,7 @@ export async function newSession() {
 }
 
 /**
- * Send a message
+ * Send a message (manual text input)
  */
 export async function sendMessage() {
     const input = document.getElementById('chatInput');
@@ -300,6 +688,7 @@ export async function sendMessage() {
     };
     state.messages.push(userMessage);
     state.suggestions = [];
+    state.selectionState = SelectionState.IDLE;
     
     // Clear input
     input.value = '';
@@ -318,28 +707,21 @@ export async function sendMessage() {
         
         // Remove temp message and add real messages
         state.messages = state.messages.filter(m => !m.id.toString().startsWith('temp-'));
-        
-        // Add the user message with real ID (it's already persisted)
-        // The response contains only the assistant message
-        state.messages.push(userMessage); // Keep our user message
+        state.messages.push(userMessage);
         state.messages.push(response.message);
-        
-        // Always use frontend-translated suggestions (ignore backend English suggestions)
-        state.suggestions = extractSuggestions(response.message?.content);
         
         hideTypingIndicator();
         state.isLoading = false;
+        
+        // Show activity selection after response
+        showActivitySelection();
         refreshUI();
-        // Don't scroll to bottom - let user read the response from their current position
         
     } catch (error) {
         console.error('Failed to send message:', error);
         hideTypingIndicator();
         state.isLoading = false;
-        
-        // Remove temp message
         state.messages = state.messages.filter(m => !m.id.toString().startsWith('temp-'));
-        
         refreshUI();
         showToast(t('chat.error'), 'error');
     }
@@ -376,7 +758,6 @@ export function useSuggestion(suggestion) {
     if (input) {
         input.value = suggestion;
         autoResize(input);
-        // Automatically send the message
         sendMessage();
     }
 }
@@ -436,23 +817,30 @@ function hideTypingIndicator() {
 }
 
 /**
- * Refresh the UI
+ * Refresh the entire UI
  */
 function refreshUI() {
     const messagesContainer = document.getElementById('chatMessages');
-    const suggestionsContainer = document.getElementById('chatSuggestions');
     const sendBtn = document.getElementById('chatSendBtn');
     
     if (messagesContainer) {
         messagesContainer.innerHTML = renderMessages();
     }
     
-    if (suggestionsContainer) {
-        suggestionsContainer.innerHTML = renderSuggestions();
-    }
+    refreshSuggestionsUI();
     
     if (sendBtn) {
         sendBtn.disabled = state.isLoading;
+    }
+}
+
+/**
+ * Refresh only the suggestions UI
+ */
+function refreshSuggestionsUI() {
+    const suggestionsContainer = document.getElementById('chatSuggestions');
+    if (suggestionsContainer) {
+        suggestionsContainer.innerHTML = renderSuggestions();
     }
 }
 
@@ -466,20 +854,6 @@ function scrollToBottom() {
             container.scrollTop = container.scrollHeight;
         }, 100);
     }
-}
-
-/**
- * Extract suggestions from message content
- * Returns translated suggestions in the user's native language
- */
-function extractSuggestions(content) {
-    // Default suggestions - translated to user's native language
-    return [
-        t('chat.suggestionPracticeVocab'),
-        t('chat.suggestionDoExercises'),
-        t('chat.suggestionStartLesson'),
-        t('chat.suggestionReview')
-    ];
 }
 
 /**
@@ -507,5 +881,16 @@ window.chatPage = {
     newSession,
     useSuggestion,
     handleKeyDown,
-    autoResize
+    autoResize,
+    // Layer 1
+    selectActivity,
+    surpriseMe,
+    // Layer 2
+    selectTopic,
+    chooseForMe,
+    showCustomTopicInput,
+    handleCustomTopicKeyDown,
+    startWithCustomTopic,
+    backToActivities,
+    backToTopics
 };

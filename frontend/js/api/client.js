@@ -328,6 +328,48 @@ export const api = {
         /** Clear a session (delete all messages) */
         clearSession: (sessionId) => request(`/v1/chat/session/${sessionId}`, {
             method: 'DELETE'
+        }),
+        
+        /**
+         * Generate topic suggestions for an activity category
+         * @param {string} category - Activity category (VOCABULARY, EXERCISE, LESSON, SCENARIO, AUDIO)
+         * @param {number} [count=5] - Number of suggestions to generate (1-10)
+         * @param {boolean} [includeRandom=true] - Whether to include a random topic selection
+         * @returns {Promise<{activityCategory: string, suggestions: Array<{topic: string, description: string, emoji: string, alignsWithGoals: boolean}>, randomTopic?: string}>}
+         */
+        getTopicSuggestions: (category, count = 5, includeRandom = true) => request('/v1/chat/topics/suggestions', {
+            method: 'POST',
+            body: { category, count, includeRandom }
+        }),
+        
+        /**
+         * Select a random appropriate topic for an activity
+         * @param {string} category - Activity category (VOCABULARY, EXERCISE, LESSON, SCENARIO, AUDIO)
+         * @returns {Promise<string>} The selected topic name
+         */
+        selectRandomTopic: async (category) => {
+            const url = `${API_BASE}/v1/chat/topics/random?category=${encodeURIComponent(category)}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new ApiError(error.message || `HTTP ${response.status}`, response.status, error);
+            }
+            
+            // This endpoint returns plain text, not JSON
+            return response.text();
+        },
+        
+        /**
+         * Record that a topic was used for an activity (for history tracking)
+         * @param {string} topic - The topic that was used
+         * @param {string} category - Activity category (VOCABULARY, EXERCISE, LESSON, SCENARIO, AUDIO)
+         */
+        recordTopicUsage: (topic, category) => request(`/v1/chat/topics/record?topic=${encodeURIComponent(topic)}&category=${encodeURIComponent(category)}`, {
+            method: 'POST'
         })
     },
     

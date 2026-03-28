@@ -4,8 +4,11 @@ import dev.languagelearning.api.dto.*;
 import dev.languagelearning.chat.service.ChatService;
 import dev.languagelearning.chat.service.ChatService.ChatResponse;
 import dev.languagelearning.chat.service.ChatService.ChatResponseChunk;
+import dev.languagelearning.chat.service.TopicSuggestionService;
+import dev.languagelearning.chat.service.TopicSuggestionService.TopicSuggestion;
 import dev.languagelearning.core.domain.ChatMessage;
 import dev.languagelearning.core.domain.ChatSession;
+import dev.languagelearning.core.domain.TopicHistory.ActivityCategory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,6 +35,7 @@ import java.util.UUID;
 public class ChatController {
 
     private final ChatService chatService;
+    private final TopicSuggestionService topicSuggestionService;
 
     @GetMapping("/session")
     @Operation(summary = "Get or create active session",
@@ -114,6 +118,61 @@ public class ChatController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/topics/suggestions")
+    @Operation(summary = "Generate topic suggestions",
+            description = "Generates personalized topic suggestions for an activity category based on user's skill level, goals, and history")
+    public ResponseEntity<TopicSuggestionsResponse> generateTopicSuggestions(
+            @Valid @RequestBody GenerateTopicSuggestionsRequest request) {
+        
+        log.info("Generating topic suggestions for category: {}", request.category());
+        
+        ActivityCategory category = parseActivityCategory(request.category());
+        int count = request.getCountOrDefault();
+        
+        List<TopicSuggestion> suggestions = topicSuggestionService.generateSuggestions(category, count);
+        List<TopicSuggestionDto> dtos = suggestions.stream()
+                .map(s -> new TopicSuggestionDto(s.topic(), s.description(), s.emoji(), s.alignsWithGoals()))
+                .toList();
+        
+        if (request.shouldIncludeRandom()) {
+            String randomTopic = topicSuggestionService.selectRandomTopic(category);
+            return ResponseEntity.ok(TopicSuggestionsResponse.withRandom(
+                    category.name(), dtos, randomTopic
+            ));
+        }
+        
+        return ResponseEntity.ok(TopicSuggestionsResponse.of(category.name(), dtos));
+    }
+
+    @PostMapping("/topics/random")
+    @Operation(summary = "Select random topic",
+            description = "Selects a random appropriate topic for an activity, considering user's goals and skill level")
+    public ResponseEntity<String> selectRandomTopic(
+            @RequestParam String category) {
+        
+        log.info("Selecting random topic for category: {}", category);
+        
+        ActivityCategory activityCategory = parseActivityCategory(category);
+        String topic = topicSuggestionService.selectRandomTopic(activityCategory);
+        
+        return ResponseEntity.ok(topic);
+    }
+
+    @PostMapping("/topics/record")
+    @Operation(summary = "Record topic usage",
+            description = "Records that a topic was used for an activity (for history tracking)")
+    public ResponseEntity<Void> recordTopicUsage(
+            @RequestParam String topic,
+            @RequestParam String category) {
+        
+        log.debug("Recording topic usage: {} for {}", topic, category);
+        
+        ActivityCategory activityCategory = parseActivityCategory(category);
+        topicSuggestionService.recordTopicUsage(topic, activityCategory);
+        
+        return ResponseEntity.ok().build();
+    }
+
     // DTO conversion methods
     private ChatSessionDto toSessionDto(ChatSession session) {
         return new ChatSessionDto(
@@ -137,6 +196,15 @@ public class ChatController {
                 message.getActivitySummary(),
                 message.getCreatedAt()
         );
+    }
+
+    private ActivityCategory parseActivityCategory(String category) {
+        try {
+            return ActivityCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid activity category: " + category + 
+                    ". Valid values are: VOCABULARY, EXERCISE, LESSON, SCENARIO, AUDIO");
+        }
     }
 
     /**

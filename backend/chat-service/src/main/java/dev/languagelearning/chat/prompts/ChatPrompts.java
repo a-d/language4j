@@ -167,6 +167,78 @@ public final class ChatPrompts {
             """;
 
     /**
+     * Topic suggestion generation prompt template.
+     * Generates personalized topic suggestions based on user's level and history.
+     */
+    public static final String TOPIC_SUGGESTIONS_PROMPT = """
+            Generate %d topic suggestions for a %s activity in %s.
+            
+            User Context:
+            - Skill Level: %s (CEFR)
+            - Target Language: %s
+            - Native Language: %s
+            
+            Topics to AVOID (recently used):
+            %s
+            
+            User's Daily Goals:
+            %s
+            
+            CRITICAL RULES:
+            1. Topic names MUST be in the user's NATIVE language (%s)
+            2. Topics MUST be appropriate for the user's skill level:
+               - A1: greetings, numbers 1-20, colors, basic food, family members, animals, body parts
+               - A2: daily routine, weather, shopping, time, dates, house/rooms, clothes, transport
+               - B1: travel, work, hobbies, health, opinions, making plans, feelings
+               - B2+: any topic including abstract concepts
+            3. DO NOT repeat any recently used topics
+            4. Make topics specific and practical (not too broad)
+            5. If user has vocabulary-related goals, suggest topics that help meet those goals
+            
+            Respond ONLY with valid JSON in this exact format:
+            {
+              "suggestions": [
+                {"topic": "Topic name in native language", "emoji": "🎯", "description": "Brief description in native language"},
+                ...
+              ]
+            }
+            
+            IMPORTANT:
+            - Exactly %d topics
+            - Each topic must have: topic, emoji, description
+            - All text in the user's NATIVE language (%s)
+            - Topics appropriate for %s level
+            - Avoid these topics: %s
+            """;
+
+    /**
+     * Random topic selection prompt.
+     * Selects an appropriate topic considering daily goals.
+     */
+    public static final String RANDOM_TOPIC_PROMPT = """
+            Select ONE appropriate topic for a %s activity.
+            
+            User Context:
+            - Skill Level: %s (CEFR)
+            - Target Language: %s
+            - Native Language: %s
+            
+            Topics to AVOID (recently used):
+            %s
+            
+            User's Daily Goals (if any align with this activity, prioritize them):
+            %s
+            
+            RULES:
+            1. Pick a topic appropriate for %s level
+            2. If user has a relevant daily goal, choose a topic that helps complete it
+            3. DO NOT pick any recently used topic
+            4. Be specific (e.g., "kitchen utensils" not just "home")
+            
+            Respond with ONLY the topic name in %s (no quotes, no explanation).
+            """;
+
+    /**
      * Activity completion acknowledgment prompt.
      */
     public static final String ACTIVITY_COMPLETION_PROMPT = """

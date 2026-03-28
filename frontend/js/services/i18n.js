@@ -332,6 +332,34 @@ const translations = {
         'chat.suggestionReview': 'Review what I learned',
         'chat.thinking': 'Thinking...',
         
+        // Chat - Activity Selection (Layer 1)
+        'chat.selectActivity': 'What would you like to do?',
+        'chat.activityVocabulary': '📚 Practice vocabulary',
+        'chat.activityExercise': '✏️ Do an exercise',
+        'chat.activityLesson': '📖 Start a lesson',
+        'chat.activityScenario': '🎭 Roleplay scenario',
+        'chat.activityAudio': '🎧 Listening & Speaking',
+        'chat.activitySurprise': '🎲 Surprise me!',
+        
+        // Chat - Topic Selection (Layer 2)
+        'chat.selectTopic': 'Choose a topic:',
+        'chat.chooseForMe': '🎲 Choose for me',
+        'chat.customTopic': '💬 Custom topic...',
+        'chat.loadingTopics': 'Finding topics for you...',
+        'chat.topicAlignedGoal': '⭐ Helps your goal',
+        'chat.backToActivities': '← Back',
+        'chat.enterCustomTopic': 'Enter your topic:',
+        'chat.customTopicPlaceholder': 'e.g., food, travel, family...',
+        'chat.startWithTopic': 'Start',
+        
+        // Chat - Activity Request Messages (sent to coach in native language)
+        'chat.requestVocabulary': 'Ich möchte Vokabeln zum Thema "{topic}" üben',
+        'chat.requestExercise': 'Ich möchte eine Übung zum Thema "{topic}" machen',
+        'chat.requestLesson': 'Ich möchte eine Lektion zum Thema "{topic}" lernen',
+        'chat.requestScenario': 'Ich möchte ein Rollenspiel zum Thema "{topic}" machen',
+        'chat.requestAudio': 'Ich möchte Hören zum Thema "{topic}" üben',
+        'chat.requestDefault': 'Ich möchte etwas über "{topic}" lernen',
+        
         // Languages
         'lang.de': 'German',
         'lang.fr': 'French',
@@ -669,6 +697,34 @@ const translations = {
         'chat.suggestionStartLesson': 'Lektion starten',
         'chat.suggestionReview': 'Gelerntes wiederholen',
         'chat.thinking': 'Denkt nach...',
+        
+        // Chat - Activity Selection (Layer 1)
+        'chat.selectActivity': 'Was möchtest du machen?',
+        'chat.activityVocabulary': '📚 Vokabeln üben',
+        'chat.activityExercise': '✏️ Eine Übung machen',
+        'chat.activityLesson': '📖 Eine Lektion starten',
+        'chat.activityScenario': '🎭 Rollenspiel',
+        'chat.activityAudio': '🎧 Hören & Sprechen',
+        'chat.activitySurprise': '🎲 Überrasche mich!',
+        
+        // Chat - Topic Selection (Layer 2)
+        'chat.selectTopic': 'Wähle ein Thema:',
+        'chat.chooseForMe': '🎲 Wähl für mich',
+        'chat.customTopic': '💬 Eigenes Thema...',
+        'chat.loadingTopics': 'Themen werden gesucht...',
+        'chat.topicAlignedGoal': '⭐ Hilft bei deinem Ziel',
+        'chat.backToActivities': '← Zurück',
+        'chat.enterCustomTopic': 'Gib dein Thema ein:',
+        'chat.customTopicPlaceholder': 'z.B. Essen, Reisen, Familie...',
+        'chat.startWithTopic': 'Starten',
+        
+        // Chat - Activity Request Messages (sent to coach in native language)
+        'chat.requestVocabulary': 'Ich möchte Vokabeln zum Thema "{topic}" üben',
+        'chat.requestExercise': 'Ich möchte eine Übung zum Thema "{topic}" machen',
+        'chat.requestLesson': 'Ich möchte eine Lektion zum Thema "{topic}" lernen',
+        'chat.requestScenario': 'Ich möchte ein Rollenspiel zum Thema "{topic}" machen',
+        'chat.requestAudio': 'Ich möchte Hören zum Thema "{topic}" üben',
+        'chat.requestDefault': 'Ich möchte etwas über "{topic}" lernen',
         
         // Languages
         'lang.de': 'Deutsch',
