@@ -50,13 +50,13 @@ Enable the Language Learning Platform to run entirely in the browser without req
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              User Interface                                  │
-│                    (Existing Frontend - Vanilla JS)                          │
+│                              User Interface                                 │
+│                    (Existing Frontend - Vanilla JS)                         │
 └─────────────────────────────────────────────────────────────────────────────┘
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         AI Service Abstraction Layer                         │
+│                         AI Service Abstraction Layer                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
 │  │ LlmService  │  │ TtsService  │  │ SttService  │  │ ImageService        │ │
 │  │             │  │             │  │             │  │ (Cloud/Library Only)│ │
@@ -65,10 +65,10 @@ Enable the Language Learning Platform to run entirely in the browser without req
           │                │                │                    │
           ▼                ▼                ▼                    ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Provider Implementations                          │
-│                                                                              │
+│                            Provider Implementations                         │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                        LOCAL (Browser)                                │   │
+│  │                        LOCAL (Browser)                               │   │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                   │   │
 │  │  │   WebLLM    │  │ Web Speech  │  │Whisper WASM │                   │   │
 │  │  │  (WebGPU)   │  │    API      │  │  (ONNX)     │                   │   │
@@ -77,21 +77,21 @@ Enable the Language Learning Platform to run entirely in the browser without req
 │  │  │   .js       │  │ (Optional)  │  │    API      │                   │   │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘                   │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                        REMOTE (Backend/Cloud)                         │   │
+│  │                        REMOTE (Backend/Cloud)                        │   │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │   │
 │  │  │ Backend API │  │ Backend API │  │ Backend API │  │ Backend API │  │   │
 │  │  │   (LLM)     │  │   (TTS)     │  │   (STT)     │  │  (Images)   │  │   │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │   │
 │  │          │              │               │                │           │   │
 │  │          └──────────────┴───────────────┴────────────────┘           │   │
-│  │                              │                                        │   │
-│  │                    Existing Spring Boot Backend                       │   │
+│  │                              │                                       │   │
+│  │                    Existing Spring Boot Backend                      │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                      EXTERNAL (Third-Party)                           │   │
+│  │                      EXTERNAL (Third-Party)                          │   │
 │  │  ┌─────────────────────────────────────────────────────────────────┐ │   │
 │  │  │  Image Libraries: Unsplash, Pexels, Pixabay (for flashcards)    │ │   │
 │  │  └─────────────────────────────────────────────────────────────────┘ │   │
@@ -100,10 +100,10 @@ Enable the Language Learning Platform to run entirely in the browser without req
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Storage Layer                                     │
+│                            Storage Layer                                    │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  IndexedDB  │  │   Cache API │  │localStorage │  │  OPFS (Origin      │ │
-│  │  (Models)   │  │  (Assets)   │  │ (Settings)  │  │  Private FS)       │ │
+│  │  IndexedDB  │  │   Cache API │  │localStorage │  │  OPFS (Origin       │ │
+│  │  (Models)   │  │  (Assets)   │  │ (Settings)  │  │  Private FS)        │ │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -745,22 +745,39 @@ function checkWebGPUSupport() {
 ```
 poc/browser-ai/
 ├── README.md                    # This document
-├── FINDINGS.md                  # POC results and benchmarks (to be created)
+├── FINDINGS.md                  # POC results and benchmarks
 ├── webllm-test/
-│   ├── index.html              # Standalone WebLLM test page
-│   ├── webllm-test.js          # Test implementation
-│   └── prompts.js              # Language learning prompts for testing
-├── whisper-test/
-│   ├── index.html              # Whisper WASM test page
-│   └── whisper-test.js         # Test implementation
+│   └── index.html              # WebLLM test - instruction-following LLM with prompts & JSON
+├── translation-test/
+│   └── index.html              # Opus-MT test - pure translation models (no prompts)
+├── stt-test/
+│   └── index.html              # Speech-to-text test (Whisper WASM)
 ├── tts-test/
-│   ├── index.html              # TTS comparison test page
-│   └── tts-test.js             # Web Speech vs Piper comparison
+│   └── index.html              # Text-to-speech test (Web Speech API)
 └── benchmarks/
     ├── llm-benchmarks.json     # LLM performance data
     ├── stt-benchmarks.json     # STT accuracy data
     └── device-matrix.json      # Device compatibility matrix
 ```
+
+### Test Pages
+
+| Test Page | Purpose | Technology | Status |
+|-----------|---------|------------|--------|
+| **webllm-test** | Instruction-following LLM for content generation | WebLLM (WebGPU) | ✅ Ready |
+| **translation-test** | Quick text-to-text translation | Transformers.js (Opus-MT) | ✅ Ready |
+| **stt-test** | Speech-to-text transcription | Whisper WASM | ✅ Ready |
+| **tts-test** | Text-to-speech synthesis | Web Speech API | ✅ Ready |
+
+### Model Comparison
+
+| Model Type | Use Case | Size | Prompts | JSON Output |
+|------------|----------|------|---------|-------------|
+| **WebLLM (Qwen/Phi)** | Vocabulary, exercises, chat, explanations | 400MB-2GB | ✅ Yes | ✅ Yes |
+| **Opus-MT** | Quick word/phrase translation | ~75MB/pair | ❌ No | ❌ No |
+| **Whisper** | Speech transcription | 39-244MB | N/A | N/A |
+
+See [FINDINGS.md](./FINDINGS.md) for detailed research on translation models and architecture recommendations.
 
 ---
 

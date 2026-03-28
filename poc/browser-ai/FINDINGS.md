@@ -212,23 +212,29 @@ This document records the findings from the Browser AI proof-of-concept testing.
 
 ### Go / No-Go Decision
 
-☐ **GO** - Proceed with implementation  
-☐ **NO-GO** - Do not proceed (see reasons below)  
-☐ **CONDITIONAL** - Proceed with modifications (see below)
+☑️ **CONDITIONAL** - Proceed with modifications (see below)
 
 ### Reasoning
 
-(Explain the decision based on findings)
+Browser-based AI is viable for language learning content generation with the right model choice. The key findings:
+
+1. **Qwen3 1.7B works well** - Good balance of size (~1GB), speed, and quality
+2. **Firefox has VRAM limits** - Larger models (1.5B+) may OOM in Firefox; smaller models work better
+3. **Chrome has better WebGPU** - More reliable for larger models
+4. **Pure translation models (Opus-MT) can't replace instruction LLMs** - They don't support prompts or JSON output
 
 ---
 
 ### Recommended Model
 
-**Primary**: _______________  
-**Rationale**: _______________
+**Primary**: **Qwen3-1.7B** (`Qwen3-1.7B-q4f16_1-MLC`)  
+**Rationale**: Best balance of quality, size (~1GB), and browser compatibility. Handles JSON output well for vocabulary, exercises, and grammar explanations. Works in both Chrome and Firefox with sufficient VRAM.
 
-**Fallback**: _______________  
-**Rationale**: _______________
+**Fallback (Low Memory)**: **Qwen2.5-0.5B** (`Qwen2.5-0.5B-Instruct-q4f16_1-MLC`)  
+**Rationale**: Only ~400MB, works on devices with limited VRAM. Quality is lower but acceptable for basic vocabulary and simple exercises.
+
+**Fallback (No WebGPU)**: **Backend API**  
+**Rationale**: Fall back to existing Spring AI backend when browser doesn't support WebGPU or device lacks resources.
 
 ---
 
@@ -266,13 +272,193 @@ Based on findings, recommended implementation order:
 
 ---
 
-## 9. Additional Notes
+## 9. Mobile LLM Assessment
+
+### Decision: ❌ NO-GO for Client-Side Offline Mobile LLM
+
+**We will NOT implement client-side offline LLM on mobile devices.**
+
+### Reasoning
+
+The language learning use case (German ↔ French with English prompts) is particularly challenging for small models:
+
+1. **Trilingual Context Requirement**
+   - English system prompts and instructions
+   - German source/target content
+   - French source/target content
+   - Small models (<2GB) lack sufficient multilingual training data to handle this well
+
+2. **Model Size vs Quality Trade-off**
+   | Model Size | Download | Quality for DE↔FR | Viable on Mobile? |
+   |------------|----------|-------------------|-------------------|
+   | 0.5B | ~400MB | ❌ Poor | ⚠️ Maybe |
+   | 1.5-2B | ~1GB | ⚠️ Marginal | ❌ No (VRAM) |
+   | 3B+ | ~2GB+ | ✅ Acceptable | ❌ No |
+   | 7B+ | ~4GB+ | ✅ Good | ❌ No |
+
+3. **Mobile WebGPU Limitations**
+   - Mobile Safari: No WebGPU support
+   - Mobile Chrome: Limited WebGPU, insufficient VRAM for instruction-following models
+   - Most phones have 4-6GB total RAM shared between system and apps
+
+4. **Quality Degradation**
+   - Small models produce incorrect grammar explanations
+   - German/French gender agreement errors
+   - JSON output often malformed
+   - Not acceptable for language learning where accuracy is critical
+
+### Supported Platforms for Browser LLM
+
+| Platform | LLM Support | Notes |
+|----------|-------------|-------|
+| Desktop Chrome/Edge | ✅ Yes | Primary target, Qwen3 1.7B |
+| Desktop Firefox | ⚠️ Limited | VRAM constraints, smaller models only |
+| Desktop Safari | ⚠️ Limited | WebGPU partial support |
+| Mobile Chrome | ❌ No | Insufficient resources |
+| Mobile Safari | ❌ No | No WebGPU |
+| Mobile Apps | ❌ No | Out of scope |
+
+### Alternative Approach for Mobile
+
+Instead of client-side LLM, mobile users will:
+
+1. **Use backend API** when online (primary)
+2. **Access pre-cached content** when offline:
+   - Pre-generated vocabulary lists
+   - Pre-generated exercises
+   - Cached lesson content
+3. **Use Opus-MT** for quick translations (small footprint, works in WASM)
+
+### Future Considerations
+
+Re-evaluate in 12-18 months when:
+- WebGPU support improves on mobile
+- Smaller instruction-following models improve (e.g., sub-1B with better multilingual)
+- Phone hardware advances (more VRAM, better GPU)
+- Apple/Google native ML frameworks mature
+
+---
+
+## 10. Additional Notes
 
 (Any other observations, edge cases, or considerations)
 
 ---
 
-## 10. Attachments
+## 11. Translation Models Research
+
+### Model Categories for Translation
+
+| Category | Models | Size | Prompts | JSON Output | Best Use Case |
+|----------|--------|------|---------|-------------|---------------|
+| **Pure Translation** | Helsinki-NLP/Opus-MT | ~75MB/pair | ❌ No | ❌ No | Quick word/sentence translation |
+| **Multi-language Translation** | Facebook/NLLB-200 | 600MB-1.3GB | ❌ No | ❌ No | 200 languages in one model |
+| **Instruction-Following LLM** | Qwen2.5, Phi-3, etc. | 400MB-2GB | ✅ Yes | ✅ Yes | Structured content generation |
+
+### Recommended Approach for Language Learning
+
+**For structured content generation (vocabulary, exercises, explanations):**
+- Use **WebLLM with Qwen3 1.7B** (recommended primary model)
+- Supports system prompts and JSON output
+- Required for language learning content that needs structure
+- Fallback: Qwen2.5-0.5B for low-memory devices
+
+**For quick translation features (tooltip, word lookup):**
+- Use **Helsinki-NLP/Opus-MT** via Transformers.js
+- Very fast (~100-500ms)
+- Small footprint (~75MB per language pair)
+- No prompt support - text-to-text only
+
+### Helsinki-NLP/Opus-MT Details
+
+**Characteristics:**
+- **Type**: Sequence-to-sequence translation model
+- **Input**: Plain text in source language
+- **Output**: Plain text in target language (no structure possible)
+- **Languages**: 1,000+ language pairs available
+- **Size**: ~75MB per language pair
+- **Speed**: Very fast (typically <500ms)
+- **Browser Support**: WebGPU and WASM via Transformers.js
+
+**Limitations:**
+- ❌ No system prompts
+- ❌ No JSON output formatting
+- ❌ No explanations or context
+- ❌ Separate model needed for each language pair
+
+**Model IDs (Xenova/Transformers.js versions):**
+- `Xenova/opus-mt-en-de` (English → German)
+- `Xenova/opus-mt-de-en` (German → English)
+- `Xenova/opus-mt-en-fr` (English → French)
+- `Xenova/opus-mt-fr-en` (French → English)
+- `Xenova/opus-mt-en-es` (English → Spanish)
+- Many more at huggingface.co/Helsinki-NLP
+
+### Facebook/NLLB-200 Details
+
+**Characteristics:**
+- **Type**: Multi-language translation model
+- **Languages**: 200 languages in a single model
+- **Variants**:
+  - `nllb-200-distilled-600M` (~600MB) - Recommended for browser
+  - `nllb-200-1.3B` (~1.3GB) - Better quality, heavier
+- **Browser Support**: Transformers.js compatible
+
+**Limitations:**
+- ❌ No system prompts
+- ❌ No JSON output formatting
+- ⚠️ Larger download for first use
+- ⚠️ Requires 4GB+ RAM
+
+### Hardware Requirements Comparison
+
+| Model | Download Size | RAM Needed | GPU/VRAM | Inference Speed |
+|-------|---------------|-----------|----------|-----------------|
+| Opus-MT (single pair) | 75-150MB | 2GB | Optional | Fast (100-500ms) |
+| NLLB-200-distilled-600M | ~600MB | 4GB | Recommended | Medium (1-3s) |
+| **WebLLM Qwen3-1.7B ⭐** | **~1GB** | **4GB** | **Required** | **Medium (2-4s)** |
+| WebLLM Qwen2.5-1.5B | ~900MB | 4GB | Required | Slow (2-5s) |
+| WebLLM Phi-3.5-mini | ~2.2GB | 8GB | Required | Slow (3-7s) |
+
+### Browser Compatibility
+
+| Browser | WebGPU | WASM | Recommended Model |
+|---------|--------|------|-------------------|
+| Chrome 113+ | ✅ | ✅ | Opus-MT / NLLB / WebLLM |
+| Edge 113+ | ✅ | ✅ | Opus-MT / NLLB / WebLLM |
+| Firefox 119+ | ✅ | ✅ | Opus-MT / NLLB / WebLLM |
+| Safari 17+ | ⚠️ Partial | ✅ | Opus-MT (WASM) |
+| Mobile Chrome | ⚠️ Limited | ✅ | Opus-MT only |
+| Mobile Safari | ❌ | ✅ | Opus-MT only |
+
+### Hybrid Architecture Recommendation
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Browser AI Architecture                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────┐     ┌─────────────────────┐        │
+│  │    WebLLM Engine    │     │   Transformers.js   │        │
+│  │   (Qwen3 1.7B) ⭐    │     │    (Opus-MT)        │        │
+│  └──────────┬──────────┘     └──────────┬──────────┘        │
+│             │                           │                   │
+│             ▼                           ▼                   │
+│  ┌─────────────────────┐     ┌─────────────────────┐        │
+│  │ Content Generation  │     │  Quick Translation  │        │
+│  │ - Vocabulary lists  │     │  - Word tooltips    │        │
+│  │ - Exercises         │     │  - Phrase lookup    │        │
+│  │ - Grammar explain   │     │  - Real-time hints  │        │
+│  │ - Chat responses    │     │                     │        │
+│  │ - JSON structured   │     │  Plain text only    │        │
+│  └─────────────────────┘     └─────────────────────┘        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 12. Attachments
 
 - [ ] Screenshots of test results
 - [ ] Console logs

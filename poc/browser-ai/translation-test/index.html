@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Model Test - Language Learning POC</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.not-supported {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .progress-container {
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+            border-radius: 9999px;
+        }
+        
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        select, textarea, input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--card-bg);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .output-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 100px;
+        }
+        
+        .metrics {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .logs {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: var(--text-muted);
+        }
+        
+        .log-info { color: var(--primary); }
+        .log-success { color: var(--success); }
+        .log-warning { color: var(--warning); }
+        .log-error { color: var(--error); }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .lang-selector select {
+            flex: 1;
+        }
+        
+        .swap-btn {
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+        
+        .swap-btn:hover {
+            background: var(--border);
+        }
+        
+        .model-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .model-info h4 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+        
+        .model-info p {
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+        
+        .example-sentences {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .example-chip {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .example-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background: var(--bg);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Translation Model Test - Language Learning POC</h1>
+        <p class="subtitle">Testing Helsinki-NLP Opus-MT models for quick browser-based translation</p>
+        
+        <div class="grid">
+            <!-- Model Info Card -->
+            <div class="card">
+                <div class="card-title">
+                    📊 Model Information
+                    <span id="model-status" class="status-badge not-supported">Not Loaded</span>
+                </div>
+                
+                <div class="model-info">
+                    <h4>Helsinki-NLP/Opus-MT</h4>
+                    <p>Pure translation models - small, fast, accurate. No prompts or JSON output - just text-to-text translation.</p>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Model Type</div>
+                        <div class="info-value">Seq2Seq</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Model Size</div>
+                        <div class="info-value" id="model-size">~75MB</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Backend</div>
+                        <div class="info-value" id="backend-info">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Load Time</div>
+                        <div class="info-value" id="load-time">-</div>
+                    </div>
+                </div>
+                
+                <div class="logs" id="logs">
+                    <div class="log-entry"><span class="log-time">[--:--:--]</span> <span class="log-info">Ready to load model...</span></div>
+                </div>
+            </div>
+            
+            <!-- Model Selection Card -->
+            <div class="card">
+                <div class="card-title">🔧 Model Selection</div>
+                
+                <div class="form-group">
+                    <label>Language Pair</label>
+                    <div class="lang-selector">
+                        <select id="source-lang">
+                            <option value="en">English</option>
+                            <option value="de">German</option>
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                            <option value="it">Italian</option>
+                            <option value="nl">Dutch</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ru">Russian</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                        </select>
+                        <button class="swap-btn" onclick="swapLanguages()" title="Swap languages">⇄</button>
+                        <select id="target-lang">
+                            <option value="de" selected>German</option>
+                            <option value="en">English</option>
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                            <option value="it">Italian</option>
+                            <option value="nl">Dutch</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ru">Russian</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Model ID</label>
+                    <input type="text" id="model-id" value="Xenova/opus-mt-en-de" readonly>
+                </div>
+                
+                <div class="progress-container" id="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">Loading model...</div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="load-btn" onclick="loadModel()">Load Model</button>
+                    <button id="unload-btn" class="secondary" onclick="unloadModel()" disabled>Unload</button>
+                </div>
+            </div>
+            
+            <!-- Translation Card -->
+            <div class="card full-width">
+                <div class="card-title">✍️ Translation Test</div>
+                
+                <div class="example-sentences">
+                    <span class="example-chip" onclick="setExample('hello')">👋 Greeting</span>
+                    <span class="example-chip" onclick="setExample('weather')">🌤️ Weather</span>
+                    <span class="example-chip" onclick="setExample('food')">🍕 Food</span>
+                    <span class="example-chip" onclick="setExample('travel')">✈️ Travel</span>
+                    <span class="example-chip" onclick="setExample('long')">📝 Long text</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="input-text">Source Text (<span id="source-label">English</span>)</label>
+                        <textarea id="input-text" placeholder="Enter text to translate...">Hello, how are you today? I hope you're having a wonderful day!</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Translation (<span id="target-label">German</span>)</label>
+                        <div class="output-box" id="output-text">Translation will appear here...</div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="translate-btn" onclick="doTranslate()" disabled>Translate</button>
+                    <button class="secondary" onclick="clearAll()">Clear</button>
+                </div>
+                
+                <div class="metrics" id="metrics" style="display: none;">
+                    <div class="metric">
+                        <div class="metric-value" id="metric-time">-</div>
+                        <div class="metric-label">Time (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metric-chars">-</div>
+                        <div class="metric-label">Characters</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metric-speed">-</div>
+                        <div class="metric-label">Chars/sec</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparison Card -->
+            <div class="card full-width">
+                <div class="card-title">📊 Model Comparison</div>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Opus-MT (This Page)</th>
+                            <th>WebLLM (Qwen/Phi)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Model Size</td>
+                            <td>~75MB per language pair</td>
+                            <td>400MB - 2GB</td>
+                        </tr>
+                        <tr>
+                            <td>System Prompts</td>
+                            <td>❌ Not supported</td>
+                            <td>✅ Supported</td>
+                        </tr>
+                        <tr>
+                            <td>JSON Output</td>
+                            <td>❌ Not supported</td>
+                            <td>✅ Supported</td>
+                        </tr>
+                        <tr>
+                            <td>Translation Speed</td>
+                            <td>⚡ Very fast (< 500ms)</td>
+                            <td>🐢 Slower (2-5s)</td>
+                        </tr>
+                        <tr>
+                            <td>Use Case</td>
+                            <td>Quick word/sentence translation</td>
+                            <td>Content generation, exercises, chat</td>
+                        </tr>
+                        <tr>
+                            <td>Best For</td>
+                            <td>Tooltip translations, quick lookup</td>
+                            <td>Vocabulary lists, grammar explanations</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transformers.js Script -->
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        
+        // Configure transformers.js
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+        
+        // Make available globally
+        window.transformersPipeline = pipeline;
+        window.translator = null;
+        window.currentModelId = null;
+        
+        // Detect backend
+        async function detectBackend() {
+            if (navigator.gpu) {
+                try {
+                    const adapter = await navigator.gpu.requestAdapter();
+                    if (adapter) {
+                        document.getElementById('backend-info').textContent = 'WebGPU';
+                        return;
+                    }
+                } catch (e) {}
+            }
+            document.getElementById('backend-info').textContent = 'WASM';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await detectBackend();
+            updateModelId();
+            log('Ready. Select language pair and click "Load Model"', 'info');
+        });
+    </script>
+    
+    <script>
+        // Language code mappings - make functions global for onclick handlers
+        const languageNames = {
+            en: 'English',
+            de: 'German',
+            fr: 'French',
+            es: 'Spanish',
+            it: 'Italian',
+            nl: 'Dutch',
+            pt: 'Portuguese',
+            ru: 'Russian',
+            zh: 'Chinese',
+            ja: 'Japanese'
+        };
+        
+        // Example sentences
+        const examples = {
+            hello: "Hello, how are you today? I hope you're having a wonderful day!",
+            weather: "The weather is beautiful today. The sun is shining and there are no clouds in the sky.",
+            food: "I would like to order a pizza with mushrooms and cheese, please. Can I also have a glass of water?",
+            travel: "Excuse me, where is the train station? I need to catch the 3 o'clock train to Munich.",
+            long: "Learning a new language is a rewarding experience that opens doors to different cultures and ways of thinking. It requires dedication, practice, and patience, but the results are worth the effort. Every day, millions of people around the world are studying foreign languages, using various methods and tools to improve their skills."
+        };
+        
+        // Logging utility
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Update model ID based on language selection
+        function updateModelId() {
+            const source = document.getElementById('source-lang').value;
+            const target = document.getElementById('target-lang').value;
+            const modelId = `Xenova/opus-mt-${source}-${target}`;
+            document.getElementById('model-id').value = modelId;
+            document.getElementById('source-label').textContent = languageNames[source];
+            document.getElementById('target-label').textContent = languageNames[target];
+            
+            // If model is loaded and different, disable translate
+            if (window.currentModelId && window.currentModelId !== modelId) {
+                document.getElementById('translate-btn').disabled = true;
+                document.getElementById('model-status').textContent = 'Model Changed';
+                document.getElementById('model-status').className = 'status-badge loading';
+            }
+        }
+        
+        // Add event listeners for language changes
+        document.getElementById('source-lang').addEventListener('change', updateModelId);
+        document.getElementById('target-lang').addEventListener('change', updateModelId);
+        
+        // Swap languages
+        window.swapLanguages = function() {
+            const source = document.getElementById('source-lang');
+            const target = document.getElementById('target-lang');
+            const temp = source.value;
+            source.value = target.value;
+            target.value = temp;
+            updateModelId();
+        }
+        
+        // Set example sentence
+        window.setExample = function(key) {
+            document.getElementById('input-text').value = examples[key] || '';
+        }
+        
+        // Load model
+        window.loadModel = async function() {
+            const modelId = document.getElementById('model-id').value;
+            const loadBtn = document.getElementById('load-btn');
+            const unloadBtn = document.getElementById('unload-btn');
+            const translateBtn = document.getElementById('translate-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const modelStatus = document.getElementById('model-status');
+            
+            loadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            modelStatus.textContent = 'Loading...';
+            modelStatus.className = 'status-badge loading';
+            
+            log(`Loading model: ${modelId}...`);
+            const startTime = performance.now();
+            
+            try {
+                window.translator = await window.transformersPipeline('translation', modelId, {
+                    progress_callback: (progress) => {
+                        if (progress.status === 'downloading') {
+                            const percent = progress.progress ? Math.round(progress.progress) : 0;
+                            progressFill.style.width = `${percent}%`;
+                            progressText.textContent = `Downloading: ${percent}%`;
+                        } else if (progress.status === 'loading') {
+                            progressText.textContent = 'Loading into memory...';
+                        } else if (progress.status === 'ready') {
+                            progressFill.style.width = '100%';
+                            progressText.textContent = 'Ready!';
+                        }
+                    }
+                });
+                
+                const loadTime = Math.round(performance.now() - startTime);
+                window.currentModelId = modelId;
+                
+                document.getElementById('load-time').textContent = `${loadTime}ms`;
+                modelStatus.textContent = 'Ready';
+                modelStatus.className = 'status-badge ready';
+                unloadBtn.disabled = false;
+                translateBtn.disabled = false;
+                
+                log(`Model loaded in ${loadTime}ms`, 'success');
+                
+            } catch (e) {
+                modelStatus.textContent = 'Error';
+                modelStatus.className = 'status-badge error';
+                log(`Failed to load model: ${e.message}`, 'error');
+                loadBtn.disabled = false;
+            }
+            
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+            }, 1000);
+        }
+        
+        // Unload model
+        window.unloadModel = function() {
+            window.translator = null;
+            window.currentModelId = null;
+            
+            document.getElementById('model-status').textContent = 'Not Loaded';
+            document.getElementById('model-status').className = 'status-badge not-supported';
+            document.getElementById('unload-btn').disabled = true;
+            document.getElementById('translate-btn').disabled = true;
+            document.getElementById('load-btn').disabled = false;
+            document.getElementById('load-time').textContent = '-';
+            
+            log('Model unloaded', 'info');
+        }
+        
+        // Translate
+        window.doTranslate = async function() {
+            if (!window.translator) {
+                log('Model not loaded', 'error');
+                return;
+            }
+            
+            const inputText = document.getElementById('input-text').value.trim();
+            if (!inputText) {
+                log('Please enter text to translate', 'warning');
+                return;
+            }
+            
+            const outputBox = document.getElementById('output-text');
+            const translateBtn = document.getElementById('translate-btn');
+            const metrics = document.getElementById('metrics');
+            
+            outputBox.textContent = 'Translating...';
+            translateBtn.disabled = true;
+            metrics.style.display = 'none';
+            
+            log(`Translating ${inputText.length} characters...`);
+            const startTime = performance.now();
+            
+            try {
+                const result = await window.translator(inputText, {
+                    max_length: 512
+                });
+                
+                const endTime = performance.now();
+                const totalTime = Math.round(endTime - startTime);
+                const translation = result[0].translation_text;
+                
+                outputBox.textContent = translation;
+                
+                // Show metrics
+                metrics.style.display = 'flex';
+                document.getElementById('metric-time').textContent = totalTime;
+                document.getElementById('metric-chars').textContent = inputText.length;
+                document.getElementById('metric-speed').textContent = Math.round(inputText.length / (totalTime / 1000));
+                
+                log(`Translation complete in ${totalTime}ms`, 'success');
+                
+            } catch (e) {
+                outputBox.textContent = `Error: ${e.message}`;
+                log(`Translation failed: ${e.message}`, 'error');
+            }
+            
+            translateBtn.disabled = false;
+        }
+        
+        // Clear all
+        window.clearAll = function() {
+            document.getElementById('input-text').value = '';
+            document.getElementById('output-text').textContent = 'Translation will appear here...';
+            document.getElementById('metrics').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -369,12 +369,26 @@
                 <div class="form-group">
                     <label for="model-select">Select Model</label>
                     <select id="model-select">
-                        <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B-Instruct (q4f16) - ~900MB</option>
-                        <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5-0.5B-Instruct (q4f16) - ~400MB</option>
-                        <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B-Instruct (q4f16) - ~1GB</option>
-                        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini-instruct (q4f16) - ~2.2GB</option>
-                        <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma-2-2B-IT (q4f16) - ~1.5GB</option>
+                        <optgroup label="Smaller Models (Firefox-friendly)">
+                            <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5-0.5B-Instruct (q4f16) - ~400MB</option>
+                            <option value="SmolLM2-360M-Instruct-q4f16_1-MLC">SmolLM2-360M-Instruct (q4f16) - ~250MB</option>
+                        </optgroup>
+                        <optgroup label="Medium Models (~1-2B)">
+                            <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Qwen2.5-1.5B-Instruct (q4f16) - ~900MB ⭐</option>
+                            <option value="Qwen3-1.7B-q4f16_1-MLC">Qwen3-1.7B (q4f16) - ~1GB</option>
+                            <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B-Instruct (q4f16) - ~800MB</option>
+                            <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma-2-2B-IT (q4f16) - ~1.5GB</option>
+                            <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B-Instruct (q4f16) - ~1GB</option>
+                        </optgroup>
+                        <optgroup label="Larger Models (Chrome recommended)">
+                            <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama-3.2-3B-Instruct (q4f16) - ~2GB</option>
+                            <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini-instruct (q4f16) - ~2.2GB</option>
+                        </optgroup>
                     </select>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        ⚠️ Some models (Gemma 3, Gemma 2 1.5B) not yet in WebLLM. Check 
+                        <a href="https://mlc.ai/web-llm/#702-models" target="_blank">WebLLM Model List</a> for available models.
+                    </p>
                 </div>
                 
                 <div class="progress-container" id="download-progress-container" style="display: none;">
@@ -579,7 +593,16 @@ Respond in JSON format:
                     throw new Error('No GPU adapter found');
                 }
                 
-                const adapterInfo = await adapter.requestAdapterInfo();
+                // Handle different WebGPU implementations - some use requestAdapterInfo(), others have adapter.info
+                let adapterInfo;
+                if (typeof adapter.requestAdapterInfo === 'function') {
+                    adapterInfo = await adapter.requestAdapterInfo();
+                } else if (adapter.info) {
+                    adapterInfo = adapter.info;
+                } else {
+                    adapterInfo = { description: 'Unknown', vendor: 'Unknown' };
+                }
+                
                 document.getElementById('webgpu-support').textContent = 'Available ✓';
                 document.getElementById('gpu-adapter').textContent = adapterInfo.description || adapterInfo.vendor || 'Unknown GPU';
                 document.getElementById('webgpu-status').textContent = 'Ready';
