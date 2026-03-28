@@ -1,0 +1,1006 @@
+{
+  "nav.chat": {
+    "context": "Navigation menu item linking to the AI chat coach feature - a personal language learning assistant",
+    "maxLength": 15
+  },
+  "nav.dashboard": {
+    "context": "Navigation menu item for the main overview/home page showing learning progress summary",
+    "maxLength": 15
+  },
+  "nav.lessons": {
+    "context": "Navigation menu item for the lessons page where users study structured learning content",
+    "maxLength": 15
+  },
+  "nav.vocabulary": {
+    "context": "Navigation menu item for the vocabulary page where users learn and review words",
+    "maxLength": 15
+  },
+  "nav.cards": {
+    "context": "Navigation menu item for visual flashcards with AI-generated images",
+    "maxLength": 15
+  },
+  "nav.exercises": {
+    "context": "Navigation menu item for practice exercises (fill-in-blanks, translation, etc.)",
+    "maxLength": 15
+  },
+  "nav.progress": {
+    "context": "Navigation menu item for the progress tracking page showing learning statistics and goals",
+    "maxLength": 15
+  },
+  "nav.settings": {
+    "context": "Navigation menu item for user settings and preferences",
+    "maxLength": 15
+  },
+
+  "dashboard.welcome": {
+    "context": "Greeting message on dashboard when user returns to the app",
+    "maxLength": 30
+  },
+  "dashboard.learning": {
+    "context": "Dashboard subtitle showing which language the user is learning from their native language",
+    "parameters": ["target", "native"],
+    "example": "Learning French from German"
+  },
+  "dashboard.todaysGoals": {
+    "context": "Section header for the list of daily learning goals on the dashboard"
+  },
+  "dashboard.continuelearning": {
+    "context": "Section header for quick actions to continue learning activities"
+  },
+  "dashboard.recentActivity": {
+    "context": "Section header for recent learning activities history"
+  },
+  "dashboard.noGoals": {
+    "context": "Message shown when user has no daily goals set up"
+  },
+  "dashboard.createDefaultGoals": {
+    "context": "Button label to automatically create a set of default daily goals"
+  },
+  "dashboard.activityComingSoon": {
+    "context": "Placeholder message indicating activity tracking feature is not yet available"
+  },
+  "dashboard.activityHint": {
+    "context": "Helpful hint explaining how activity tracking will work once enabled"
+  },
+
+  "action.startLesson": {
+    "context": "Quick action button label to begin a new lesson"
+  },
+  "action.startLessonDesc": {
+    "context": "Description for the start lesson action - encourages continuing from last position"
+  },
+  "action.flashcards": {
+    "context": "Quick action button label for flashcard vocabulary review"
+  },
+  "action.flashcardsDesc": {
+    "context": "Description for flashcards action - review vocabulary with spaced repetition"
+  },
+  "action.speaking": {
+    "context": "Quick action button label for speaking/pronunciation practice"
+  },
+  "action.speakingDesc": {
+    "context": "Description for speaking action - practice pronunciation"
+  },
+  "action.roleplay": {
+    "context": "Quick action button label for conversation roleplay scenarios"
+  },
+  "action.roleplayDesc": {
+    "context": "Description for roleplay action - practice through simulated conversations"
+  },
+
+  "lessons.title": {
+    "context": "Page title for the lessons section"
+  },
+  "lessons.generateNew": {
+    "context": "Button label to create a new AI-generated lesson"
+  },
+  "lessons.generateTitle": {
+    "context": "Modal/section title for the lesson generation form"
+  },
+  "lessons.topic": {
+    "context": "Form field label for entering the lesson topic"
+  },
+  "lessons.topicPlaceholder": {
+    "context": "Placeholder text in topic input field showing example topics"
+  },
+  "lessons.generate": {
+    "context": "Button label to submit and generate the lesson (includes emoji)"
+  },
+  "lessons.listen": {
+    "context": "Button label to play text-to-speech audio of lesson content (includes emoji)"
+  },
+
+  "vocabulary.title": {
+    "context": "Page title for the vocabulary section"
+  },
+  "vocabulary.addWords": {
+    "context": "Button label to add new vocabulary words"
+  },
+  "vocabulary.reviewFlashcards": {
+    "context": "Button label to start reviewing vocabulary with flashcards"
+  },
+  "vocabulary.generateTitle": {
+    "context": "Modal/section title for vocabulary generation form"
+  },
+  "vocabulary.words": {
+    "context": "Label for the number/count of words"
+  },
+  "vocabulary.generate": {
+    "context": "Button label to generate vocabulary list (includes emoji)"
+  },
+  "vocabulary.flashcardsTitle": {
+    "context": "Section title for the flashcards area"
+  },
+  "vocabulary.generateFlashcards": {
+    "context": "Button label to generate flashcard set (includes emoji)"
+  },
+
+  "exercises.title": {
+    "context": "Page title for the exercises section"
+  },
+  "exercises.fillBlanks": {
+    "context": "Exercise type name - fill in the blank exercises"
+  },
+  "exercises.fillBlanksDesc": {
+    "context": "Description of fill-in-blank exercise type"
+  },
+  "exercises.wordOrder": {
+    "context": "Exercise type name - arranging words in correct order"
+  },
+  "exercises.wordOrderDesc": {
+    "context": "Description of word order exercise type"
+  },
+  "exercises.translation": {
+    "context": "Exercise type name - translating sentences between languages"
+  },
+  "exercises.translationDesc": {
+    "context": "Description of translation exercise type"
+  },
+  "exercises.listening": {
+    "context": "Exercise type name - listening and transcribing audio"
+  },
+  "exercises.listeningDesc": {
+    "context": "Description of listening exercise type"
+  },
+  "exercises.speakingExercise": {
+    "context": "Exercise type name - speaking/pronunciation exercises"
+  },
+  "exercises.speakingDesc": {
+    "context": "Description of speaking exercise type"
+  },
+  "exercises.listeningComprehension": {
+    "context": "Exercise type name - listening to stories and answering comprehension questions"
+  },
+  "exercises.listeningComprehensionDesc": {
+    "context": "Description of listening comprehension exercise type"
+  },
+  "exercises.lcInstructions": {
+    "context": "Instructions for listening comprehension exercise explaining how it works"
+  },
+  "exercises.lcPlayStory": {
+    "context": "Button label to start playing the story audio"
+  },
+  "exercises.lcPause": {
+    "context": "Button label to pause audio playback"
+  },
+  "exercises.lcResume": {
+    "context": "Button label to resume paused audio"
+  },
+  "exercises.lcPlayAgain": {
+    "context": "Button label to replay the story from beginning"
+  },
+  "exercises.lcReplay": {
+    "context": "Button label for quick replay of audio"
+  },
+  "exercises.lcLoading": {
+    "context": "Loading indicator text while audio is being prepared"
+  },
+  "exercises.lcShowStoryText": {
+    "context": "Button label to reveal the story text (hidden by default)"
+  },
+  "exercises.lcHideStoryText": {
+    "context": "Button label to hide the story text again"
+  },
+  "exercises.lcShowTranslation": {
+    "context": "Button label to show translation of the story"
+  },
+  "exercises.lcHideTranslation": {
+    "context": "Button label to hide the translation"
+  },
+  "exercises.lcTranslation": {
+    "context": "Label/header for the translation section"
+  },
+  "exercises.lcTrueOrFalse": {
+    "context": "Header for true/false question section in comprehension exercise"
+  },
+  "exercises.lcAnswered": {
+    "context": "Status indicator showing how many questions have been answered"
+  },
+  "exercises.lcTrue": {
+    "context": "Answer option - statement is true/correct"
+  },
+  "exercises.lcFalse": {
+    "context": "Answer option - statement is false/incorrect"
+  },
+  "exercises.lcCorrect": {
+    "context": "Feedback message when user answers correctly"
+  },
+  "exercises.lcStatementTrue": {
+    "context": "Explanation shown after answering - confirms statement was true"
+  },
+  "exercises.lcStatementFalse": {
+    "context": "Explanation shown after answering - confirms statement was false"
+  },
+  "exercises.lcListenAgain": {
+    "context": "Suggestion to listen to the audio again"
+  },
+  "exercises.lcPerfect": {
+    "context": "Congratulation message for perfect score in listening comprehension"
+  },
+  "exercises.lcGreat": {
+    "context": "Congratulation message for good score in listening comprehension"
+  },
+  "exercises.lcGood": {
+    "context": "Encouraging message for acceptable score in listening comprehension"
+  },
+  "exercises.lcKeepPracticing": {
+    "context": "Encouraging message for lower score suggesting more practice"
+  },
+  "exercises.exit": {
+    "context": "Button label to exit/close the exercise (includes X symbol)"
+  },
+  "exercises.done": {
+    "context": "Button label indicating exercise is complete or to finish"
+  },
+  "exercises.generating": {
+    "context": "Loading message while exercise content is being generated"
+  },
+  "exercises.score": {
+    "context": "Label for the score/points achieved"
+  },
+  "exercises.submitAll": {
+    "context": "Button label to submit all answers at once"
+  },
+  "exercises.correctAnswers": {
+    "context": "Label showing count of correct answers"
+  },
+  "exercises.timeSpent": {
+    "context": "Label showing how long the exercise took"
+  },
+  "exercises.greatJob": {
+    "context": "Celebration message for good exercise performance (includes emoji)"
+  },
+  "exercises.keepPracticing": {
+    "context": "Encouraging message to continue practicing"
+  },
+  "exercises.tryAgain": {
+    "context": "Button label to retry the exercise"
+  },
+  "exercises.recentHistory": {
+    "context": "Section header for recent exercise history"
+  },
+  "exercises.noHistory": {
+    "context": "Message shown when user has no exercise history yet"
+  },
+  "exercises.historyLoadFailed": {
+    "context": "Error message when exercise history could not be loaded"
+  },
+  "exercises.check": {
+    "context": "Button label to check/verify an answer"
+  },
+  "exercises.noExercisesGenerated": {
+    "context": "Message shown when exercise generation returned no exercises"
+  },
+  "exercises.clickToListen": {
+    "context": "Instruction text for audio playback button"
+  },
+  "exercises.playingAudio": {
+    "context": "Status indicator while audio is playing"
+  },
+  "exercises.clickToReplay": {
+    "context": "Instruction to click for replaying audio"
+  },
+  "exercises.paused": {
+    "context": "Status indicator when audio is paused"
+  },
+  "exercises.typeWhatYouHear": {
+    "context": "Placeholder text in input field for listening exercises"
+  },
+  "exercises.listenExample": {
+    "context": "Button label to hear the example pronunciation"
+  },
+  "exercises.recordYourVoice": {
+    "context": "Button label to start voice recording for speaking exercises"
+  },
+  "exercises.yourSpeech": {
+    "context": "Label for the user's recorded speech/transcription"
+  },
+  "exercises.noSpeechDetected": {
+    "context": "Message when speech recognition found no speech"
+  },
+  "exercises.transcriptionFailed": {
+    "context": "Error message when speech-to-text conversion failed"
+  },
+  "exercises.recordFirst": {
+    "context": "Instruction to record voice before submitting"
+  },
+  "exercises.evaluating": {
+    "context": "Loading indicator while answer is being evaluated"
+  },
+
+  "progress.title": {
+    "context": "Page title for progress tracking section"
+  },
+  "progress.exercisesCompleted": {
+    "context": "Statistic label for total exercises completed"
+  },
+  "progress.averageScore": {
+    "context": "Statistic label for average exercise score"
+  },
+  "progress.timeSpent": {
+    "context": "Statistic label for total time spent learning"
+  },
+  "progress.dayStreak": {
+    "context": "Statistic label for consecutive days of learning"
+  },
+  "progress.goals": {
+    "context": "Section header for learning goals"
+  },
+  "progress.noLongTermGoals": {
+    "context": "Message when user has no long-term goals set"
+  },
+  "progress.createGoal": {
+    "context": "Button label to create a new goal"
+  },
+  "progress.noGoals": {
+    "context": "Message when user has no goals at all"
+  },
+  "progress.noGoalsInCategory": {
+    "context": "Message when selected goal category is empty"
+  },
+
+  "settings.title": {
+    "context": "Page title for settings section"
+  },
+  "settings.subtitle": {
+    "context": "Subtitle explaining what settings page is for"
+  },
+  "settings.profile": {
+    "context": "Section header for profile settings (includes emoji)"
+  },
+  "settings.editProfile": {
+    "context": "Button label to edit user profile (includes emoji)"
+  },
+  "settings.memberSince": {
+    "context": "Label showing when user joined"
+  },
+  "settings.level": {
+    "context": "Label for user's current skill level"
+  },
+  "settings.preferences": {
+    "context": "Section header for user preferences (includes emoji)"
+  },
+  "settings.darkMode": {
+    "context": "Setting name for dark/light theme toggle"
+  },
+  "settings.darkModeDesc": {
+    "context": "Description of dark mode setting"
+  },
+  "settings.notifications": {
+    "context": "Setting name for notifications toggle"
+  },
+  "settings.notificationsDesc": {
+    "context": "Description of notifications setting"
+  },
+  "settings.speechVoice": {
+    "context": "Setting name for text-to-speech voice selection"
+  },
+  "settings.speechVoiceDesc": {
+    "context": "Description of speech voice setting"
+  },
+  "settings.comingSoon": {
+    "context": "Label indicating feature is not yet available"
+  },
+  "settings.about": {
+    "context": "Section header for about/info section (includes emoji)"
+  },
+  "settings.appName": {
+    "context": "The application name displayed in about section"
+  },
+  "settings.appDesc": {
+    "context": "Brief description of what the application does"
+  },
+  "settings.version": {
+    "context": "Application version number"
+  },
+
+  "profile.editTitle": {
+    "context": "Modal title for editing profile (includes emoji)"
+  },
+  "profile.displayName": {
+    "context": "Form field label for user's display name"
+  },
+  "profile.displayNamePlaceholder": {
+    "context": "Placeholder text for display name input"
+  },
+  "profile.skillLevel": {
+    "context": "Form field label for CEFR skill level selection"
+  },
+  "profile.languages": {
+    "context": "Form section label for language settings"
+  },
+  "profile.languagesNote": {
+    "context": "Note explaining languages are configured at deployment"
+  },
+  "profile.save": {
+    "context": "Button label to save profile changes"
+  },
+  "profile.cancel": {
+    "context": "Button label to cancel editing and close modal"
+  },
+
+  "level.A1": {
+    "context": "CEFR level A1 description - complete beginner"
+  },
+  "level.A2": {
+    "context": "CEFR level A2 description - elementary level"
+  },
+  "level.B1": {
+    "context": "CEFR level B1 description - intermediate level"
+  },
+  "level.B2": {
+    "context": "CEFR level B2 description - upper intermediate"
+  },
+  "level.C1": {
+    "context": "CEFR level C1 description - advanced level"
+  },
+  "level.C2": {
+    "context": "CEFR level C2 description - near-native proficiency"
+  },
+
+  "goals.createTitle": {
+    "context": "Modal title for creating a new goal"
+  },
+  "goals.editTitle": {
+    "context": "Modal title for editing an existing goal"
+  },
+  "goals.title": {
+    "context": "Form field label for goal title"
+  },
+  "goals.titlePlaceholder": {
+    "context": "Placeholder text showing example goal title"
+  },
+  "goals.description": {
+    "context": "Form field label for goal description"
+  },
+  "goals.descriptionPlaceholder": {
+    "context": "Placeholder text for goal description"
+  },
+  "goals.type": {
+    "context": "Form field label for goal type selection"
+  },
+  "goals.typeDaily": {
+    "context": "Goal type option - resets daily"
+  },
+  "goals.typeWeekly": {
+    "context": "Goal type option - resets weekly"
+  },
+  "goals.typeMonthly": {
+    "context": "Goal type option - resets monthly"
+  },
+  "goals.typeYearly": {
+    "context": "Goal type option - resets yearly"
+  },
+  "goals.typeCannotChange": {
+    "context": "Warning that goal type cannot be changed after creation"
+  },
+  "goals.target": {
+    "context": "Form field label for target value/number"
+  },
+  "goals.unit": {
+    "context": "Form field label for unit of measurement"
+  },
+  "goals.unitPlaceholder": {
+    "context": "Placeholder showing example units"
+  },
+  "goals.currentProgress": {
+    "context": "Label showing current progress value"
+  },
+  "goals.newProgress": {
+    "context": "Label for entering new progress value"
+  },
+  "goals.create": {
+    "context": "Button label to create the goal"
+  },
+  "goals.save": {
+    "context": "Button label to save goal changes"
+  },
+  "goals.edit": {
+    "context": "Action label to edit a goal"
+  },
+  "goals.delete": {
+    "context": "Action label to delete a goal"
+  },
+  "goals.reset": {
+    "context": "Action label to reset goal progress to zero"
+  },
+  "goals.complete": {
+    "context": "Action label to mark goal as complete"
+  },
+  "goals.done": {
+    "context": "Status label for completed goals"
+  },
+  "goals.completed": {
+    "context": "Status indicator text shown on completed goals"
+  },
+  "goals.addGoal": {
+    "context": "Button label to add a new goal"
+  },
+  "goals.createCustom": {
+    "context": "Button label to create a custom goal"
+  },
+  "goals.allGoals": {
+    "context": "Filter option to show all goals"
+  },
+  "goals.increment": {
+    "context": "Button label to add 1 to goal progress"
+  },
+  "goals.updateProgress": {
+    "context": "Action label to update progress value"
+  },
+  "goals.markComplete": {
+    "context": "Action label to mark goal as fully complete"
+  },
+  "goals.moreActions": {
+    "context": "Menu label for additional goal actions"
+  },
+  "goals.clickToUpdate": {
+    "context": "Tooltip text for clicking to update progress"
+  },
+  "goals.confirmReset": {
+    "context": "Confirmation message before resetting goal progress"
+  },
+
+  "toast.profileUpdated": {
+    "context": "Success notification after profile is saved"
+  },
+  "toast.profileUpdateFailed": {
+    "context": "Error notification when profile save fails"
+  },
+  "toast.goalCreated": {
+    "context": "Success notification after goal is created"
+  },
+  "toast.goalCreateFailed": {
+    "context": "Error notification when goal creation fails"
+  },
+  "toast.goalCompleted": {
+    "context": "Success notification when goal is completed (includes emoji)"
+  },
+  "toast.goalDeleted": {
+    "context": "Success notification after goal is deleted"
+  },
+  "toast.goalUpdated": {
+    "context": "Success notification after goal is updated"
+  },
+  "toast.goalUpdateFailed": {
+    "context": "Error notification when goal update fails"
+  },
+  "toast.goalReset": {
+    "context": "Success notification after goal progress is reset"
+  },
+  "toast.goalNotFound": {
+    "context": "Error notification when goal cannot be found"
+  },
+  "toast.progressUpdated": {
+    "context": "Success notification after progress is updated"
+  },
+  "toast.lessonGenerated": {
+    "context": "Success notification after lesson is generated"
+  },
+  "toast.lessonGenerateFailed": {
+    "context": "Error notification when lesson generation fails"
+  },
+  "toast.vocabGenerated": {
+    "context": "Success notification after vocabulary is generated"
+  },
+  "toast.vocabGenerateFailed": {
+    "context": "Error notification when vocabulary generation fails"
+  },
+  "toast.flashcardsGenerated": {
+    "context": "Success notification after flashcards are generated"
+  },
+  "toast.flashcardsGenerateFailed": {
+    "context": "Error notification when flashcard generation fails"
+  },
+  "toast.exerciseLoaded": {
+    "context": "Success notification after exercise is loaded"
+  },
+  "toast.exerciseGenerateFailed": {
+    "context": "Error notification when exercise generation fails"
+  },
+  "toast.exerciseSaved": {
+    "context": "Success notification after exercise result is saved"
+  },
+  "toast.exerciseSaveFailed": {
+    "context": "Error notification when saving exercise result fails"
+  },
+  "toast.scenarioGenerated": {
+    "context": "Success notification after roleplay scenario is generated"
+  },
+  "toast.scenarioGenerateFailed": {
+    "context": "Error notification when scenario generation fails"
+  },
+  "toast.defaultGoalsCreated": {
+    "context": "Success notification after default goals are created"
+  },
+  "toast.backendUnavailable": {
+    "context": "Error notification when backend server is not reachable"
+  },
+  "toast.generatingAudio": {
+    "context": "Info notification while audio is being generated"
+  },
+  "toast.playingAudio": {
+    "context": "Info notification when audio starts playing"
+  },
+  "toast.speechUnavailable": {
+    "context": "Error notification when text-to-speech is not available"
+  },
+  "toast.userDataNotLoaded": {
+    "context": "Error notification when user data could not be loaded"
+  },
+  "toast.enterDisplayName": {
+    "context": "Validation error - display name is required"
+  },
+  "toast.enterTitle": {
+    "context": "Validation error - title is required"
+  },
+  "toast.audioPlayFailed": {
+    "context": "Error notification when audio playback fails"
+  },
+  "toast.audioGenerationFailed": {
+    "context": "Error notification when audio generation fails"
+  },
+  "toast.recordingStarted": {
+    "context": "Info notification when voice recording starts"
+  },
+  "toast.recordingStopped": {
+    "context": "Info notification when voice recording stops"
+  },
+  "toast.microphoneAccessDenied": {
+    "context": "Error notification when microphone permission is denied"
+  },
+  "toast.transcribing": {
+    "context": "Info notification while speech is being transcribed"
+  },
+  "toast.transcriptionComplete": {
+    "context": "Success notification when transcription is done"
+  },
+  "toast.transcriptionFailed": {
+    "context": "Error notification when transcription fails"
+  },
+  "toast.cacheCleared": {
+    "context": "Success notification when cached content is cleared"
+  },
+
+  "activity.completedGoal": {
+    "context": "Activity log entry for completing a goal"
+  },
+  "activity.today": {
+    "context": "Time label for activities from today"
+  },
+
+  "misc.loading": {
+    "context": "Generic loading indicator text"
+  },
+  "misc.close": {
+    "context": "Generic close button label"
+  },
+  "misc.generating": {
+    "context": "Generic generating/processing indicator"
+  },
+  "misc.comingSoon": {
+    "context": "Label for features not yet available"
+  },
+  "misc.roleplayTitle": {
+    "context": "Title prefix for roleplay scenarios (includes emoji)"
+  },
+  "misc.clearCache": {
+    "context": "Button label to clear cached content"
+  },
+
+  "cards.title": {
+    "context": "Page title for visual learning cards section"
+  },
+  "cards.generateTitle": {
+    "context": "Modal/section title for generating visual cards"
+  },
+  "cards.generateFromTopic": {
+    "context": "Section title for generating cards from a topic"
+  },
+  "cards.topicLabel": {
+    "context": "Form field label for card topic"
+  },
+  "cards.topicPlaceholder": {
+    "context": "Placeholder showing example card topics"
+  },
+  "cards.topicDescription": {
+    "context": "Help text explaining how topic-based generation works"
+  },
+  "cards.cardCount": {
+    "context": "Form field label for number of cards to generate"
+  },
+  "cards.customCardTitle": {
+    "context": "Section title for advanced custom card creation"
+  },
+  "cards.word": {
+    "context": "Form field label for vocabulary word"
+  },
+  "cards.wordPlaceholder": {
+    "context": "Placeholder showing example words"
+  },
+  "cards.context": {
+    "context": "Form field label for optional context/sentence"
+  },
+  "cards.contextPlaceholder": {
+    "context": "Placeholder showing example context sentence"
+  },
+  "cards.generate": {
+    "context": "Button label to generate a single image (includes emoji)"
+  },
+  "cards.generateBatch": {
+    "context": "Button label to generate multiple images (includes emoji)"
+  },
+  "cards.wordsList": {
+    "context": "Form field label for comma-separated word list"
+  },
+  "cards.wordsListPlaceholder": {
+    "context": "Placeholder showing example word list format"
+  },
+  "cards.flipCard": {
+    "context": "Instruction/button to flip the flashcard"
+  },
+  "cards.flipHint": {
+    "context": "Hint text explaining how to reveal translation"
+  },
+  "cards.showImage": {
+    "context": "Button label to show the card image"
+  },
+  "cards.hideImage": {
+    "context": "Button label to hide the card image"
+  },
+  "cards.nextCard": {
+    "context": "Button label to go to next card"
+  },
+  "cards.prevCard": {
+    "context": "Button label to go to previous card"
+  },
+  "cards.cardOf": {
+    "context": "Card counter showing position in deck",
+    "parameters": ["current", "total"],
+    "example": "Card 3 of 10"
+  },
+  "cards.noCards": {
+    "context": "Message when no visual cards have been created yet"
+  },
+  "cards.generating": {
+    "context": "Loading indicator while image is being generated"
+  },
+  "cards.generatingFromTopic": {
+    "context": "Loading message during topic-based card generation",
+    "parameters": ["count"]
+  },
+  "cards.generatingBatch": {
+    "context": "Loading indicator during batch image generation"
+  },
+  "cards.imageGenerated": {
+    "context": "Success notification when image generation completes"
+  },
+  "cards.imageGenerateFailed": {
+    "context": "Error notification when image generation fails"
+  },
+  "cards.topicGenerateFailed": {
+    "context": "Error notification when topic-based generation fails"
+  },
+  "cards.topicSuccess": {
+    "context": "Success notification with card count",
+    "parameters": ["count"]
+  },
+  "cards.partialSuccess": {
+    "context": "Partial success notification when some images failed",
+    "parameters": ["success", "total"]
+  },
+  "cards.imageServiceUnavailable": {
+    "context": "Error when image service is not configured"
+  },
+  "cards.batchComplete": {
+    "context": "Success notification when all batch images are done"
+  },
+  "cards.visualFlashcards": {
+    "context": "Feature name for visual flashcard learning"
+  },
+  "cards.visualFlashcardsDesc": {
+    "context": "Description of visual flashcard feature"
+  },
+  "cards.yourLanguage": {
+    "context": "Label for user's native language on card"
+  },
+  "cards.targetLanguage": {
+    "context": "Label for target language on card"
+  },
+
+  "chat.title": {
+    "context": "Title for the AI chat coach page"
+  },
+  "chat.subtitle": {
+    "context": "Subtitle describing the chat coach feature"
+  },
+  "chat.loading": {
+    "context": "Loading message while connecting to chat"
+  },
+  "chat.placeholder": {
+    "context": "Placeholder text in chat input field"
+  },
+  "chat.send": {
+    "context": "Button label to send chat message"
+  },
+  "chat.you": {
+    "context": "Label for user's messages in chat"
+  },
+  "chat.coach": {
+    "context": "Label for AI coach's messages in chat"
+  },
+  "chat.suggestions": {
+    "context": "Section header for suggested actions/topics"
+  },
+  "chat.newSession": {
+    "context": "Button label to start a new chat session"
+  },
+  "chat.newSessionConfirm": {
+    "context": "Confirmation message before clearing chat history"
+  },
+  "chat.clearChat": {
+    "context": "Button label to clear chat messages"
+  },
+  "chat.error": {
+    "context": "Error message when sending message fails"
+  },
+  "chat.connectionError": {
+    "context": "Error message when chat connection fails"
+  },
+  "chat.unknownActivity": {
+    "context": "Label for unrecognized activity type"
+  },
+  "chat.activityError": {
+    "context": "Error message when activity fails to load"
+  },
+  "chat.suggestionPracticeVocab": {
+    "context": "Suggested action - practice vocabulary"
+  },
+  "chat.suggestionDoExercises": {
+    "context": "Suggested action - do exercises"
+  },
+  "chat.suggestionStartLesson": {
+    "context": "Suggested action - start a lesson"
+  },
+  "chat.suggestionReview": {
+    "context": "Suggested action - review learned content"
+  },
+  "chat.thinking": {
+    "context": "Loading indicator while AI is generating response"
+  },
+  "chat.selectActivity": {
+    "context": "Prompt asking user to select an activity type"
+  },
+  "chat.activityVocabulary": {
+    "context": "Activity option - vocabulary practice (includes emoji)"
+  },
+  "chat.activityExercise": {
+    "context": "Activity option - do an exercise (includes emoji)"
+  },
+  "chat.activityLesson": {
+    "context": "Activity option - start a lesson (includes emoji)"
+  },
+  "chat.activityScenario": {
+    "context": "Activity option - roleplay scenario (includes emoji)"
+  },
+  "chat.activityAudio": {
+    "context": "Activity option - listening and speaking (includes emoji)"
+  },
+  "chat.activitySurprise": {
+    "context": "Activity option - random surprise activity (includes emoji)"
+  },
+  "chat.selectTopic": {
+    "context": "Prompt asking user to select a topic"
+  },
+  "chat.chooseForMe": {
+    "context": "Button to let AI choose a topic (includes emoji)"
+  },
+  "chat.customTopic": {
+    "context": "Option to enter a custom topic (includes emoji)"
+  },
+  "chat.loadingTopics": {
+    "context": "Loading message while fetching topic suggestions"
+  },
+  "chat.topicAlignedGoal": {
+    "context": "Badge indicating topic helps with user's goals (includes emoji)"
+  },
+  "chat.backToActivities": {
+    "context": "Button to go back to activity selection"
+  },
+  "chat.enterCustomTopic": {
+    "context": "Prompt to enter a custom topic"
+  },
+  "chat.customTopicPlaceholder": {
+    "context": "Placeholder for custom topic input"
+  },
+  "chat.startWithTopic": {
+    "context": "Button to start activity with selected topic"
+  },
+  "chat.requestVocabulary": {
+    "context": "Message template sent when user wants vocabulary practice",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+  "chat.requestExercise": {
+    "context": "Message template sent when user wants an exercise",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+  "chat.requestLesson": {
+    "context": "Message template sent when user wants a lesson",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+  "chat.requestScenario": {
+    "context": "Message template sent when user wants a roleplay",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+  "chat.requestAudio": {
+    "context": "Message template sent when user wants listening practice",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+  "chat.requestDefault": {
+    "context": "Default message template sent to AI coach",
+    "parameters": ["topic"],
+    "note": "This message is sent to the AI coach in the user's native language"
+  },
+
+  "lang.de": {
+    "context": "Language name - German"
+  },
+  "lang.fr": {
+    "context": "Language name - French"
+  },
+  "lang.en": {
+    "context": "Language name - English"
+  },
+  "lang.es": {
+    "context": "Language name - Spanish"
+  },
+  "lang.it": {
+    "context": "Language name - Italian"
+  },
+  "lang.pt": {
+    "context": "Language name - Portuguese"
+  },
+  "lang.nl": {
+    "context": "Language name - Dutch"
+  },
+  "lang.pl": {
+    "context": "Language name - Polish"
+  },
+  "lang.ru": {
+    "context": "Language name - Russian"
+  },
+  "lang.ja": {
+    "context": "Language name - Japanese"
+  },
+  "lang.zh": {
+    "context": "Language name - Chinese"
+  },
+  "lang.ko": {
+    "context": "Language name - Korean"
+  }
+}

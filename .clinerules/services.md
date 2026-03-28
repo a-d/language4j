@@ -334,6 +334,22 @@ api.exercises.generate('LISTENING_COMPREHENSION', 'daily routines', 1, { wordCou
 | `/flashcard` | POST | Generate flashcard image for vocabulary word |
 | `/flashcard/batch` | POST | Generate multiple flashcard images (max 5) |
 
+### I18nController
+**Path**: `/api/v1/i18n`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/languages` | GET | List all available languages with translations |
+| `/languages/{languageCode}` | GET | Get translations for a language (generates via LLM if new) |
+| `/languages/{languageCode}/exists` | GET | Check if translations exist without triggering generation |
+| `/languages/{languageCode}/generate` | POST | Force regenerate translations (not for en/de) |
+
+**Notes:**
+- Bundled languages (en, de) are pre-loaded from `resources/i18n/`
+- New languages trigger LLM-based translation using context from `messages.json`
+- Generated translations are cached to `data/i18n/` directory
+- Frontend caches translations in localStorage for offline resilience
+
 ---
 
 ## DTO Naming Conventions

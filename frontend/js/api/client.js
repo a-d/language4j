@@ -369,6 +369,38 @@ export const api = {
         })
     },
     
+    // ==================== I18n ====================
+    i18n: {
+        /**
+         * Get translations for a specific language
+         * @param {string} languageCode - ISO 639-1 language code (e.g., 'en', 'de', 'fr')
+         * @returns {Promise<Object>} Map of translation keys to translated text
+         */
+        getLanguage: (languageCode) => request(`/v1/i18n/languages/${languageCode}`),
+        
+        /**
+         * Check if translations exist for a language (without triggering generation)
+         * @param {string} languageCode - ISO 639-1 language code
+         * @returns {Promise<{languageCode: string, exists: boolean}>}
+         */
+        hasLanguage: (languageCode) => request(`/v1/i18n/languages/${languageCode}/exists`),
+        
+        /**
+         * Get list of all available languages with translations
+         * @returns {Promise<{languages: string[]}>}
+         */
+        getAvailableLanguages: () => request('/v1/i18n/languages'),
+        
+        /**
+         * Force regeneration of translations for a language
+         * @param {string} languageCode - ISO 639-1 language code (cannot be 'en' or 'de')
+         * @returns {Promise<Object>} Map of translation keys to translated text
+         */
+        generateLanguage: (languageCode) => request(`/v1/i18n/languages/${languageCode}/generate`, {
+            method: 'POST'
+        })
+    },
+    
     // ==================== Images ====================
     images: {
         /**
