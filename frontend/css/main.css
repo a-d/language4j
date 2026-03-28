@@ -2659,7 +2659,7 @@ h3 {
     background: var(--bg-color);
 }
 
-.user-menu-item:first-child {
+.user-menu-item:not(:last-child) {
     border-bottom: 1px solid var(--border-color);
 }
 

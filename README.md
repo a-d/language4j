@@ -286,15 +286,15 @@ docker-compose up -d
 
 ## 📝 Environment Variables Reference
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NATIVE_LANGUAGE` | `de` | Your native language code |
-| `TARGET_LANGUAGE` | `fr` | Language to learn |
+| Variable | Default | Description                            |
+|----------|---------|----------------------------------------|
+| `NATIVE_LANGUAGE` | `de` | (Default user) native language     |
+| `TARGET_LANGUAGE` | `fr` | (Default user) language to learn       |
 | `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, ollama) |
-| `LLM_API_KEY` | - | API key for LLM provider |
-| `LLM_MODEL` | `gpt-4-turbo-preview` | Model name |
-| `DATABASE_URL` | `jdbc:postgresql://postgres:5432/language_learning` | Database URL |
-| `SERVER_PORT` | `8080` | Backend server port |
+| `LLM_API_KEY` | - | API key for LLM provider               |
+| `LLM_MODEL` | `gpt-4-turbo-preview` | Model name                             |
+| `DATABASE_URL` | `jdbc:postgresql://postgres:5432/language_learning` | Database URL                           |
+| `SERVER_PORT` | `8080` | Backend server port                    |
 
 ## 🤝 Contributing
 

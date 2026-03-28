@@ -233,7 +233,7 @@ function setupNavigation() {
 }
 
 /**
- * Show user menu with options to edit profile or switch users
+ * Show user menu with options to edit profile, settings, or switch users
  */
 function showUserMenu() {
     // Remove any existing menu
@@ -251,6 +251,9 @@ function showUserMenu() {
         </div>
         <div class="user-menu-item" onclick="window.showUserSwitcher()">
             👥 ${t('users.switchUser')}
+        </div>
+        <div class="user-menu-item" onclick="window.navigateToSettings()">
+            ⚙️ ${t('nav.settings')}
         </div>
     `;
     
@@ -559,6 +562,12 @@ window.submitProfileUpdate = () => submitProfileUpdate(
 
 // Theme functions
 window.toggleDarkMode = toggleDarkMode;
+
+// Navigation functions
+window.navigateToSettings = () => {
+    closeUserMenu();
+    navigateTo('settings');
+};
 
 // ==================== Start Application ====================
 
