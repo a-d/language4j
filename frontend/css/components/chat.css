@@ -2,13 +2,19 @@
    CHAT COMPONENT STYLES
    ============================================== */
 
+/* Remove vertical padding from main-content when chat page is active */
+.main-content:has(#chat-page.active) {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 /* Chat Container */
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 180px);
-    max-height: 800px;
-    min-height: 400px;
+    height: calc(100vh - 200px); /* Account for navbar (~60px) + page header (~100px) + buffer (~40px) */
+    min-height: 300px;
+    /* No max-height - fill available space */
 }
 
 /* Messages Area */
@@ -220,6 +226,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+    flex-shrink: 0; /* Don't shrink - stay at bottom */
+    padding-top: var(--spacing-sm);
 }
 
 /* Quick Suggestions */
@@ -560,7 +568,7 @@
 /* Responsive */
 @media (max-width: 768px) {
     .chat-container {
-        height: calc(100vh - 140px);
+        height: calc(100vh - 200px); /* Smaller header on mobile */
     }
 
     .chat-message {

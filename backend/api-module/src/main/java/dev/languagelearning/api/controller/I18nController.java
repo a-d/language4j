@@ -24,7 +24,7 @@ import java.util.Map;
  * </ul>
  */
 @RestController
-@RequestMapping("/v1/i18n")
+@RequestMapping("/api/v1/i18n")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "I18n", description = "Internationalization endpoints for UI translations")

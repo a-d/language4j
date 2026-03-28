@@ -6,8 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,16 +19,18 @@ import java.util.UUID;
  * <p>
  * This enables multi-user support where the frontend specifies which user
  * is making the request via the X-User-Id header.
+ * <p>
+ * Uses {@link ObjectProvider} for lazy lookup of the request-scoped bean,
+ * ensuring the request context is active before accessing it.
  */
 @Slf4j
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class UserContextFilter extends OncePerRequestFilter {
 
     public static final String USER_ID_HEADER = "X-User-Id";
 
-    private final UserContext userContext;
+    private final ObjectProvider<UserContext> userContextProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,8 +42,13 @@ public class UserContextFilter extends OncePerRequestFilter {
         if (userIdHeader != null && !userIdHeader.isBlank()) {
             try {
                 UUID userId = UUID.fromString(userIdHeader.trim());
-                userContext.setUserId(userId);
-                log.debug("Set user context from header: {}", userId);
+                UserContext userContext = userContextProvider.getIfAvailable();
+                if (userContext != null) {
+                    userContext.setUserId(userId);
+                    log.debug("Set user context from header: {}", userId);
+                } else {
+                    log.warn("UserContext not available in request scope");
+                }
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid X-User-Id header value: {}", userIdHeader);
                 // Continue without setting user context - service will handle missing context
