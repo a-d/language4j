@@ -1136,5 +1136,18 @@
 
   "toast.featureDisabledInDemo": {
     "context": "Toast notification when user tries to access a feature not available in demo mode"
+  },
+
+  "topics.loadingSuggestions": {
+    "context": "Loading message shown while fetching AI-powered topic suggestions"
+  },
+  "topics.aiSuggestionsHint": {
+    "context": "Hint text explaining that topic suggestions are AI-powered and based on learning goals"
+  },
+  "topics.loadFailed": {
+    "context": "Error message when topic suggestions could not be loaded"
+  },
+  "misc.retry": {
+    "context": "Button label to retry a failed operation"
   }
 }

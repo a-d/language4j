@@ -233,7 +233,7 @@ class TopicsService {
         } = options;
 
         const divider = dividerText || t('exercises.orSelectBelow') || 'or select a topic below';
-        const hint = hintText || t('topics.aiSuggestionsHint') || 'AI-powered topic suggestions based on your learning goals';
+        const hint = hintText || t('topics.aiSuggestionsHint') || 'Topic suggestions based on your learning goals';
 
         return `
             <div class="topic-suggestions-container" data-category="${category}" data-select-fn="${onSelectFn}">
@@ -378,7 +378,7 @@ class TopicsService {
                         </div>
                         
                         <p class="topic-suggestions-hint">
-                            ✨ ${t('topics.aiSuggestionsHint') || 'AI-powered topic suggestions based on your learning goals'}
+                            ✨ ${t('topics.aiSuggestionsHint') || 'Topic suggestions based on your learning goals'}
                         </p>
                     </div>
                 </div>

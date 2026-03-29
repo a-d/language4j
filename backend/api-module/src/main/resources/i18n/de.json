@@ -382,7 +382,7 @@
   "toast.featureDisabledInDemo": "Diese Funktion ist im Demo-Modus nicht verfügbar",
 
   "topics.loadingSuggestions": "Vorschläge werden geladen...",
-  "topics.aiSuggestionsHint": "KI-gestützte Themenvorschläge basierend auf deinen Lernzielen",
+  "topics.aiSuggestionsHint": "Themenvorschläge basierend auf deinen Lernzielen",
   "topics.loadFailed": "Vorschläge konnten nicht geladen werden",
   "misc.retry": "Wiederholen"
 }

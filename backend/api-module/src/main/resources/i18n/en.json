@@ -382,7 +382,7 @@
   "toast.featureDisabledInDemo": "This feature is not available in demo mode",
 
   "topics.loadingSuggestions": "Loading suggestions...",
-  "topics.aiSuggestionsHint": "AI-powered topic suggestions based on your learning goals",
+  "topics.aiSuggestionsHint": "Topic suggestions based on your learning goals",
   "topics.loadFailed": "Failed to load suggestions",
   "misc.retry": "Retry"
 }
