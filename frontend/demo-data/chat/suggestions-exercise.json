@@ -1,0 +1,36 @@
+{
+  "activityCategory": "EXERCISE",
+  "suggestions": [
+    {
+      "topic": "Guten Tag! – Begrüßungen und Verabschiedungen",
+      "description": "Übe gängige Begrüßungsformen und Abschiedsworte im Alltag, ideal für erste Gespräche auf Französisch.",
+      "emoji": "👋",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Zahlen von 1 bis 20 – Zählen und Telefonnummern",
+      "description": "Übe die Zahlwörter von 1 bis 20 und wende sie bei Telefonnummern und einfachen Rechnungen an.",
+      "emoji": "🔢",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Farben des Alltags – Die Welt in Farben sehen",
+      "description": "Lerne grundlegende Farben und beschreibe Gegenstände nach ihrer Farbe im Französischen.",
+      "emoji": "🎨",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Essen und Trinken – Was isst du gerne?",
+      "description": "Erweitere dein Vokabular rund um einfache Lebensmittel und Übe Fragen wie „Qu’est-ce que tu manges?“",
+      "emoji": "🍽️",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Meine Familie – Wer ist in deiner Familie?",
+      "description": "Lerne die Namen für Familienmitglieder und beschreibe deine Familie mit einfachen Sätzen.",
+      "emoji": "👨‍👩‍👧",
+      "alignsWithGoals": false
+    }
+  ],
+  "randomTopic": "die Farben"
+}

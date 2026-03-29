@@ -1,0 +1,36 @@
+{
+  "activityCategory": "LESSON",
+  "suggestions": [
+    {
+      "topic": "Guten Tag! – Begrüßungen und Verabschiedungen",
+      "description": "Lernen Sie grundlegende Begrüßungsformen wie 'Bonjour' und 'Au revoir' sowie einfache Antworten im Alltag.",
+      "emoji": "👋",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Zahlen von 1 bis 20 – Zählen lernen",
+      "description": "Üben Sie die Zahlwörter von 1 bis 20 mit Spiel und visuellen Hilfen für besseres Verständnis.",
+      "emoji": "🔢",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Farben der Welt – Die wichtigsten Farben im Französischen",
+      "description": "Erkennen und benennen Sie gängige Farben wie 'rouge', 'bleu' und 'jaune' an Objekten aus dem Alltag.",
+      "emoji": "🌈",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Meine Familie – Familienmitglieder vorstellen",
+      "description": "Lernen Sie die Namen für Eltern, Geschwister und andere Familienmitglieder auf Französisch.",
+      "emoji": "👨‍👩‍👧‍👦",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Tiere im Zoo – Tierarten kennenlernen",
+      "description": "Entdecken Sie häufige Tiere wie 'le chien', 'le chat' oder 'l’éléphant' und lernen Sie deren Namen in Französisch.",
+      "emoji": "🦁",
+      "alignsWithGoals": false
+    }
+  ],
+  "randomTopic": "Frühstückssachen"
+}

@@ -1,0 +1,41 @@
+[
+    {
+        "id": "goal-daily-words",
+        "type": "DAILY",
+        "title": "Learn new words",
+        "description": "Learn 10 new vocabulary words today",
+        "targetValue": 10,
+        "currentValue": 3,
+        "unit": "words",
+        "startDate": "2026-03-29",
+        "endDate": "2026-03-29",
+        "completed": false,
+        "progressPercent": 30
+    },
+    {
+        "id": "goal-daily-exercises",
+        "type": "DAILY",
+        "title": "Complete exercises",
+        "description": "Complete 5 exercises today",
+        "targetValue": 5,
+        "currentValue": 2,
+        "unit": "exercises",
+        "startDate": "2026-03-29",
+        "endDate": "2026-03-29",
+        "completed": false,
+        "progressPercent": 40
+    },
+    {
+        "id": "goal-weekly-lessons",
+        "type": "WEEKLY",
+        "title": "Study lessons",
+        "description": "Complete 3 lessons this week",
+        "targetValue": 3,
+        "currentValue": 1,
+        "unit": "lessons",
+        "startDate": "2026-03-23",
+        "endDate": "2026-04-05",
+        "completed": false,
+        "progressPercent": 33
+    }
+]

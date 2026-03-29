@@ -1115,3 +1115,158 @@
 .lc-summary-icon { font-size: 3rem; margin-bottom: 0.5rem; }
 .lc-summary-score { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
 .lc-summary-message { color: var(--text-secondary); margin-bottom: 1rem; }
+
+/* ==================== Demo Mode Notice ==================== */
+
+.demo-mode-notice {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--border-color);
+}
+
+.demo-mode-notice .notice-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.7;
+}
+
+.demo-mode-notice h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+}
+
+.demo-mode-notice p {
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-secondary);
+}
+
+.demo-mode-notice .notice-hint {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: var(--spacing-md);
+}
+
+/* ==================== Demo Topic Selector ==================== */
+
+.demo-topic-selector {
+    padding: var(--spacing-lg);
+}
+
+.demo-topic-selector .selector-instruction {
+    font-size: var(--font-size-lg);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+/* Topic input row - similar to Visual Cards page */
+.topic-input-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.topic-input-row .topic-search-input {
+    flex: 1;
+    padding: var(--spacing-md);
+    font-size: var(--font-size-base);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.topic-input-row .topic-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.topic-input-row .btn {
+    white-space: nowrap;
+}
+
+/* Topic divider */
+.topic-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.topic-divider::before,
+.topic-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.topic-divider span {
+    padding: 0 var(--spacing-md);
+}
+
+.topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.topic-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-lg);
+    background: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    min-height: 80px;
+}
+
+.topic-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(79, 70, 229, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.topic-btn:active {
+    transform: translateY(0);
+}
+
+.demo-mode-hint {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-style: italic;
+    padding: var(--spacing-md);
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 600px) {
+    .topic-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .topic-btn {
+        padding: var(--spacing-md);
+        min-height: 60px;
+        font-size: var(--font-size-sm);
+    }
+}

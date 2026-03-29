@@ -33,6 +33,8 @@
   "lessons.topic": "Topic",
   "lessons.topicPlaceholder": "e.g., greetings, food, travel",
   "lessons.generate": "🎯 Generate Lesson",
+  "lessons.orSelectBelow": "or select a topic below",
+  "lessons.demoModeHint": "Demo mode: Only pre-generated topics are available",
   "lessons.listen": "🔊 Listen",
 
   "vocabulary.title": "Vocabulary",
@@ -42,6 +44,8 @@
   "vocabulary.words": "Words",
   "vocabulary.generate": "📝 Generate Vocabulary",
   "vocabulary.flashcardsTitle": "Flashcards",
+  "vocabulary.orSelectBelow": "or select a topic below",
+  "vocabulary.demoModeHint": "Demo mode: Only pre-generated topics are available",
   "vocabulary.generateFlashcards": "🃏 Generate Flashcards",
 
   "exercises.title": "Exercises",
@@ -284,6 +288,8 @@
   "cards.batchComplete": "All images generated!",
   "cards.visualFlashcards": "Visual Flashcards",
   "cards.visualFlashcardsDesc": "Learn with AI-generated images",
+  "cards.orSelectBelow": "or select a topic below",
+  "cards.demoModeHint": "Demo mode: Only pre-generated topics are available",
   "cards.yourLanguage": "Your language",
   "cards.targetLanguage": "Learning",
 
@@ -329,6 +335,7 @@
   "chat.requestScenario": "I would like to do a roleplay about \"{topic}\"",
   "chat.requestAudio": "I would like to practice listening about \"{topic}\"",
   "chat.requestDefault": "I would like to learn about \"{topic}\"",
+  "chat.demoModeHint": "Demo mode: Use the buttons above to explore",
 
   "lang.de": "German",
   "lang.fr": "French",
@@ -362,5 +369,15 @@
   "users.deleteAccount": "Delete Account",
   "users.deleteConfirm": "Are you sure you want to delete the account \"{name}\"? All data will be permanently lost.",
   "users.deleted": "Account deleted",
-  "users.deleteFailed": "Failed to delete account"
+  "users.deleteFailed": "Failed to delete account",
+
+  "exercises.selectTopic": "Select a topic for your exercise:",
+  "exercises.demoModeHint": "Demo mode: Only pre-generated topics are available",
+  "exercises.notAvailableInDemo": "Not Available in Demo Mode",
+  "exercises.requiresBackend": "This exercise type requires the backend server for audio processing.",
+  "exercises.tryOtherExercises": "Try Fill-in-the-Blanks, Word Order, or Translation exercises instead.",
+  "exercises.start": "Start",
+  "exercises.orSelectBelow": "or select a topic below",
+
+  "toast.featureDisabledInDemo": "This feature is not available in demo mode"
 }

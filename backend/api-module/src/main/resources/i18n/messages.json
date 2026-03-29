@@ -106,6 +106,12 @@
   "lessons.generate": {
     "context": "Button label to submit and generate the lesson (includes emoji)"
   },
+  "lessons.orSelectBelow": {
+    "context": "Divider text between topic input field and topic button grid on Lessons page"
+  },
+  "lessons.demoModeHint": {
+    "context": "Hint text in demo mode explaining only pre-generated topics are available for lessons"
+  },
   "lessons.listen": {
     "context": "Button label to play text-to-speech audio of lesson content (includes emoji)"
   },
@@ -130,6 +136,12 @@
   },
   "vocabulary.flashcardsTitle": {
     "context": "Section title for the flashcards area"
+  },
+  "vocabulary.orSelectBelow": {
+    "context": "Divider text between topic input field and topic button grid on Vocabulary page"
+  },
+  "vocabulary.demoModeHint": {
+    "context": "Hint text in demo mode explaining only pre-generated topics are available for vocabulary"
   },
   "vocabulary.generateFlashcards": {
     "context": "Button label to generate flashcard set (includes emoji)"
@@ -839,6 +851,12 @@
   "cards.visualFlashcardsDesc": {
     "context": "Description of visual flashcard feature"
   },
+  "cards.orSelectBelow": {
+    "context": "Divider text between topic input field and topic button grid on Cards page"
+  },
+  "cards.demoModeHint": {
+    "context": "Hint text in demo mode explaining only pre-generated topics are available for visual cards"
+  },
   "cards.yourLanguage": {
     "context": "Label for user's native language on card"
   },
@@ -984,6 +1002,9 @@
     "parameters": ["topic"],
     "note": "This message is sent to the AI coach in the user's native language"
   },
+  "chat.demoModeHint": {
+    "context": "Hint text shown in chat when in demo mode, explaining that free-text input is disabled and user should use buttons"
+  },
 
   "lang.de": {
     "context": "Language name - German"
@@ -1089,5 +1110,31 @@
 
   "misc.cancel": {
     "context": "Generic cancel button label"
+  },
+
+  "exercises.selectTopic": {
+    "context": "Instruction text on demo mode topic selector asking user to choose a topic for the exercise"
+  },
+  "exercises.demoModeHint": {
+    "context": "Hint text in demo mode explaining only pre-generated topics are available offline"
+  },
+  "exercises.notAvailableInDemo": {
+    "context": "Title shown when an exercise type is not available in demo/offline mode"
+  },
+  "exercises.requiresBackend": {
+    "context": "Explanation that the exercise requires backend server for audio processing"
+  },
+  "exercises.tryOtherExercises": {
+    "context": "Suggestion to try text-based exercises instead of audio-dependent ones"
+  },
+  "exercises.start": {
+    "context": "Button label to start an exercise after selecting or entering a topic"
+  },
+  "exercises.orSelectBelow": {
+    "context": "Divider text between topic input field and topic button grid"
+  },
+
+  "toast.featureDisabledInDemo": {
+    "context": "Toast notification when user tries to access a feature not available in demo mode"
   }
 }

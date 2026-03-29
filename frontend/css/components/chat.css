@@ -565,6 +565,21 @@
     50% { opacity: 0; }
 }
 
+/* Demo Mode Hint */
+.chat-demo-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-info-bg);
+    border: 1px dashed var(--color-info);
+    border-radius: var(--radius-md);
+    color: var(--color-info);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .chat-container {

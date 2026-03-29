@@ -33,6 +33,8 @@
   "lessons.topic": "Thema",
   "lessons.topicPlaceholder": "z.B. Begrüßungen, Essen, Reisen",
   "lessons.generate": "🎯 Lektion generieren",
+  "lessons.orSelectBelow": "oder wähle ein Thema unten",
+  "lessons.demoModeHint": "Demo-Modus: Nur vorgenerierte Themen verfügbar",
   "lessons.listen": "🔊 Anhören",
 
   "vocabulary.title": "Vokabeln",
@@ -42,6 +44,8 @@
   "vocabulary.words": "Wörter",
   "vocabulary.generate": "📝 Vokabeln generieren",
   "vocabulary.flashcardsTitle": "Karteikarten",
+  "vocabulary.orSelectBelow": "oder wähle ein Thema unten",
+  "vocabulary.demoModeHint": "Demo-Modus: Nur vorgenerierte Themen verfügbar",
   "vocabulary.generateFlashcards": "🃏 Karteikarten generieren",
 
   "exercises.title": "Übungen",
@@ -284,6 +288,8 @@
   "cards.batchComplete": "Alle Bilder generiert!",
   "cards.visualFlashcards": "Visuelle Karteikarten",
   "cards.visualFlashcardsDesc": "Mit KI-generierten Bildern lernen",
+  "cards.orSelectBelow": "oder wähle ein Thema unten",
+  "cards.demoModeHint": "Demo-Modus: Nur vorgenerierte Themen verfügbar",
   "cards.yourLanguage": "Deine Sprache",
   "cards.targetLanguage": "Lernsprache",
 
@@ -329,6 +335,7 @@
   "chat.requestScenario": "Ich möchte ein Rollenspiel zum Thema \"{topic}\" machen",
   "chat.requestAudio": "Ich möchte Hören zum Thema \"{topic}\" üben",
   "chat.requestDefault": "Ich möchte etwas über \"{topic}\" lernen",
+  "chat.demoModeHint": "Demo-Modus: Nutze die Schaltflächen oben",
 
   "lang.de": "Deutsch",
   "lang.fr": "Französisch",
@@ -362,5 +369,15 @@
   "users.deleteAccount": "Konto löschen",
   "users.deleteConfirm": "Bist du sicher, dass du das Konto \"{name}\" löschen möchtest? Alle Daten gehen unwiderruflich verloren.",
   "users.deleted": "Konto gelöscht",
-  "users.deleteFailed": "Konto konnte nicht gelöscht werden"
+  "users.deleteFailed": "Konto konnte nicht gelöscht werden",
+
+  "exercises.selectTopic": "Wähle ein Thema für deine Übung:",
+  "exercises.demoModeHint": "Demo-Modus: Nur vorgenerierte Themen verfügbar",
+  "exercises.notAvailableInDemo": "Im Demo-Modus nicht verfügbar",
+  "exercises.requiresBackend": "Diese Übungsart erfordert den Backend-Server für Audioverarbeitung.",
+  "exercises.tryOtherExercises": "Probiere stattdessen Lückentext, Wortstellung oder Übersetzung.",
+  "exercises.start": "Starten",
+  "exercises.orSelectBelow": "oder wähle ein Thema unten",
+
+  "toast.featureDisabledInDemo": "Diese Funktion ist im Demo-Modus nicht verfügbar"
 }

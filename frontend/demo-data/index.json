@@ -1,0 +1,36 @@
+{
+    "version": "1.0.0",
+    "generatedAt": "2026-03-29T02:18:33Z",
+    "nativeLanguage": "en",
+    "targetLanguage": "de",
+    "topics": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+    "categories": {
+        "lessons": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+        "vocabulary": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+        "flashcards": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+        "visualCards": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+        "scenarios": ["greetings", "food", "travel", "shopping", "work", "health", "home"],
+        "exercises": {
+            "text-completion": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+            "drag-drop": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"],
+            "translation": ["greetings","food","travel","family","shopping","weather","work","hobbies","health","home","time","colors","animals","clothing","technology"]
+        }
+    },
+    "chatSuggestions": ["vocabulary", "exercise", "lesson", "scenario"],
+    "features": {
+        "lessons": true,
+        "vocabulary": true,
+        "flashcards": true,
+        "exercises": {
+            "textCompletion": true,
+            "dragDrop": true,
+            "translation": true,
+            "listening": false,
+            "speaking": false
+        },
+        "chat": true,
+        "visualCards": true,
+        "audio": false,
+        "progressTracking": false
+    }
+}

@@ -14,6 +14,7 @@ import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { cache, CacheKeys } from '../services/cache.js';
+import { demoMode } from '../services/demo-mode.js';
 
 const { PAGE, VISUAL_CARDS, CURRENT_INDEX } = CacheKeys.CARDS;
 
@@ -47,7 +48,12 @@ export function loadCardsData() {
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
                         <label for="topic-input">${t('cards.topicLabel')}</label>
-                        <input type="text" id="topic-input" placeholder="${t('cards.topicPlaceholder')}" class="form-input" />
+                        <input type="text" id="topic-input" placeholder="${t('cards.topicPlaceholder')}" class="form-input" ${demoMode.isEnabled() ? 'list="cards-topic-suggestions"' : ''} />
+                        ${demoMode.isEnabled() ? `
+                            <datalist id="cards-topic-suggestions">
+                                ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                            </datalist>
+                        ` : ''}
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="card-count">${t('cards.cardCount')}</label>
@@ -69,6 +75,25 @@ export function loadCardsData() {
                         </button>
                     ` : ''}
                 </div>
+                
+                ${demoMode.isEnabled() ? `
+                    <div class="topic-divider">
+                        <span>${t('cards.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
+                    </div>
+                    
+                    <div class="topic-grid" id="cards-topic-grid">
+                        ${getAvailableTopics().map(topic => `
+                            <button class="topic-btn" data-topic="${topic}" onclick="window.selectCardsTopic('${topic}')">
+                                ${getTopicEmoji(topic)} ${formatTopic(topic)}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <p class="demo-mode-hint">
+                        📴 ${t('cards.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
+                    </p>
+                ` : ''}
+                
                 <div id="generation-progress" class="generation-progress hidden">
                     <div class="generation-progress-spinner"></div>
                     <div class="generation-progress-text" id="generation-progress-text">${t('cards.generating')}</div>
@@ -512,3 +537,71 @@ export function generateVisualCardsBatch(showLoading, hideLoading) {
     }
     toast.warning(t('cards.topicPlaceholder'));
 }
+
+// ============ Demo Mode Topic Selection Helpers ============
+
+/**
+ * Get available visual card topics from demo data.
+ * @returns {string[]} Array of topic names (lowercase, no extension)
+ */
+function getAvailableTopics() {
+    // These match the files in frontend/demo-data/content/visual-cards/
+    return [
+        'greetings', 'food', 'travel', 'family', 'shopping',
+        'home', 'weather', 'work', 'health', 'hobbies',
+        'animals', 'colors', 'clothing', 'technology', 'time'
+    ];
+}
+
+/**
+ * Format topic name for display (capitalize first letter).
+ * @param {string} topic - Topic name
+ * @returns {string} Formatted topic name
+ */
+function formatTopic(topic) {
+    if (!topic) return '';
+    return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
+/**
+ * Get an emoji for a topic.
+ * @param {string} topic - Topic name
+ * @returns {string} Emoji for the topic
+ */
+function getTopicEmoji(topic) {
+    const emojiMap = {
+        'greetings': '👋',
+        'food': '🍕',
+        'travel': '✈️',
+        'family': '👨‍👩‍👧‍👦',
+        'shopping': '🛒',
+        'home': '🏠',
+        'weather': '🌤️',
+        'work': '💼',
+        'health': '🏥',
+        'hobbies': '🎨',
+        'animals': '🐾',
+        'colors': '🎨',
+        'clothing': '👕',
+        'technology': '💻',
+        'time': '⏰'
+    };
+    return emojiMap[topic.toLowerCase()] || '📝';
+}
+
+/**
+ * Handle topic button click in demo mode.
+ * Sets the topic input and triggers generation.
+ * @param {string} topic - Selected topic
+ */
+export function selectCardsTopic(topic) {
+    const topicInput = document.getElementById('topic-input');
+    if (topicInput) {
+        topicInput.value = formatTopic(topic);
+        // Trigger generation
+        generateVisualCardsFromTopic();
+    }
+}
+
+// Register global functions for onclick handlers
+window.selectCardsTopic = selectCardsTopic;

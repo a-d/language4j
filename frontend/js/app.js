@@ -84,8 +84,8 @@ async function init() {
  * Hides features that require backend AI services.
  */
 function applyDemoModeRestrictions() {
-    // Add demo-hide class to listening exercises (always hidden - requires audio)
-    document.querySelectorAll('[data-type="listening"], [data-type="speaking"]').forEach(el => {
+    // Add demo-hide class to audio-dependent exercises (always hidden - requires audio/speech services)
+    document.querySelectorAll('[data-type="listening"], [data-type="speaking"], [data-type="listening-comprehension"]').forEach(el => {
         el.setAttribute('data-demo-hide', 'true');
     });
     

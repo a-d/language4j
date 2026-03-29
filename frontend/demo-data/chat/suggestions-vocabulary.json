@@ -1,0 +1,36 @@
+{
+  "activityCategory": "VOCABULARY",
+  "suggestions": [
+    {
+      "topic": "Begrüßungen und Höflichkeiten",
+      "description": "Lerne grundlegende Begrüßungen wie 'Bonjour' und 'Merci' sowie einfache höfliche Ausdrücke.",
+      "emoji": "👋",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Zahlen von 1 bis 20",
+      "description": "Übe die Zahlen von eins bis zwanzig, um einfache Zählungen und Preise zu verstehen.",
+      "emoji": "🔢",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Farben im Alltag",
+      "description": "Erkenne und benenne gängige Farben wie rot, blau oder gelb in einfachen Szenarien.",
+      "emoji": "🌈",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Essen und Getränke",
+      "description": "Lerne Namen von grundlegenden Lebensmitteln wie Brot, Apfel oder Wasser.",
+      "emoji": "🍽️",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Körperstellen",
+      "description": "Identifiziere und benenne wichtige Körperteile wie Kopf, Hand oder Auge in einfachen Bildern.",
+      "emoji": "👤",
+      "alignsWithGoals": false
+    }
+  ],
+  "randomTopic": "Tiere im Zoo"
+}

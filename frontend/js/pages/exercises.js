@@ -7,6 +7,7 @@ import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
+import { demoMode } from '../services/demo-mode.js';
 
 /** Exercise type mapping for backend */
 const EXERCISE_TYPE_MAP = {
@@ -16,6 +17,13 @@ const EXERCISE_TYPE_MAP = {
     'listening': 'LISTENING',
     'listening-comprehension': 'LISTENING_COMPREHENSION',
     'speaking': 'SPEAKING'
+};
+
+/** Map exercise types to feature names for disabled features check */
+const EXERCISE_FEATURE_MAP = {
+    'listening': 'listening',
+    'listening-comprehension': 'listeningComprehension',
+    'speaking': 'speaking'
 };
 
 /** Current exercise state */
@@ -52,7 +60,46 @@ export async function startExercise(type, showLoading, hideLoading) {
     const exerciseArea = document.getElementById('exercise-area');
     if (!exerciseArea) return;
     
+    // Check if this exercise type is disabled in demo mode
+    const featureName = EXERCISE_FEATURE_MAP[type];
+    if (featureName && demoMode.isEnabled() && !demoMode.isFeatureAvailable(featureName)) {
+        const exerciseTitles = {
+            'listening': t('exercises.listening'),
+            'listening-comprehension': t('exercises.listeningComprehension') || '🎧 Listening Comprehension',
+            'speaking': t('exercises.speakingExercise')
+        };
+        
+        exerciseArea.classList.remove('hidden');
+        exerciseArea.innerHTML = `
+            <div class="exercise-container">
+                <div class="exercise-header">
+                    <h3>${exerciseTitles[type] || type}</h3>
+                    <button class="btn btn-sm btn-secondary" onclick="window.closeExercise()">${t('exercises.exit')}</button>
+                </div>
+                <div class="demo-mode-notice">
+                    <div class="notice-icon">🔇</div>
+                    <h4>${t('exercises.notAvailableInDemo') || 'Not Available in Demo Mode'}</h4>
+                    <p>${t('exercises.requiresBackend') || 'This exercise type requires the backend server for audio processing.'}</p>
+                    <p class="notice-hint">${t('exercises.tryOtherExercises') || 'Try Fill-in-the-Blanks, Word Order, or Translation exercises instead.'}</p>
+                </div>
+            </div>
+        `;
+        toast.warning(t('toast.featureDisabledInDemo') || 'This feature is not available in demo mode');
+        return;
+    }
+    
     exerciseArea.classList.remove('hidden');
+    
+    // In demo mode, show topic selector instead of free text input
+    if (demoMode.isEnabled()) {
+        const topic = await showDemoTopicSelector(exerciseArea, type);
+        if (!topic) {
+            // User cancelled
+            closeExercise();
+            return;
+        }
+        return generateExerciseWithTopic(type, topic, showLoading, hideLoading);
+    }
     
     const topic = prompt(t('lessons.topicPlaceholder')) || 'basic vocabulary';
     
@@ -83,29 +130,20 @@ export async function startExercise(type, showLoading, hideLoading) {
     
     try {
         let response;
-        switch (type) {
-            case 'text-completion':
-                response = await api.exercises.generateTextCompletion(topic, 5);
-                break;
-            case 'drag-drop':
-                response = await api.exercises.generateDragDrop(topic, 5);
-                break;
-            case 'translation':
-                response = await api.exercises.generateTranslation(topic, 5);
-                break;
-            case 'listening':
-                response = await api.exercises.generateListening(topic, 5);
-                break;
-            case 'listening-comprehension':
-                response = await api.exercises.generateListeningComprehension(topic, 100, 5);
-                break;
-            case 'speaking':
-                response = await api.exercises.generateSpeaking(topic, 5);
-                break;
-            default:
-                toast.info(`${type} ${t('misc.comingSoon')}`);
-                closeExercise();
-                return;
+        const backendType = EXERCISE_TYPE_MAP[type];
+        
+        if (!backendType) {
+            toast.info(`${type} ${t('misc.comingSoon')}`);
+            closeExercise();
+            return;
+        }
+        
+        // Use unified exercise generation API
+        if (type === 'listening-comprehension') {
+            // Listening comprehension has special options
+            response = await api.exercises.generate(backendType, topic, 1, { wordCount: 100, statementCount: 5 });
+        } else {
+            response = await api.exercises.generate(backendType, topic, 5);
         }
         
         currentExercise = { type, topic, content: response.content };
@@ -1037,6 +1075,230 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return str.replace(/[&<>"']/g, m => map[m]);
+}
+
+// ==================== Demo Mode Functions ====================
+
+/**
+ * Show topic selector UI for demo mode instead of free text input.
+ * Similar to the Visual Cards page - shows topic grid for selection.
+ * @param {HTMLElement} exerciseArea - The exercise area container
+ * @param {string} type - Exercise type
+ * @returns {Promise<string|null>} Selected topic or null if cancelled
+ */
+function showDemoTopicSelector(exerciseArea, type) {
+    return new Promise((resolve) => {
+        // Get available topics for this exercise type from demo mode index
+        const backendType = EXERCISE_TYPE_MAP[type];
+        const frontendType = type.replace(/_/g, '-');
+        
+        // Get topics from demo index categories
+        let topics = demoMode.getTopics();
+        
+        // For exercises, check if there's a specific category
+        if (demoMode.index?.categories?.exercises?.[frontendType]) {
+            topics = demoMode.index.categories.exercises[frontendType];
+        }
+        
+        const exerciseTitles = {
+            'text-completion': t('exercises.fillBlanks'),
+            'drag-drop': t('exercises.wordOrder'),
+            'translation': t('exercises.translation')
+        };
+        
+        // Capitalize topic names for display
+        const formatTopic = (topic) => topic.charAt(0).toUpperCase() + topic.slice(1);
+        
+        exerciseArea.innerHTML = `
+            <div class="exercise-container">
+                <div class="exercise-header">
+                    <h3>${exerciseTitles[type] || type}</h3>
+                    <button class="btn btn-sm btn-secondary" id="demo-topic-cancel">${t('misc.cancel') || 'Cancel'}</button>
+                </div>
+                <div class="demo-topic-selector">
+                    <p class="selector-instruction">${t('exercises.selectTopic')}</p>
+                    
+                    <!-- Topic input with autocomplete like Visual Cards -->
+                    <div class="topic-input-row">
+                        <input type="text" 
+                               id="demo-topic-input" 
+                               class="form-input topic-search-input" 
+                               placeholder="${t('lessons.topicPlaceholder')}"
+                               list="topic-suggestions" />
+                        <datalist id="topic-suggestions">
+                            ${topics.map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                        </datalist>
+                        <button class="btn btn-primary" id="demo-topic-submit">
+                            🎯 ${t('exercises.start') || 'Start'}
+                        </button>
+                    </div>
+                    
+                    <div class="topic-divider">
+                        <span>${t('exercises.orSelectBelow') || 'or select a topic below'}</span>
+                    </div>
+                    
+                    <div class="topic-grid">
+                        ${topics.map(topic => `
+                            <button class="topic-btn" data-topic="${topic}">
+                                ${getTopicEmoji(topic)} ${formatTopic(topic)}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <p class="demo-mode-hint">
+                        📴 ${t('exercises.demoModeHint')}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        const topicInput = document.getElementById('demo-topic-input');
+        const submitBtn = document.getElementById('demo-topic-submit');
+        
+        // Add event listeners
+        document.getElementById('demo-topic-cancel')?.addEventListener('click', () => resolve(null));
+        
+        // Handle submit button
+        submitBtn?.addEventListener('click', () => {
+            const inputTopic = topicInput?.value.trim().toLowerCase();
+            if (inputTopic) {
+                // Find matching topic or use normalized version
+                const matchedTopic = topics.find(t => t.toLowerCase() === inputTopic) || 
+                                    demoMode.normalizeTopic(inputTopic);
+                resolve(matchedTopic);
+            }
+        });
+        
+        // Handle Enter key in input
+        topicInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitBtn?.click();
+            }
+        });
+        
+        // Handle topic button clicks
+        exerciseArea.querySelectorAll('.topic-btn').forEach(btn => {
+            btn.addEventListener('click', () => resolve(btn.dataset.topic));
+        });
+        
+        // Focus the input
+        topicInput?.focus();
+    });
+}
+
+/**
+ * Get emoji for a topic.
+ * @param {string} topic - Topic name
+ * @returns {string} Emoji
+ */
+function getTopicEmoji(topic) {
+    const emojiMap = {
+        'greetings': '👋',
+        'food': '🍕',
+        'travel': '✈️',
+        'family': '👨‍👩‍👧‍👦',
+        'shopping': '🛒',
+        'weather': '🌤️',
+        'work': '💼',
+        'hobbies': '🎨',
+        'health': '🏥',
+        'home': '🏠',
+        'time': '⏰',
+        'colors': '🎨',
+        'animals': '🐕',
+        'clothing': '👕',
+        'technology': '💻'
+    };
+    return emojiMap[topic] || '📚';
+}
+
+/**
+ * Generate exercise with a specific topic (used after demo mode topic selection).
+ * @param {string} type - Exercise type
+ * @param {string} topic - Selected topic
+ * @param {Function} showLoading
+ * @param {Function} hideLoading
+ */
+async function generateExerciseWithTopic(type, topic, showLoading, hideLoading) {
+    const exerciseArea = document.getElementById('exercise-area');
+    if (!exerciseArea) return;
+    
+    const exerciseTitles = {
+        'text-completion': t('exercises.fillBlanks'),
+        'drag-drop': t('exercises.wordOrder'),
+        'translation': t('exercises.translation'),
+        'listening': t('exercises.listening'),
+        'listening-comprehension': t('exercises.listeningComprehension') || '🎧 Listening Comprehension',
+        'speaking': t('exercises.speakingExercise')
+    };
+    
+    exerciseArea.innerHTML = `
+        <div class="exercise-container">
+            <div class="exercise-header">
+                <h3>${exerciseTitles[type] || type}</h3>
+                <button class="btn btn-sm btn-secondary" onclick="window.closeExercise()">${t('exercises.exit')}</button>
+            </div>
+            <p class="exercise-instruction">${t('exercises.generating')}</p>
+        </div>
+    `;
+    
+    showLoading();
+    
+    // Reset score tracking
+    exerciseScores = { correct: 0, total: 0, answers: [] };
+    exerciseStartTime = Date.now();
+    
+    try {
+        const backendType = EXERCISE_TYPE_MAP[type];
+        const response = await api.exercises.generate(backendType, topic, 5);
+        
+        currentExercise = { type, topic, content: response.content };
+        
+        // Parse content to get total questions
+        let parsedExercises = [];
+        try {
+            const parsed = JSON.parse(response.content);
+            parsedExercises = Array.isArray(parsed) ? parsed : (parsed.exercises || parsed.questions || []);
+            exerciseScores.total = parsedExercises.length;
+        } catch (e) {
+            exerciseScores.total = 5;
+        }
+        
+        const exerciseTypeMap = {
+            'text-completion': ContentType.TEXT_COMPLETION,
+            'drag-drop': ContentType.DRAG_DROP,
+            'translation': ContentType.TRANSLATION
+        };
+        
+        exerciseArea.innerHTML = `
+            <div class="exercise-container">
+                <div class="exercise-header">
+                    <h3>${exerciseTitles[type]}: ${topic.charAt(0).toUpperCase() + topic.slice(1)}</h3>
+                    <div class="exercise-header-actions">
+                        <span class="exercise-score-display" id="live-score">
+                            ${t('exercises.score')}: <strong>0</strong> / ${exerciseScores.total}
+                        </span>
+                        <button class="btn btn-sm btn-secondary" onclick="window.closeExercise()">${t('exercises.exit')}</button>
+                    </div>
+                </div>
+                <div class="exercise-content">${renderContent(response.content, response.type || exerciseTypeMap[type])}</div>
+                <div class="exercise-footer">
+                    <button class="btn btn-primary btn-lg" id="submit-all-btn" onclick="window.submitAllExercises()">
+                        ${t('exercises.submitAll')}
+                    </button>
+                </div>
+            </div>
+        `;
+        toast.success(t('toast.exerciseLoaded'));
+        
+    } catch (error) {
+        console.error('Failed to generate exercise:', error);
+        toast.error(t('toast.exerciseGenerateFailed'));
+        closeExercise();
+    } finally {
+        hideLoading();
+    }
 }
 
 // Register global functions

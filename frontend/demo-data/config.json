@@ -1,0 +1,14 @@
+{
+    "demoMode": true,
+    "nativeLanguage": "de",
+    "targetLanguage": "fr",
+    "skillLevel": "A1",
+    "disabledFeatures": [
+        "listening",
+        "listeningComprehension",
+        "speaking",
+        "visualCards",
+        "progressTracking",
+        "userManagement"
+    ]
+}

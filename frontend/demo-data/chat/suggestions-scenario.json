@@ -1,0 +1,36 @@
+{
+  "activityCategory": "SCENARIO",
+  "suggestions": [
+    {
+      "topic": "Guten Tag! – Ein Gespräch am Morgen",
+      "description": "Übe grundlegende Begrüßungen und einfache Fragen wie 'Wie geht es dir?' und 'Was ist dein Name?'",
+      "emoji": "👋",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Die Farben der Welt – Spiel mit farbigen Objekten",
+      "description": "Lerne die wichtigsten Farben im Deutschen, indem du Gegenstände nach ihrer Farbe benennst.",
+      "emoji": "🎨",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Meine Familie – Ein Foto vorstellen",
+      "description": "Beschreibe einfache Familienmitglieder wie Mutter, Vater oder Bruder mit einfachen Sätzen.",
+      "emoji": "👨‍👩‍👧‍👦",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Im Supermarkt – Lebensmittel kaufen",
+      "description": "Übe grundlegende Nahrungsmittelwörter und Fragen wie 'Wie viel kostet das?' im Einkaufsraum.",
+      "emoji": "🛒",
+      "alignsWithGoals": false
+    },
+    {
+      "topic": "Zahlen von 1 bis 20 – Zählen mit Spielzeugen",
+      "description": "Trainiere die Zahlen von 1 bis 20, indem du Gegenstände zählst und sie im Französisch benennst.",
+      "emoji": "🔢",
+      "alignsWithGoals": false
+    }
+  ],
+  "randomTopic": "Ein Café besuchen"
+}

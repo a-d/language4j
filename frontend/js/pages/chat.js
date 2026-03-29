@@ -8,6 +8,7 @@ import { apiClient } from '../api/client.js';
 import { contentRenderer } from '../services/content-renderer.js';
 import { t, applyTranslations } from '../services/i18n.js';
 import { showToast } from '../services/toast.js';
+import { demoMode } from '../services/demo-mode.js';
 
 /**
  * Selection states for the layered dialog
@@ -74,6 +75,8 @@ export async function init() {
  * @returns {string} HTML content
  */
 export function render() {
+    const isDemoMode = demoMode.isEnabled();
+    
     return `
         <div class="chat-container">
             <div class="chat-session-controls">
@@ -91,26 +94,33 @@ export function render() {
                     ${renderSuggestions()}
                 </div>
                 
-                <div class="chat-input-row">
-                    <textarea 
-                        class="chat-input" 
-                        id="chatInput"
-                        placeholder="${t('chat.placeholder')}"
-                        rows="1"
-                        onkeydown="window.chatPage.handleKeyDown(event)"
-                        oninput="window.chatPage.autoResize(this)"
-                    ></textarea>
-                    <button 
-                        class="chat-send-btn" 
-                        id="chatSendBtn"
-                        onclick="window.chatPage.sendMessage()"
-                        ${state.isLoading ? 'disabled' : ''}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    </button>
-                </div>
+                ${isDemoMode ? `
+                    <div class="chat-demo-hint">
+                        <span>📴</span>
+                        <span>${t('chat.demoModeHint') || 'Demo mode: Use the buttons above to explore'}</span>
+                    </div>
+                ` : `
+                    <div class="chat-input-row">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput"
+                            placeholder="${t('chat.placeholder')}"
+                            rows="1"
+                            onkeydown="window.chatPage.handleKeyDown(event)"
+                            oninput="window.chatPage.autoResize(this)"
+                        ></textarea>
+                        <button 
+                            class="chat-send-btn" 
+                            id="chatSendBtn"
+                            onclick="window.chatPage.sendMessage()"
+                            ${state.isLoading ? 'disabled' : ''}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                `}
             </div>
         </div>
     `;
@@ -243,6 +253,15 @@ function renderSuggestions() {
  * Render Layer 1: Activity type selection
  */
 function renderActivitySuggestions() {
+    const isDemoMode = demoMode.isEnabled();
+    
+    // In demo mode, hide audio option since it requires backend
+    const audioButton = isDemoMode ? '' : `
+        <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('audio')">
+            ${t('chat.activityAudio')}
+        </button>
+    `;
+    
     return `
         <div class="suggestion-layer activity-selection">
             <div class="suggestion-label">${t('chat.selectActivity')}</div>
@@ -259,9 +278,7 @@ function renderActivitySuggestions() {
                 <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('scenario')">
                     ${t('chat.activityScenario')}
                 </button>
-                <button class="chat-suggestion-btn activity-btn" onclick="window.chatPage.selectActivity('audio')">
-                    ${t('chat.activityAudio')}
-                </button>
+                ${audioButton}
                 <button class="chat-suggestion-btn surprise-btn" onclick="window.chatPage.surpriseMe()">
                     ${t('chat.activitySurprise')}
                 </button>
@@ -434,6 +451,38 @@ function showActivitySelection() {
 }
 
 /**
+ * Get demo mode topics with emojis
+ * @returns {Array} Topic suggestions for demo mode
+ */
+function getDemoTopics() {
+    const topics = demoMode.getTopics();
+    const emojiMap = {
+        'greetings': '👋',
+        'food': '🍕',
+        'travel': '✈️',
+        'family': '👨‍👩‍👧‍👦',
+        'shopping': '🛒',
+        'home': '🏠',
+        'weather': '🌤️',
+        'work': '💼',
+        'health': '🏥',
+        'hobbies': '🎨',
+        'animals': '🐾',
+        'colors': '🎨',
+        'clothing': '👕',
+        'technology': '💻',
+        'time': '⏰'
+    };
+    
+    return topics.map(topic => ({
+        topic: topic.charAt(0).toUpperCase() + topic.slice(1),
+        emoji: emojiMap[topic] || '📚',
+        description: '',
+        alignsWithGoals: false
+    }));
+}
+
+/**
  * Handle activity selection (Layer 1 -> Layer 2)
  */
 export async function selectActivity(activityKey) {
@@ -446,6 +495,16 @@ export async function selectActivity(activityKey) {
     state.selectedActivity = { key: activityKey, ...mapping };
     state.selectionState = SelectionState.LOADING_TOPICS;
     refreshSuggestionsUI();
+    
+    // In demo mode, use local topics instead of backend API
+    if (demoMode.isEnabled()) {
+        const demoTopics = getDemoTopics();
+        state.topicSuggestions = demoTopics.slice(0, 8); // Show first 8 topics
+        state.randomTopic = demoTopics[Math.floor(Math.random() * demoTopics.length)]?.topic;
+        state.selectionState = SelectionState.SELECTING_TOPIC;
+        refreshSuggestionsUI();
+        return;
+    }
     
     try {
         // Fetch topic suggestions from backend
@@ -473,13 +532,24 @@ export async function surpriseMe() {
     showTypingIndicator();
     
     try {
-        // Pick a random activity
-        const activityKeys = Object.keys(ActivityMapping);
+        // Pick a random activity (exclude audio in demo mode)
+        let activityKeys = Object.keys(ActivityMapping);
+        if (demoMode.isEnabled()) {
+            activityKeys = activityKeys.filter(key => key !== 'audio');
+        }
         const randomActivityKey = activityKeys[Math.floor(Math.random() * activityKeys.length)];
         const mapping = ActivityMapping[randomActivityKey];
         
         // Get a random topic for this activity
-        const topic = await apiClient.chat.selectRandomTopic(mapping.category);
+        let topic;
+        if (demoMode.isEnabled()) {
+            const topics = demoMode.getTopics();
+            topic = topics[Math.floor(Math.random() * topics.length)];
+            // Capitalize first letter
+            topic = topic.charAt(0).toUpperCase() + topic.slice(1);
+        } else {
+            topic = await apiClient.chat.selectRandomTopic(mapping.category);
+        }
         
         // Send the request to the coach
         await executeActivityWithTopic(randomActivityKey, topic);

@@ -8,6 +8,7 @@ import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
 import { cache, CacheKeys } from '../services/cache.js';
+import { demoMode } from '../services/demo-mode.js';
 
 const { PAGE, CONTENT, TOPIC } = CacheKeys.LESSONS;
 
@@ -23,12 +24,20 @@ export function loadLessonsData(showLoading, hideLoading) {
     const cachedTopic = cache.get(PAGE, TOPIC) || '';
     const cachedContent = cache.get(PAGE, CONTENT);
     
+    const isDemoMode = demoMode.isEnabled();
+    const topicGridHtml = isDemoMode ? buildTopicGrid() : '';
+    
     container.innerHTML = `
         <div class="lesson-generator">
             <h3>${t('lessons.generateTitle')}</h3>
             <div class="form-group">
                 <label for="lesson-topic">${t('lessons.topic')}</label>
-                <input type="text" id="lesson-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" />
+                <input type="text" id="lesson-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="lesson-topic-suggestions"' : ''} />
+                ${isDemoMode ? `
+                    <datalist id="lesson-topic-suggestions">
+                        ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                    </datalist>
+                ` : ''}
             </div>
             <div class="button-row">
                 <button class="btn btn-primary" onclick="window.generateLesson()">
@@ -40,6 +49,7 @@ export function loadLessonsData(showLoading, hideLoading) {
                     </button>
                 ` : ''}
             </div>
+            ${topicGridHtml}
         </div>
         <div id="generated-lesson" class="generated-content ${cachedContent ? '' : 'hidden'}">
             ${cachedContent || ''}
@@ -160,7 +170,99 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Register global function
-window.clearLessonsCache = clearLessonsCache;
+// ============ Demo Mode Topic Selection Helpers ============
 
-export default { loadLessonsData, generateLesson, clearLessonsCache };
+/**
+ * Get available lesson topics from demo data.
+ * @returns {string[]} Array of topic names (lowercase)
+ */
+function getAvailableTopics() {
+    // These match the files in frontend/demo-data/content/lessons/
+    return [
+        'greetings', 'food', 'travel', 'family', 'shopping',
+        'home', 'weather', 'work', 'health', 'hobbies',
+        'animals', 'colors', 'clothing', 'technology', 'time'
+    ];
+}
+
+/**
+ * Format topic name for display (capitalize first letter).
+ * @param {string} topic - Topic name
+ * @returns {string} Formatted topic name
+ */
+function formatTopic(topic) {
+    if (!topic) return '';
+    return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
+/**
+ * Get an emoji for a topic.
+ * @param {string} topic - Topic name
+ * @returns {string} Emoji for the topic
+ */
+function getTopicEmoji(topic) {
+    const emojiMap = {
+        'greetings': '👋',
+        'food': '🍕',
+        'travel': '✈️',
+        'family': '👨‍👩‍👧‍👦',
+        'shopping': '🛒',
+        'home': '🏠',
+        'weather': '🌤️',
+        'work': '💼',
+        'health': '🏥',
+        'hobbies': '🎨',
+        'animals': '🐾',
+        'colors': '🎨',
+        'clothing': '👕',
+        'technology': '💻',
+        'time': '⏰'
+    };
+    return emojiMap[topic.toLowerCase()] || '📚';
+}
+
+/**
+ * Build topic grid HTML for demo mode.
+ * @returns {string} HTML string
+ */
+function buildTopicGrid() {
+    const topics = getAvailableTopics();
+    
+    return `
+        <div class="topic-divider">
+            <span>${t('lessons.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
+        </div>
+        
+        <div class="topic-grid" id="lesson-topic-grid">
+            ${topics.map(topic => `
+                <button class="topic-btn" data-topic="${topic}" onclick="window.selectLessonTopic('${topic}')">
+                    ${getTopicEmoji(topic)} ${formatTopic(topic)}
+                </button>
+            `).join('')}
+        </div>
+        
+        <p class="demo-mode-hint">
+            📴 ${t('lessons.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
+        </p>
+    `;
+}
+
+/**
+ * Handle topic button click for lessons.
+ * @param {string} topic - Selected topic
+ */
+export function selectLessonTopic(topic) {
+    const topicInput = document.getElementById('lesson-topic');
+    if (topicInput) {
+        topicInput.value = formatTopic(topic);
+        cache.save(PAGE, TOPIC, formatTopic(topic));
+        // Trigger generation
+        window.generateLesson();
+    }
+}
+
+// Register global functions
+window.clearLessonsCache = clearLessonsCache;
+window.selectLessonTopic = selectLessonTopic;
+
+export default { loadLessonsData, generateLesson, clearLessonsCache, selectLessonTopic };

@@ -90,10 +90,39 @@ class DemoModeService {
         // Add demo mode class to body for CSS styling
         document.body.classList.add('demo-mode');
         
+        // Apply UI restrictions for demo mode
+        this.applyUIRestrictions();
+        
         // Show demo mode banner
         this.showBanner();
         
         return true;
+    }
+
+    /**
+     * Apply UI restrictions for demo mode.
+     * Hides features that require backend AI services.
+     */
+    applyUIRestrictions() {
+        // Hide audio-dependent exercise cards (listening, speaking, listening-comprehension)
+        document.querySelectorAll('[data-type="listening"], [data-type="speaking"], [data-type="listening-comprehension"]').forEach(el => {
+            el.setAttribute('data-demo-hide', 'true');
+        });
+        
+        // Check if visual cards are available in demo data
+        const visualCardsEnabled = this.index?.features?.visualCards === true;
+        
+        // Conditionally hide visual cards feature based on demo data availability
+        const cardsNavLink = document.querySelector('[data-page="cards"]');
+        if (cardsNavLink) {
+            if (visualCardsEnabled) {
+                cardsNavLink.removeAttribute('data-demo-hide');
+            } else {
+                cardsNavLink.setAttribute('data-demo-hide', 'true');
+            }
+        }
+        
+        console.log('Demo mode UI restrictions applied');
     }
 
     /**
@@ -295,8 +324,10 @@ class DemoModeService {
             // Users
             'GET /users/me': () => this.loadData('user.json'),
             'PUT /users/me': () => this.loadData('user.json'),
-            'GET /users': () => this.loadData('user.json').then(u => [u]),
+            'GET /users': () => this.loadData('user.json').then(u => u ? [u] : []),
             'GET /users/exists': () => Promise.resolve({ exists: true }),
+            // Dynamic user by ID - matches /users/{id}
+            'GET /users/': (userId) => this.loadData('user.json'),
 
             // Goals
             'GET /goals': () => this.loadData('goals.json'),
@@ -334,7 +365,45 @@ class DemoModeService {
                 return this.loadData(`content/scenarios/${topic}.json`);
             },
 
-            // Visual Cards (images)
+            // Content - Visual Cards (bilingual flashcards with images)
+            'POST /content/visual-cards/generate': async () => {
+                const topic = this.normalizeTopic(body.topic);
+                const cardCount = body.cardCount || 5;
+                const rawCards = await this.loadData(`content/visual-cards/${topic}.json`);
+                
+                // Transform demo data format to expected API response format
+                // Demo data: [{ url, revisedPrompt, size, word }]
+                // Expected:  { cards: [{ nativeWord, targetWord, imageUrl, ... }], topic, ... }
+                if (!rawCards || !Array.isArray(rawCards)) {
+                    return {
+                        topic,
+                        nativeLanguage: this.config?.nativeLanguage || 'English',
+                        targetLanguage: this.config?.targetLanguage || 'French',
+                        cards: [],
+                        cardCount: 0,
+                        failedCount: 0
+                    };
+                }
+                
+                const cards = rawCards.slice(0, cardCount).map(card => ({
+                    nativeWord: card.word,           // Word in native language
+                    targetWord: card.word,           // For demo, same word (normally would be translated)
+                    imageUrl: card.url,              // Base64 image data
+                    exampleSentence: null,           // Not available in demo data
+                    pronunciation: null              // Not available in demo data
+                }));
+                
+                return {
+                    topic,
+                    nativeLanguage: this.config?.nativeLanguage || 'English',
+                    targetLanguage: this.config?.targetLanguage || 'French',
+                    cards,
+                    cardCount: cards.length,
+                    failedCount: 0
+                };
+            },
+
+            // Visual Cards (images) - legacy endpoints
             'POST /images/flashcard/batch': async () => {
                 const topic = this.normalizeTopic(body.topic);
                 return this.loadData(`content/visual-cards/${topic}.json`);
@@ -371,14 +440,17 @@ class DemoModeService {
 
             // Chat
             'GET /chat/session': async () => {
-                const greeting = await this.loadData('chat/greeting.json');
                 return {
                     id: 'demo-session',
                     userId: 'demo-user',
                     active: true,
-                    createdAt: new Date().toISOString(),
-                    messages: greeting ? [greeting] : []
+                    createdAt: new Date().toISOString()
                 };
+            },
+            // Chat messages for a session - returns array of messages
+            'GET /chat/session/demo-session/messages': async () => {
+                const greeting = await this.loadData('chat/greeting.json');
+                return greeting ? [greeting] : [];
             },
             'POST /chat/topics/suggestions': async () => {
                 const category = (body.category || 'vocabulary').toLowerCase();
@@ -387,7 +459,8 @@ class DemoModeService {
             'POST /chat/topics/random': () => {
                 const topics = this.getTopics();
                 return Promise.resolve(topics[Math.floor(Math.random() * topics.length)]);
-            }
+            },
+            'POST /chat/topics/record': () => Promise.resolve({ success: true })
         };
 
         // Try exact match first
@@ -395,9 +468,39 @@ class DemoModeService {
             return routes[routeKey]();
         }
 
-        // Try partial matches for dynamic routes
+        // Handle dynamic user routes like /users/{id}
+        // Note: Must be checked after exact matches like /users/me, /users/exists
+        const userIdMatch = cleanEndpoint.match(/^\/users\/([^/]+)$/);
+        if (method === 'GET' && userIdMatch && userIdMatch[1] !== 'me' && userIdMatch[1] !== 'exists') {
+            console.log('Demo mode: matched user by ID route');
+            return this.loadData('user.json');
+        }
+
+        // Handle dynamic chat session routes like /chat/session/{id}/messages
+        const chatMessagesMatch = cleanEndpoint.match(/^\/chat\/session\/([^/]+)\/messages$/);
+        if (chatMessagesMatch) {
+            if (method === 'GET') {
+                console.log('Demo mode: matched chat messages GET route');
+                const greeting = await this.loadData('chat/greeting.json');
+                return greeting ? [greeting] : [];
+            }
+            if (method === 'POST') {
+                console.log('Demo mode: matched chat messages POST route');
+                // Generate a response based on the user's message
+                const userContent = body.content || '';
+                const assistantMessage = await this.generateChatResponse(userContent);
+                // Return in the expected API format: { message: ... }
+                return { message: assistantMessage };
+            }
+        }
+
+        // Try partial matches for other dynamic routes (not users or chat)
         for (const [pattern, handler] of Object.entries(routes)) {
             const [pMethod, pPath] = pattern.split(' ');
+            // Skip user routes - already handled above
+            if (pPath.startsWith('/users/')) continue;
+            // Skip chat session routes - already handled above
+            if (pPath.startsWith('/chat/session/') && pPath.includes('/messages')) continue;
             if (method === pMethod && cleanEndpoint.startsWith(pPath.replace(/\{.*\}/, ''))) {
                 return handler();
             }
@@ -418,68 +521,73 @@ class DemoModeService {
 
     /**
      * Generate a mock chat response based on user input
+     * Supports both English and German keywords for activity detection
      */
     async generateChatResponse(userMessage) {
         const content = userMessage.toLowerCase();
         
-        // Check for activity requests
-        if (content.includes('vocabulary') || content.includes('words')) {
+        // Check for activity requests (English and German keywords)
+        // Vocabulary: vocabulary, words, vokabeln
+        if (content.includes('vocabulary') || content.includes('words') || content.includes('vokabeln')) {
             const topic = this.extractTopic(content) || this.getRandomTopic();
             const vocabulary = await this.loadData(`content/vocabulary/${topic}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Here's some vocabulary about **${topic}**! Study these words and their meanings.`,
+                content: `Hier sind Vokabeln zum Thema **${topic}**! Lerne diese Wörter und ihre Bedeutungen.`,
                 embeddedActivityType: 'VOCABULARY',
                 embeddedActivityContent: vocabulary?.content,
                 createdAt: new Date().toISOString()
             };
         }
 
-        if (content.includes('exercise') || content.includes('practice')) {
+        // Exercise: exercise, practice, übung
+        if (content.includes('exercise') || content.includes('practice') || content.includes('übung')) {
             const topic = this.extractTopic(content) || this.getRandomTopic();
             const exercises = await this.loadData(`exercises/text-completion/${topic}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Let's practice **${topic}**! Fill in the blanks with the correct words.`,
+                content: `Lass uns **${topic}** üben! Fülle die Lücken mit den richtigen Wörtern aus.`,
                 embeddedActivityType: 'TEXT_COMPLETION',
                 embeddedActivityContent: exercises?.content,
                 createdAt: new Date().toISOString()
             };
         }
 
-        if (content.includes('lesson') || content.includes('learn')) {
+        // Lesson: lesson, learn, lektion, lernen
+        if (content.includes('lesson') || content.includes('learn') || content.includes('lektion') || content.includes('lernen')) {
             const topic = this.extractTopic(content) || this.getRandomTopic();
             const lesson = await this.loadData(`content/lessons/${topic}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Here's a lesson about **${topic}**!`,
+                content: `Hier ist eine Lektion zum Thema **${topic}**!`,
                 embeddedActivityType: 'LESSON',
                 embeddedActivityContent: lesson?.content,
                 createdAt: new Date().toISOString()
             };
         }
 
-        if (content.includes('scenario') || content.includes('roleplay')) {
+        // Scenario: scenario, roleplay, rollenspiel, szenario
+        if (content.includes('scenario') || content.includes('roleplay') || content.includes('rollenspiel') || content.includes('szenario')) {
             const topic = this.extractTopic(content) || 'greetings';
             const scenario = await this.loadData(`content/scenarios/${topic}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Let's practice a roleplay scenario about **${topic}**!`,
+                content: `Lass uns ein Rollenspiel zum Thema **${topic}** üben!`,
                 embeddedActivityType: 'SCENARIO',
                 embeddedActivityContent: scenario?.content,
                 createdAt: new Date().toISOString()
             };
         }
 
-        // Default response
+        // Default response (in German since native language is German)
         return {
             id: 'demo-msg-' + Date.now(),
             role: 'ASSISTANT',
-            content: "I'm running in demo mode with limited functionality. You can:\n\n• **Practice vocabulary** - Ask about any topic\n• **Do exercises** - Try fill-in-the-blank exercises\n• **Start a lesson** - Learn about a topic\n• **Try roleplay** - Practice conversation scenarios\n\nJust select an activity from the suggestions below!",
+            content: "Ich bin im Demo-Modus mit eingeschränkter Funktionalität. Du kannst:\n\n• **Vokabeln üben** - Zu jedem Thema\n• **Übungen machen** - Lückentext-Übungen\n• **Eine Lektion starten** - Zu einem Thema lernen\n• **Ein Rollenspiel ausprobieren** - Gesprächsszenarien üben\n\nWähle einfach eine Aktivität oben aus!",
             createdAt: new Date().toISOString()
         };
     }

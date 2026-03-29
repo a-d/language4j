@@ -8,6 +8,7 @@ import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
 import { cache, CacheKeys } from '../services/cache.js';
+import { demoMode } from '../services/demo-mode.js';
 
 const { PAGE, CONTENT, FLASHCARDS, TOPIC, COUNT, FLASHCARD_TOPIC } = CacheKeys.VOCABULARY;
 
@@ -28,13 +29,22 @@ export function loadVocabularyData(showLoading, hideLoading) {
     
     const hasAnyCache = cachedContent || cachedFlashcards;
     
+    const isDemoMode = demoMode.isEnabled();
+    const topicGridHtml = isDemoMode ? buildTopicGrid('vocab') : '';
+    const flashcardTopicGridHtml = isDemoMode ? buildTopicGrid('flashcard') : '';
+    
     container.innerHTML = `
         <div class="vocab-generator">
             <h3>${t('vocabulary.generateTitle')}</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label for="vocab-topic">${t('lessons.topic')}</label>
-                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" />
+                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="vocab-topic-suggestions"' : ''} />
+                    ${isDemoMode ? `
+                        <datalist id="vocab-topic-suggestions">
+                            ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                        </datalist>
+                    ` : ''}
                 </div>
                 <div class="form-group">
                     <label for="vocab-count">${t('vocabulary.words')}</label>
@@ -51,6 +61,7 @@ export function loadVocabularyData(showLoading, hideLoading) {
                     </button>
                 ` : ''}
             </div>
+            ${topicGridHtml}
         </div>
         <div id="generated-vocabulary" class="generated-content ${cachedContent ? '' : 'hidden'}">
             ${cachedContent || ''}
@@ -60,11 +71,17 @@ export function loadVocabularyData(showLoading, hideLoading) {
             <h3>${t('vocabulary.flashcardsTitle')}</h3>
             <div class="form-group">
                 <label for="flashcard-topic">${t('lessons.topic')}</label>
-                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" />
+                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" ${isDemoMode ? 'list="flashcard-topic-suggestions"' : ''} />
+                ${isDemoMode ? `
+                    <datalist id="flashcard-topic-suggestions">
+                        ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                    </datalist>
+                ` : ''}
             </div>
             <button class="btn btn-secondary" onclick="window.generateFlashcards()">
                 ${t('vocabulary.generateFlashcards')}
             </button>
+            ${flashcardTopicGridHtml}
             <div id="flashcards-container" class="${cachedFlashcards ? '' : 'hidden'}">
                 ${cachedFlashcards || ''}
             </div>
@@ -256,7 +273,116 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Register global function
-window.clearVocabularyCache = clearVocabularyCache;
+// ============ Demo Mode Topic Selection Helpers ============
 
-export default { loadVocabularyData, generateVocabulary, generateFlashcards, clearVocabularyCache };
+/**
+ * Get available vocabulary topics from demo data.
+ * @returns {string[]} Array of topic names (lowercase)
+ */
+function getAvailableTopics() {
+    // These match the files in frontend/demo-data/content/vocabulary/
+    return [
+        'greetings', 'food', 'travel', 'family', 'shopping',
+        'home', 'weather', 'work', 'health', 'hobbies',
+        'animals', 'colors', 'clothing', 'technology', 'time'
+    ];
+}
+
+/**
+ * Format topic name for display (capitalize first letter).
+ * @param {string} topic - Topic name
+ * @returns {string} Formatted topic name
+ */
+function formatTopic(topic) {
+    if (!topic) return '';
+    return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
+/**
+ * Get an emoji for a topic.
+ * @param {string} topic - Topic name
+ * @returns {string} Emoji for the topic
+ */
+function getTopicEmoji(topic) {
+    const emojiMap = {
+        'greetings': '👋',
+        'food': '🍕',
+        'travel': '✈️',
+        'family': '👨‍👩‍👧‍👦',
+        'shopping': '🛒',
+        'home': '🏠',
+        'weather': '🌤️',
+        'work': '💼',
+        'health': '🏥',
+        'hobbies': '🎨',
+        'animals': '🐾',
+        'colors': '🎨',
+        'clothing': '👕',
+        'technology': '💻',
+        'time': '⏰'
+    };
+    return emojiMap[topic.toLowerCase()] || '📝';
+}
+
+/**
+ * Build topic grid HTML for demo mode.
+ * @param {string} section - 'vocab' or 'flashcard'
+ * @returns {string} HTML string
+ */
+function buildTopicGrid(section) {
+    const topics = getAvailableTopics();
+    const clickHandler = section === 'vocab' ? 'selectVocabTopic' : 'selectFlashcardTopic';
+    
+    return `
+        <div class="topic-divider">
+            <span>${t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
+        </div>
+        
+        <div class="topic-grid" id="${section}-topic-grid">
+            ${topics.map(topic => `
+                <button class="topic-btn" data-topic="${topic}" onclick="window.${clickHandler}('${topic}')">
+                    ${getTopicEmoji(topic)} ${formatTopic(topic)}
+                </button>
+            `).join('')}
+        </div>
+        
+        <p class="demo-mode-hint">
+            📴 ${t('vocabulary.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
+        </p>
+    `;
+}
+
+/**
+ * Handle topic button click for vocabulary section.
+ * @param {string} topic - Selected topic
+ */
+export function selectVocabTopic(topic) {
+    const topicInput = document.getElementById('vocab-topic');
+    if (topicInput) {
+        topicInput.value = formatTopic(topic);
+        cache.save(PAGE, TOPIC, formatTopic(topic));
+        // Trigger generation
+        window.generateVocabulary();
+    }
+}
+
+/**
+ * Handle topic button click for flashcards section.
+ * @param {string} topic - Selected topic
+ */
+export function selectFlashcardTopic(topic) {
+    const topicInput = document.getElementById('flashcard-topic');
+    if (topicInput) {
+        topicInput.value = formatTopic(topic);
+        cache.save(PAGE, FLASHCARD_TOPIC, formatTopic(topic));
+        // Trigger generation
+        window.generateFlashcards();
+    }
+}
+
+// Register global functions
+window.clearVocabularyCache = clearVocabularyCache;
+window.selectVocabTopic = selectVocabTopic;
+window.selectFlashcardTopic = selectFlashcardTopic;
+
+export default { loadVocabularyData, generateVocabulary, generateFlashcards, clearVocabularyCache, selectVocabTopic, selectFlashcardTopic };

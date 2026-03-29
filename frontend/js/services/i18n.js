@@ -43,7 +43,7 @@ let loadPromise = null;
  */
 const STORAGE_PREFIX = 'i18n_';
 const STORAGE_VERSION_KEY = 'i18n_version';
-const CACHE_VERSION = '1.0.0'; // Increment when translation keys change
+const CACHE_VERSION = '1.6.0'; // Increment when translation keys change - bumped for chat.demoModeHint
 
 /**
  * Load translations for a language from backend or cache
@@ -149,7 +149,8 @@ function clearCache() {
  * @returns {Promise<void>}
  */
 export async function setLanguage(langCode) {
-    const lang = langCode.toLowerCase();
+    // Default to 'en' if langCode is undefined or null
+    const lang = (langCode || 'en').toLowerCase();
     currentLanguage = lang;
     
     // Prevent concurrent loading
