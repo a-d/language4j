@@ -217,12 +217,24 @@ class DemoModeService {
     }
 
     /**
+     * Simulated network delay for demo mode (makes it feel more realistic)
+     * @param {number} ms - Milliseconds to delay (default 100ms)
+     * @returns {Promise<void>}
+     */
+    async simulateDelay(ms = 100) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
      * Load data from demo data files
      * @param {string} path - Relative path to data file
      * @returns {Promise<Object>} Loaded data
      */
     async loadData(path) {
         const cacheKey = path;
+        
+        // Add realistic delay even for cached data
+        await this.simulateDelay();
         
         if (this.dataCache.has(cacheKey)) {
             return this.dataCache.get(cacheKey);
