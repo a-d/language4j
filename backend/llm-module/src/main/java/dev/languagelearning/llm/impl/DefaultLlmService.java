@@ -34,15 +34,31 @@ public class DefaultLlmService implements LlmService {
     @Override
     @Nonnull
     public String generate(@Nonnull String userPrompt) {
-        log.debug("Generating response for prompt: {}", truncateForLog(userPrompt));
+        log.debug("===== LLM Request Start =====");
+        log.debug("ChatModel class: {}", chatModel.getClass().getName());
+        log.debug("Prompt length: {} characters", userPrompt.length());
+        log.debug("Prompt preview: {}", truncateForLog(userPrompt));
+        
         try {
             Prompt prompt = new Prompt(userPrompt);
+            log.debug("Calling ChatModel.call()...");
+            long startTime = System.currentTimeMillis();
             ChatResponse response = chatModel.call(prompt);
+            long duration = System.currentTimeMillis() - startTime;
+            log.debug("ChatModel.call() completed in {} ms", duration);
+            
             String result = extractContent(response);
-            log.debug("Generated response: {}", truncateForLog(result));
+            log.debug("Response length: {} characters", result.length());
+            log.debug("Response preview: {}", truncateForLog(result));
+            log.debug("===== LLM Request End =====");
             return result;
         } catch (Exception e) {
-            log.error("Failed to generate LLM response", e);
+            log.error("===== LLM Request Failed =====");
+            log.error("Exception type: {}", e.getClass().getName());
+            log.error("Exception message: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("Root cause: {} - {}", e.getCause().getClass().getName(), e.getCause().getMessage());
+            }
             throw new LlmException("Failed to generate response: " + e.getMessage(), e);
         }
     }
@@ -50,17 +66,38 @@ public class DefaultLlmService implements LlmService {
     @Override
     @Nonnull
     public String generate(@Nonnull String systemPrompt, @Nonnull String userPrompt) {
-        log.debug("Generating response with system prompt");
+        log.debug("===== LLM Request Start (with system prompt) =====");
+        log.debug("ChatModel class: {}", chatModel.getClass().getName());
+        log.debug("System prompt length: {} chars, User prompt length: {} chars",
+                systemPrompt.length(), userPrompt.length());
+        log.debug("System prompt preview: {}", truncateForLog(systemPrompt));
+        log.debug("User prompt preview: {}", truncateForLog(userPrompt));
+        
         try {
             List<Message> messages = List.of(
                     new SystemMessage(systemPrompt),
                     new UserMessage(userPrompt)
             );
             Prompt prompt = new Prompt(messages);
+            
+            log.debug("Calling ChatModel.call()...");
+            long startTime = System.currentTimeMillis();
             ChatResponse response = chatModel.call(prompt);
-            return extractContent(response);
+            long duration = System.currentTimeMillis() - startTime;
+            log.debug("ChatModel.call() completed in {} ms", duration);
+            
+            String result = extractContent(response);
+            log.debug("Response length: {} characters", result.length());
+            log.debug("Response preview: {}", truncateForLog(result));
+            log.debug("===== LLM Request End =====");
+            return result;
         } catch (Exception e) {
-            log.error("Failed to generate LLM response", e);
+            log.error("===== LLM Request Failed =====");
+            log.error("Exception type: {}", e.getClass().getName());
+            log.error("Exception message: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("Root cause: {} - {}", e.getCause().getClass().getName(), e.getCause().getMessage());
+            }
             throw new LlmException("Failed to generate response: " + e.getMessage(), e);
         }
     }

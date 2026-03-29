@@ -166,6 +166,7 @@ management:
 #   LOG_LEVEL_APP=DEBUG
 #   LOG_LEVEL_SPRING_AI=DEBUG
 #   LOG_LEVEL_SQL=DEBUG
+#   LOG_LEVEL_HTTP=DEBUG (enables HTTP wire logging)
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
@@ -173,6 +174,17 @@ logging:
     org.springframework.ai: ${LOG_LEVEL_SPRING_AI:WARN}
     org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
     org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BINDER:WARN}
+    # HTTP wire logging (enable via LOG_LEVEL_HTTP=DEBUG)
+    org.springframework.web.client.RestClient: ${LOG_LEVEL_HTTP:WARN}
+    org.springframework.http.client: ${LOG_LEVEL_HTTP:WARN}
+    org.apache.hc.client5: ${LOG_LEVEL_HTTP:WARN}
+    org.apache.http: ${LOG_LEVEL_HTTP:WARN}
+    # Spring AI OpenAI specific logging
+    org.springframework.ai.openai: ${LOG_LEVEL_HTTP:WARN}
+    org.springframework.ai.openai.api: ${LOG_LEVEL_HTTP:WARN}
+    # JDK HTTP client logging
+    jdk.internal.net.http: ${LOG_LEVEL_HTTP:WARN}
+    java.net.http: ${LOG_LEVEL_HTTP:WARN}
 
 ---
 # Development Profile

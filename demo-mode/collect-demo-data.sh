@@ -146,7 +146,7 @@ api_request() {
     
     local curl_args=(-s -w "%{http_code}" -o "$temp_file")
     curl_args+=(-H "Content-Type: application/json")
-    curl_args+=(-H "X-User-Id: demo-user")
+    # Note: X-User-Id header not sent - backend uses default user context
     
     if [ "$method" = "POST" ]; then
         curl_args+=(-X POST -d "$body")
@@ -398,73 +398,123 @@ download_image_as_base64() {
 collect_visual_cards() {
     local topic="$1"
     local output_file="$OUTPUT_DIR/content/visual-cards/$topic.json"
+    local vocab_file="$OUTPUT_DIR/content/vocabulary/$topic.json"
     local temp_file=$(mktemp)
     local temp_output=$(mktemp)
     
+    # Check if vocabulary file exists (needed to get words for images)
+    if [ ! -f "$vocab_file" ]; then
+        log_warn "Visual cards: No vocabulary file for $topic, skipping"
+        return 1
+    fi
+    
+    if [ "$JQ_AVAILABLE" != true ]; then
+        log_warn "Visual cards: jq is required for visual cards collection"
+        return 1
+    fi
+    
     TOTAL_REQUESTS=$((TOTAL_REQUESTS + 1))
     
-    # Generate visual cards via API (batch endpoint for 3 cards per topic)
+    # Extract first 3 words from vocabulary to generate images for
+    # The vocabulary file has structure: { content: "<escaped JSON string>", type: "vocabulary" }
+    # We need to parse the nested JSON string in the content field
+    local words_json
+    
+    # Try to extract words - the content field contains a JSON string that needs parsing
+    # First try: content is a string containing JSON with "vocabulary" array
+    words_json=$(jq -r '.content | fromjson | [.vocabulary[:3][] | {word: .word, context: (.example // "")}]' "$vocab_file" 2>/dev/null)
+    
+    # If that fails, try: direct .words array (older format)
+    if [ -z "$words_json" ] || [ "$words_json" = "null" ] || [ "$words_json" = "[]" ]; then
+        words_json=$(jq -r '[.words[:3][] | {word: .word, context: (.example // "")}]' "$vocab_file" 2>/dev/null)
+    fi
+    
+    # If still empty, try: content is direct JSON object with vocabulary
+    if [ -z "$words_json" ] || [ "$words_json" = "null" ] || [ "$words_json" = "[]" ]; then
+        words_json=$(jq -r '[.content.vocabulary[:3][] | {word: .word, context: (.example // "")}]' "$vocab_file" 2>/dev/null)
+    fi
+    
+    if [ -z "$words_json" ] || [ "$words_json" = "null" ] || [ "$words_json" = "[]" ]; then
+        log_warn "Visual cards: Could not extract words from vocabulary for $topic (tried all formats)"
+        FAILED_REQUESTS=$((FAILED_REQUESTS + 1))
+        return 1
+    fi
+    
+    echo "    Found words: $(echo "$words_json" | jq -r '[.[].word] | join(", ")' 2>/dev/null)"
+    
+    # Generate visual cards via API (batch endpoint expects array of {word, context})
     local curl_args=(-s -w "%{http_code}" -o "$temp_file")
     curl_args+=(-H "Content-Type: application/json")
-    curl_args+=(-H "X-User-Id: demo-user")
-    curl_args+=(-X POST -d "{\"topic\": \"$topic\", \"count\": 3}")
+    # Note: X-User-Id header not sent - backend uses default user context
+    curl_args+=(-X POST -d "$words_json")
     
     local http_code
     http_code=$(curl "${curl_args[@]}" "$BACKEND_URL/api/v1/images/flashcard/batch")
     
     if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
         # Parse response and download images
-        if [ "$JQ_AVAILABLE" = true ]; then
-            # Process each card and embed images as base64
-            local cards_count
-            cards_count=$(jq 'length' "$temp_file" 2>/dev/null || echo "0")
-            
-            echo "[" > "$temp_output"
-            local first=true
-            
-            for i in $(seq 0 $((cards_count - 1))); do
-                local card
-                card=$(jq ".[$i]" "$temp_file")
-                
-                # Extract image URL
-                local image_url
-                image_url=$(echo "$card" | jq -r '.imageUrl // .url // empty')
-                
-                local image_data=""
-                if [ -n "$image_url" ] && [ "$image_url" != "null" ]; then
-                    echo -n "    Downloading image $((i+1))/$cards_count... "
-                    image_data=$(download_image_as_base64 "$image_url")
-                    if [ -n "$image_data" ]; then
-                        echo "✓"
-                    else
-                        echo "✗"
-                    fi
-                    sleep 0.5
-                fi
-                
-                # Build card JSON with embedded image
-                if [ "$first" = true ]; then
-                    first=false
-                else
-                    echo "," >> "$temp_output"
-                fi
-                
-                # Add imageData field with base64 or keep original URL
-                if [ -n "$image_data" ]; then
-                    echo "$card" | jq --arg imgData "$image_data" '. + {imageData: $imgData}' >> "$temp_output"
-                else
-                    echo "$card" >> "$temp_output"
-                fi
-            done
-            
-            echo "]" >> "$temp_output"
-            
-            # Format final output
-            jq '.' "$temp_output" > "$output_file" 2>/dev/null || mv "$temp_output" "$output_file"
-        else
-            # Without jq, just save the raw response
-            mv "$temp_file" "$output_file"
+        # Process each card and embed images as base64
+        local cards_count
+        cards_count=$(jq 'length' "$temp_file" 2>/dev/null || echo "0")
+        
+        if [ "$cards_count" -eq 0 ]; then
+            log_warn "Visual cards: Empty response for $topic"
+            FAILED_REQUESTS=$((FAILED_REQUESTS + 1))
+            rm -f "$temp_file" "$temp_output"
+            return 1
         fi
+        
+        echo "[" > "$temp_output"
+        local first=true
+        
+        # Get words from original request to include in output
+        local words_array
+        words_array=$(echo "$words_json" | jq -r '.[].word' 2>/dev/null)
+        
+        for i in $(seq 0 $((cards_count - 1))); do
+            local card
+            card=$(jq ".[$i]" "$temp_file")
+            
+            # Get the word for this index from the original request
+            local word
+            word=$(echo "$words_json" | jq -r ".[$i].word" 2>/dev/null)
+            
+            # Extract image URL
+            local image_url
+            image_url=$(echo "$card" | jq -r '.url // .imageUrl // empty')
+            
+            local image_data=""
+            if [ -n "$image_url" ] && [ "$image_url" != "null" ]; then
+                echo -n "    Downloading image $((i+1))/$cards_count ($word)... "
+                image_data=$(download_image_as_base64 "$image_url")
+                if [ -n "$image_data" ]; then
+                    echo "✓"
+                else
+                    echo "✗"
+                fi
+                sleep 0.5
+            fi
+            
+            # Build card JSON with word and embedded image
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo "," >> "$temp_output"
+            fi
+            
+            # Add word and imageData fields
+            if [ -n "$image_data" ]; then
+                echo "$card" | jq --arg word "$word" --arg imgData "$image_data" \
+                    '. + {word: $word, imageData: $imgData}' >> "$temp_output"
+            else
+                echo "$card" | jq --arg word "$word" '. + {word: $word}' >> "$temp_output"
+            fi
+        done
+        
+        echo "]" >> "$temp_output"
+        
+        # Format final output
+        jq '.' "$temp_output" > "$output_file" 2>/dev/null || mv "$temp_output" "$output_file"
         
         SUCCESSFUL_REQUESTS=$((SUCCESSFUL_REQUESTS + 1))
         rm -f "$temp_file" "$temp_output"

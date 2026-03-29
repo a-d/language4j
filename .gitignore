@@ -6,8 +6,14 @@
 *.iml
 
 # Environment files
+# The active .env file (contains sensitive data, machine-specific config)
 .env
 .env.local
+
+# Note: These environment TEMPLATES are intentionally tracked:
+# - .env.example  : Documentation and all options
+# - .env.ollama   : Ollama provider template
+# - .env.lmstudio : LM Studio provider template
 
 # Local deployment personal configuration
 # Note: local-deployment/ contains personal local AI setup

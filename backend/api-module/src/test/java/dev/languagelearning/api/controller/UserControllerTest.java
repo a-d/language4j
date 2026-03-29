@@ -93,7 +93,7 @@ class UserControllerTest {
         @Test
         @DisplayName("should update display name")
         void shouldUpdateDisplayName() throws Exception {
-            UpdateUserRequest request = new UpdateUserRequest("New Name", null);
+            UpdateUserRequest request = new UpdateUserRequest("New Name", null, null, null);
             User updatedUser = createTestUser();
             updatedUser.setDisplayName("New Name");
             
@@ -113,7 +113,7 @@ class UserControllerTest {
         @Test
         @DisplayName("should update skill level")
         void shouldUpdateSkillLevel() throws Exception {
-            UpdateUserRequest request = new UpdateUserRequest(null, "B2");
+            UpdateUserRequest request = new UpdateUserRequest(null, "B2", null, null);
             User updatedUser = createTestUser();
             updatedUser.setSkillLevel(SkillLevel.B2);
             
@@ -133,7 +133,7 @@ class UserControllerTest {
         @Test
         @DisplayName("should update both display name and skill level")
         void shouldUpdateBothDisplayNameAndSkillLevel() throws Exception {
-            UpdateUserRequest request = new UpdateUserRequest("Updated Name", "C1");
+            UpdateUserRequest request = new UpdateUserRequest("Updated Name", "C1", null, null);
             User intermediateUser = createTestUser();
             intermediateUser.setId(testUser.getId());
             intermediateUser.setDisplayName("Updated Name");
@@ -160,7 +160,7 @@ class UserControllerTest {
         @Test
         @DisplayName("should return current user when no updates provided")
         void shouldReturnCurrentUserWhenNoUpdatesProvided() throws Exception {
-            UpdateUserRequest request = new UpdateUserRequest(null, null);
+            UpdateUserRequest request = new UpdateUserRequest(null, null, null, null);
             when(userService.getCurrentUser()).thenReturn(testUser);
 
             mockMvc.perform(put("/api/v1/users/me")
@@ -183,7 +183,7 @@ class UserControllerTest {
                 when(userService.getCurrentUser()).thenReturn(testUser);
                 when(userService.updateSkillLevel(testUser.getId(), level)).thenReturn(updatedUser);
 
-                UpdateUserRequest request = new UpdateUserRequest(null, level.name());
+                UpdateUserRequest request = new UpdateUserRequest(null, level.name(), null, null);
                 
                 mockMvc.perform(put("/api/v1/users/me")
                                 .contentType(MediaType.APPLICATION_JSON)

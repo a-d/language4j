@@ -1,12 +1,13 @@
 package dev.languagelearning.content.service.impl;
 
-import dev.languagelearning.config.LanguageConfig;
+import dev.languagelearning.core.domain.ExerciseGenerationType;
 import dev.languagelearning.core.domain.SkillLevel;
 import dev.languagelearning.core.domain.User;
 import dev.languagelearning.learning.service.UserService;
 import dev.languagelearning.llm.LlmService;
 import dev.languagelearning.llm.PromptTemplate;
 import dev.languagelearning.llm.prompts.LanguageLearningPrompts;
+import dev.languagelearning.llm.service.LlmJsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -29,9 +31,8 @@ import static org.mockito.Mockito.*;
 /**
  * Unit tests for {@link ContentGenerationServiceImpl}.
  * <p>
- * Note: The service implementation uses getNativeName() and getTargetName()
- * which may not exist in LanguageConfig. Tests mock these methods to work
- * with the expected implementation.
+ * The service uses the User object's getNativeLanguageName() and getTargetLanguageName()
+ * methods to get language names from ISO codes (e.g., "de" -> "German").
  */
 @ExtendWith(MockitoExtension.class)
 class ContentGenerationServiceImplTest {
@@ -40,10 +41,10 @@ class ContentGenerationServiceImplTest {
     private LlmService llmService;
 
     @Mock
-    private UserService userService;
+    private LlmJsonGenerator llmJsonGenerator;
 
     @Mock
-    private LanguageConfig languageConfig;
+    private UserService userService;
 
     @InjectMocks
     private ContentGenerationServiceImpl contentGenerationService;
@@ -56,6 +57,8 @@ class ContentGenerationServiceImplTest {
 
     private User testUser;
 
+    // User has nativeLanguage="de" which maps to "German"
+    // User has targetLanguage="fr" which maps to "French"
     private static final String NATIVE_LANGUAGE = "German";
     private static final String TARGET_LANGUAGE = "French";
     private static final String GENERATED_CONTENT = "Generated LLM content";
@@ -64,9 +67,8 @@ class ContentGenerationServiceImplTest {
     void setUp() {
         testUser = createTestUser();
         lenient().when(userService.getCurrentUser()).thenReturn(testUser);
-        lenient().when(languageConfig.getNativeName()).thenReturn(NATIVE_LANGUAGE);
-        lenient().when(languageConfig.getTargetName()).thenReturn(TARGET_LANGUAGE);
         lenient().when(llmService.generate(any(PromptTemplate.class), any())).thenReturn(GENERATED_CONTENT);
+        lenient().when(llmJsonGenerator.generateJson(any(PromptTemplate.class), any())).thenReturn(GENERATED_CONTENT);
     }
 
     @Nested
@@ -124,7 +126,7 @@ class ContentGenerationServiceImplTest {
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_VOCABULARY_LIST), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("topic", topic);
@@ -133,8 +135,8 @@ class ContentGenerationServiceImplTest {
     }
 
     @Nested
-    @DisplayName("generateTextCompletionExercises")
-    class GenerateTextCompletionExercises {
+    @DisplayName("generateExercises")
+    class GenerateExercises {
 
         @Test
         @DisplayName("should generate text completion exercises with correct parameters")
@@ -144,21 +146,17 @@ class ContentGenerationServiceImplTest {
             int questionCount = 5;
 
             // When
-            String result = contentGenerationService.generateTextCompletionExercises(topic, questionCount);
+            String result = contentGenerationService.generateExercises(
+                    ExerciseGenerationType.TEXT_COMPLETION, topic, questionCount, null);
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_TEXT_COMPLETION), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("topic", topic);
             assertThat(variables).containsEntry("questionCount", questionCount);
         }
-    }
-
-    @Nested
-    @DisplayName("generateDragDropExercises")
-    class GenerateDragDropExercises {
 
         @Test
         @DisplayName("should generate drag-drop exercises with correct parameters")
@@ -168,21 +166,17 @@ class ContentGenerationServiceImplTest {
             int sentenceCount = 8;
 
             // When
-            String result = contentGenerationService.generateDragDropExercises(topic, sentenceCount);
+            String result = contentGenerationService.generateExercises(
+                    ExerciseGenerationType.DRAG_DROP, topic, sentenceCount, null);
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.GENERATE_DRAG_DROP), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_DRAG_DROP), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("topic", topic);
             assertThat(variables).containsEntry("sentenceCount", sentenceCount);
         }
-    }
-
-    @Nested
-    @DisplayName("generateTranslationExercises")
-    class GenerateTranslationExercises {
 
         @Test
         @DisplayName("should generate translation exercises with correct parameters")
@@ -192,15 +186,51 @@ class ContentGenerationServiceImplTest {
             int sentenceCount = 6;
 
             // When
-            String result = contentGenerationService.generateTranslationExercises(topic, sentenceCount);
+            String result = contentGenerationService.generateExercises(
+                    ExerciseGenerationType.TRANSLATION, topic, sentenceCount, null);
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_TRANSLATION_EXERCISE), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("topic", topic);
             assertThat(variables).containsEntry("sentenceCount", sentenceCount);
+        }
+
+        @Test
+        @DisplayName("should throw exception for unimplemented exercise type")
+        void shouldThrowExceptionForUnimplementedExerciseType() {
+            // Given
+            String topic = "Test";
+
+            // When/Then
+            assertThatThrownBy(() -> 
+                    contentGenerationService.generateExercises(ExerciseGenerationType.HANGMAN, topic, 5, null))
+                    .isInstanceOf(UnsupportedOperationException.class)
+                    .hasMessageContaining("HANGMAN")
+                    .hasMessageContaining("not yet implemented");
+        }
+
+        @Test
+        @DisplayName("should handle listening comprehension with options")
+        void shouldHandleListeningComprehensionWithOptions() {
+            // Given
+            String topic = "Family";
+            Map<String, Object> options = Map.of("wordCount", 150, "statementCount", 6);
+
+            // When
+            String result = contentGenerationService.generateExercises(
+                    ExerciseGenerationType.LISTENING_COMPREHENSION, topic, 1, options);
+
+            // Then
+            assertThat(result).isEqualTo(GENERATED_CONTENT);
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_LISTENING_COMPREHENSION), variablesCaptor.capture());
+
+            Map<String, Object> variables = variablesCaptor.getValue();
+            assertThat(variables).containsEntry("topic", topic);
+            assertThat(variables).containsEntry("wordCount", 150);
+            assertThat(variables).containsEntry("statementCount", 6);
         }
     }
 
@@ -220,7 +250,7 @@ class ContentGenerationServiceImplTest {
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.GENERATE_FLASHCARDS), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.GENERATE_FLASHCARDS), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("topic", topic);
@@ -299,7 +329,7 @@ class ContentGenerationServiceImplTest {
 
             // Then
             assertThat(result).isEqualTo(GENERATED_CONTENT);
-            verify(llmService).generate(eq(LanguageLearningPrompts.EVALUATE_RESPONSE), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(eq(LanguageLearningPrompts.EVALUATE_RESPONSE), variablesCaptor.capture());
 
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("exercise", exercise);
@@ -320,7 +350,7 @@ class ContentGenerationServiceImplTest {
             contentGenerationService.evaluateResponse(exercise, userResponse, expectedAnswer);
 
             // Then
-            verify(llmService).generate(any(PromptTemplate.class), variablesCaptor.capture());
+            verify(llmJsonGenerator).generateJson(any(PromptTemplate.class), variablesCaptor.capture());
             Map<String, Object> variables = variablesCaptor.getValue();
             assertThat(variables).containsEntry("skillLevel", "C1");
             assertThat(variables).containsEntry("nativeLanguage", NATIVE_LANGUAGE);

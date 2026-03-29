@@ -71,7 +71,7 @@ class UserControllerIT extends BaseIntegrationTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk());
 
-            UpdateUserRequest request = new UpdateUserRequest("New Display Name", null);
+            UpdateUserRequest request = new UpdateUserRequest("New Display Name", null, null, null);
 
             mockMvc.perform(put("/api/v1/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +87,7 @@ class UserControllerIT extends BaseIntegrationTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk());
 
-            UpdateUserRequest request = new UpdateUserRequest(null, "B1");
+            UpdateUserRequest request = new UpdateUserRequest(null, "B1", null, null);
 
             mockMvc.perform(put("/api/v1/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +103,7 @@ class UserControllerIT extends BaseIntegrationTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk());
 
-            UpdateUserRequest request = new UpdateUserRequest("Updated Name", "C1");
+            UpdateUserRequest request = new UpdateUserRequest("Updated Name", "C1", null, null);
 
             mockMvc.perform(put("/api/v1/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -125,7 +125,7 @@ class UserControllerIT extends BaseIntegrationTest {
 
             String currentDisplayName = objectMapper.readTree(response).get("displayName").asText();
 
-            UpdateUserRequest request = new UpdateUserRequest(null, null);
+            UpdateUserRequest request = new UpdateUserRequest(null, null, null, null);
 
             mockMvc.perform(put("/api/v1/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -141,7 +141,7 @@ class UserControllerIT extends BaseIntegrationTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk());
 
-            UpdateUserRequest request = new UpdateUserRequest(null, "INVALID_LEVEL");
+            UpdateUserRequest request = new UpdateUserRequest(null, "INVALID_LEVEL", null, null);
 
             mockMvc.perform(put("/api/v1/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -157,7 +157,7 @@ class UserControllerIT extends BaseIntegrationTest {
                     .andExpect(status().isOk());
 
             for (SkillLevel level : SkillLevel.values()) {
-                UpdateUserRequest request = new UpdateUserRequest(null, level.name());
+                UpdateUserRequest request = new UpdateUserRequest(null, level.name(), null, null);
 
                 mockMvc.perform(put("/api/v1/users/me")
                                 .contentType(MediaType.APPLICATION_JSON)
