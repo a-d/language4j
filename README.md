@@ -13,6 +13,23 @@ An AI-powered, deployable language learning platform that adapts to user configu
 - **Multi-Provider AI Support** - Works with OpenAI, Anthropic, or local Ollama
 - **Roleplay Scenarios** - Practice conversations in realistic situations
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Dashboard</strong><br/><img src="https://github.com/user-attachments/assets/ed94484f-f8d0-4532-a555-c2e2a1422210" alt="Dashboard" /></td>
+    <td align="center"><strong>AI Chat Coach</strong><br/><img src="https://github.com/user-attachments/assets/e3f69288-51e6-4d6b-89fe-600aad1fd299" alt="AI Chat Coach" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Interactive Exercises</strong><br/><img src="https://github.com/user-attachments/assets/72f08ac6-e2d6-4474-ba21-c7fba41ebabb" alt="Interactive Exercises" /></td>
+    <td align="center"><strong>Vocabulary Lists</strong><br/><img src="https://github.com/user-attachments/assets/5c4aab33-592e-4c17-a0f1-1a4efe22644e" alt="Vocabulary Lists" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Flashcards</strong><br/><img src="https://github.com/user-attachments/assets/9433ea25-0374-45c8-899d-4d10642c086e" alt="Flashcards" /></td>
+    <td align="center"><strong>Visual Cards with AI Images</strong><br/><img src="https://github.com/user-attachments/assets/a30ec4b7-98a3-4000-8351-7fab031f6c02" alt="Visual Cards with AI Images" /></td>
+  </tr>
+</table>
+
 ## 🚀 Quick Start
 
 ### Prerequisites

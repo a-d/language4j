@@ -667,7 +667,6 @@ h3 {
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
-    margin-top: var(--spacing-xl);
 }
 
 .lesson-content,
