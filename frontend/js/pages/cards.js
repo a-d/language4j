@@ -7,7 +7,8 @@
  * - FRONT: Shows image + word in NATIVE language (what user knows)
  * - BACK (after flip): Shows image + word in TARGET language (what user learns)
  * 
- * Cards are persisted to session storage for navigation persistence.
+ * Note: Visual cards are NOT cached to sessionStorage due to large base64 image sizes.
+ * Cards are stored in memory only and regenerated each session.
  */
 
 import { api } from '../api/client.js';
@@ -16,9 +17,9 @@ import { t } from '../services/i18n.js';
 import { cache, CacheKeys } from '../services/cache.js';
 import { demoMode } from '../services/demo-mode.js';
 
-const { PAGE, VISUAL_CARDS, CURRENT_INDEX } = CacheKeys.CARDS;
+const { PAGE, CURRENT_INDEX } = CacheKeys.CARDS;
 
-// State for visual cards - initialized from cache
+// State for visual cards - in-memory only (not cached due to large image sizes)
 let visualCards = [];
 let currentCardIndex = 0;
 let isGenerating = false;
@@ -28,12 +29,8 @@ const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
 
 /**
  * Initialize visual cards page UI.
- * Restores state from session cache.
  */
 export function loadCardsData() {
-    // Restore state from cache
-    restoreFromCache();
-    
     const container = document.getElementById('cards-list');
     if (!container) return;
     
@@ -154,37 +151,11 @@ export function loadCardsData() {
         </div>
     `;
     
-    // Restore card display if we have cards
+    // Update card display if we have cards in memory
     if (hasCards) {
         updateCardDisplay();
         updateCardsGrid();
     }
-}
-
-/**
- * Restore state from session cache.
- */
-function restoreFromCache() {
-    const cachedCards = cache.get(PAGE, VISUAL_CARDS);
-    const cachedIndex = cache.get(PAGE, CURRENT_INDEX);
-    
-    if (cachedCards && Array.isArray(cachedCards)) {
-        visualCards = cachedCards;
-        currentCardIndex = typeof cachedIndex === 'number' ? cachedIndex : 0;
-        
-        // Ensure index is within bounds
-        if (currentCardIndex >= visualCards.length) {
-            currentCardIndex = Math.max(0, visualCards.length - 1);
-        }
-    }
-}
-
-/**
- * Save current state to session cache.
- */
-function saveToCache() {
-    cache.save(PAGE, VISUAL_CARDS, visualCards);
-    cache.save(PAGE, CURRENT_INDEX, currentCardIndex);
 }
 
 /**
@@ -217,7 +188,7 @@ export async function generateVisualCardsFromTopic(showLoading, hideLoading) {
     showLoading?.();
     
     try {
-        // Call the new visual cards API
+        // Call the visual cards API
         const response = await api.content.generateVisualCards(topic, cardCount);
         
         // Transform response to our card format
@@ -236,9 +207,6 @@ export async function generateVisualCardsFromTopic(showLoading, hideLoading) {
         // Add to collection
         visualCards.push(...newCards);
         currentCardIndex = visualCards.length - newCards.length;  // Go to first new card
-        
-        // Save to cache
-        saveToCache();
         
         // Clear the form
         document.getElementById('topic-input').value = '';
@@ -268,6 +236,80 @@ export async function generateVisualCardsFromTopic(showLoading, hideLoading) {
     } finally {
         isGenerating = false;
         hideLoading?.();
+        progressContainer?.classList.add('hidden');
+    }
+}
+
+/**
+ * Generate visual cards using an English topic key directly.
+ * Used by demo mode topic buttons to bypass normalization.
+ * @param {string} topicKey - English topic key (e.g., 'greetings', 'food')
+ */
+async function generateVisualCardsFromTopicKey(topicKey) {
+    if (isGenerating) return;
+    
+    const cardCount = parseInt(document.getElementById('card-count')?.value || '5', 10);
+    
+    isGenerating = true;
+    
+    // Show progress indicator
+    const progressContainer = document.getElementById('generation-progress');
+    const progressText = document.getElementById('generation-progress-text');
+    progressContainer?.classList.remove('hidden');
+    if (progressText) {
+        progressText.textContent = t('cards.generatingFromTopic', { count: cardCount });
+    }
+    
+    toast.info(t('cards.generatingFromTopic', { count: cardCount }));
+    
+    try {
+        // Call the visual cards API with the English topic key
+        const response = await api.content.generateVisualCards(topicKey, cardCount);
+        
+        // Transform response to our card format
+        const newCards = response.cards.map(card => ({
+            nativeWord: card.nativeWord,
+            targetWord: card.targetWord,
+            imageUrl: card.imageUrl || PLACEHOLDER_IMAGE,
+            exampleSentence: card.exampleSentence,
+            pronunciation: card.pronunciation,
+            topic: response.topic,
+            nativeLanguage: response.nativeLanguage,
+            targetLanguage: response.targetLanguage,
+            createdAt: new Date().toISOString()
+        }));
+        
+        // Add to collection
+        visualCards.push(...newCards);
+        currentCardIndex = visualCards.length - newCards.length;  // Go to first new card
+        
+        // Clear the form
+        document.getElementById('topic-input').value = '';
+        
+        // Update the display
+        updateCardDisplay();
+        updateCardsGrid();
+        updateClearButton();
+        
+        // Show result
+        if (response.failedCount > 0) {
+            toast.warning(t('cards.partialSuccess', { 
+                success: response.cardCount - response.failedCount, 
+                total: response.cardCount 
+            }));
+        } else {
+            toast.success(t('cards.topicSuccess', { count: response.cardCount }));
+        }
+        
+    } catch (error) {
+        console.error('Failed to generate visual cards:', error);
+        if (error.status === 503) {
+            toast.error(t('cards.imageServiceUnavailable'));
+        } else {
+            toast.error(t('cards.topicGenerateFailed'));
+        }
+    } finally {
+        isGenerating = false;
         progressContainer?.classList.add('hidden');
     }
 }
@@ -304,9 +346,6 @@ export async function generateVisualCard(showLoading, hideLoading) {
         
         visualCards.push(newCard);
         currentCardIndex = visualCards.length - 1;
-        
-        // Save to cache
-        saveToCache();
         
         // Clear the form
         document.getElementById('card-word').value = '';
@@ -434,12 +473,11 @@ function updateClearButton() {
 }
 
 /**
- * Clear all cached cards.
+ * Clear all cards from memory.
  */
 export function clearCardsCache() {
     visualCards = [];
     currentCardIndex = 0;
-    cache.clearPage(PAGE);
     
     // Update display
     updateCardDisplay();
@@ -473,7 +511,6 @@ export function flipCard(cardElement) {
 export function prevCard() {
     if (visualCards.length === 0) return;
     currentCardIndex = (currentCardIndex - 1 + visualCards.length) % visualCards.length;
-    saveToCache();
     updateCardDisplay();
     updateCardsGrid();
 }
@@ -484,7 +521,6 @@ export function prevCard() {
 export function nextCard() {
     if (visualCards.length === 0) return;
     currentCardIndex = (currentCardIndex + 1) % visualCards.length;
-    saveToCache();
     updateCardDisplay();
     updateCardsGrid();
 }
@@ -495,7 +531,6 @@ export function nextCard() {
 export function viewCard(index) {
     if (index >= 0 && index < visualCards.length) {
         currentCardIndex = index;
-        saveToCache();
         updateCardDisplay();
         updateCardsGrid();
         
@@ -514,35 +549,11 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Register global functions for onclick handlers in HTML
-window.clearCardsCache = clearCardsCache;
-window.generateVisualCardsFromTopic = generateVisualCardsFromTopic;
-window.generateVisualCard = generateVisualCard;
-window.flipCard = flipCard;
-window.prevCard = prevCard;
-window.nextCard = nextCard;
-window.viewCard = viewCard;
-window.handleCardImageError = handleCardImageError;
-
-/**
- * Legacy function for backwards compatibility.
- * Calls the new topic-based generation if a topic is provided,
- * otherwise shows a warning.
- */
-export function generateVisualCardsBatch(showLoading, hideLoading) {
-    // Check if there's a topic input, use the new flow
-    const topicInput = document.getElementById('topic-input');
-    if (topicInput && topicInput.value.trim()) {
-        return generateVisualCardsFromTopic(showLoading, hideLoading);
-    }
-    toast.warning(t('cards.topicPlaceholder'));
-}
-
 // ============ Demo Mode Topic Selection Helpers ============
 
 /**
  * Get available visual card topics from demo data.
- * @returns {string[]} Array of topic names (lowercase, no extension)
+ * @returns {string[]} Array of topic names (lowercase, English keys)
  */
 function getAvailableTopics() {
     // These match the files in frontend/demo-data/content/visual-cards/
@@ -592,17 +603,39 @@ function getTopicEmoji(topic) {
 
 /**
  * Handle topic button click in demo mode.
- * Sets the topic input and triggers generation.
- * @param {string} topic - Selected topic
+ * Sets the topic input and triggers generation with the English key.
+ * @param {string} topic - Selected topic (English key)
  */
 export function selectCardsTopic(topic) {
     const topicInput = document.getElementById('topic-input');
     if (topicInput) {
+        // Show German label in input for user feedback
         topicInput.value = formatTopic(topic);
-        // Trigger generation
-        generateVisualCardsFromTopic();
+        // Trigger generation with the English key directly (bypasses normalization)
+        generateVisualCardsFromTopicKey(topic);
     }
 }
 
-// Register global functions for onclick handlers
+// Register global functions for onclick handlers in HTML
+window.clearCardsCache = clearCardsCache;
+window.generateVisualCardsFromTopic = generateVisualCardsFromTopic;
+window.generateVisualCard = generateVisualCard;
+window.flipCard = flipCard;
+window.prevCard = prevCard;
+window.nextCard = nextCard;
+window.viewCard = viewCard;
+window.handleCardImageError = handleCardImageError;
 window.selectCardsTopic = selectCardsTopic;
+
+/**
+ * Legacy function for backwards compatibility.
+ */
+export function generateVisualCardsBatch(showLoading, hideLoading) {
+    const topicInput = document.getElementById('topic-input');
+    if (topicInput && topicInput.value.trim()) {
+        return generateVisualCardsFromTopic(showLoading, hideLoading);
+    }
+    toast.warning(t('cards.topicPlaceholder'));
+}
+
+export default { loadCardsData, generateVisualCardsFromTopic, generateVisualCard, clearCardsCache, selectCardsTopic };

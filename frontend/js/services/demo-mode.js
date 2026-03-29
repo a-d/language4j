@@ -415,12 +415,12 @@ class DemoModeService {
                 const rawCards = await this.loadData(`content/visual-cards/${topic}.json`);
                 
                 // Transform demo data format to expected API response format
-                // Demo data: [{ url, revisedPrompt, size, word }]
-                // Expected:  { cards: [{ nativeWord, targetWord, imageUrl, ... }], topic, ... }
+                // Demo data: [{ url, revisedPrompt, size, word, nativeWord, exampleSentence, pronunciation }]
+                // Expected:  { cards: [{ nativeWord, targetWord, imageUrl, exampleSentence, pronunciation }], topic, ... }
                 if (!rawCards || !Array.isArray(rawCards)) {
                     return {
                         topic,
-                        nativeLanguage: this.config?.nativeLanguage || 'English',
+                        nativeLanguage: this.config?.nativeLanguage || 'German',
                         targetLanguage: this.config?.targetLanguage || 'French',
                         cards: [],
                         cardCount: 0,
@@ -429,16 +429,16 @@ class DemoModeService {
                 }
                 
                 const cards = rawCards.slice(0, cardCount).map(card => ({
-                    nativeWord: card.word,           // Word in native language
-                    targetWord: card.word,           // For demo, same word (normally would be translated)
-                    imageUrl: card.url,              // Base64 image data
-                    exampleSentence: null,           // Not available in demo data
-                    pronunciation: null              // Not available in demo data
+                    nativeWord: card.nativeWord || card.word,     // German translation
+                    targetWord: card.word,                         // French word (target language)
+                    imageUrl: card.url,                            // Base64 image data
+                    exampleSentence: card.exampleSentence || null, // French example sentence
+                    pronunciation: card.pronunciation || null       // IPA pronunciation
                 }));
                 
                 return {
                     topic,
-                    nativeLanguage: this.config?.nativeLanguage || 'English',
+                    nativeLanguage: this.config?.nativeLanguage || 'German',
                     targetLanguage: this.config?.targetLanguage || 'French',
                     cards,
                     cardCount: cards.length,

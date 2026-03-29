@@ -14,9 +14,12 @@ When working with visual card files, assume all files in this directory have the
 [
   {
     "url": "data:image/png;base64,[...]",
-    "revisedPrompt": "Create a simple, clear educational illustration for the French word 'au revoir'. The image should be suitable for a language learning flashcard. Style: clean, minimalist, colorful, no text in the image. Context: Au revoir, merci !",
+    "revisedPrompt": "Create a simple, clear educational illustration for the French word 'bonjour'. The image should be suitable for a language learning flashcard. Style: clean, minimalist, colorful, no text in the image. Context: Bonjour, comment allez-vous?",
     "size": "512x512",
-    "word": "au revoir"
+    "word": "bonjour",
+    "nativeWord": "Guten Tag",
+    "exampleSentence": "Bonjour, comment allez-vous?",
+    "pronunciation": "bɔ̃.ʒuʁ"
   }
 ]
 ```
@@ -28,7 +31,10 @@ When working with visual card files, assume all files in this directory have the
 | `url` | string | Base64-encoded PNG image data (very large) |
 | `revisedPrompt` | string | The prompt used to generate the image |
 | `size` | string | Image dimensions (e.g., "512x512") |
-| `word` | string | The vocabulary word this image represents |
+| `word` | string | The French vocabulary word (target language) |
+| `nativeWord` | string | German translation (native language) |
+| `exampleSentence` | string | Example French sentence using the word |
+| `pronunciation` | string | IPA pronunciation guide for the French word |
 
 ## Allowed Operations
 
