@@ -79,6 +79,9 @@ class DemoModeService {
         // Check for manual demo mode setting
         const manuallyEnabled = localStorage.getItem(DEMO_MODE_KEY) === 'true';
         
+        // Check for forced demo mode (for static deployments like GitHub Pages)
+        const forcedDemo = window.APP_CONFIG?.FORCE_DEMO_MODE === true;
+        
         // Try to load demo data index
         try {
             const indexResponse = await fetch(`${DEMO_DATA_BASE}/index.json`);
@@ -96,8 +99,12 @@ class DemoModeService {
             console.log('Demo data not available');
         }
 
-        if (manuallyEnabled && this.index) {
+        // Enable demo mode if manually enabled, forced, or no demo data index found
+        if ((manuallyEnabled || forcedDemo) && this.index) {
             this.enable();
+            if (forcedDemo) {
+                console.log('Demo mode forced via APP_CONFIG.FORCE_DEMO_MODE');
+            }
         }
 
         this.initialized = true;
