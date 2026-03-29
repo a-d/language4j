@@ -2,7 +2,7 @@
 # Transform visual-cards JSON files to add translations, examples, and pronunciation
 # Uses jq to process files without loading them fully into memory
 
-BASE_DIR="/mnt/c/Users/James/IdeaProjects/language-learning"
+BASE_DIR="/"
 CARDS_DIR="$BASE_DIR/frontend/demo-data/content/visual-cards"
 TRANSLATIONS="$BASE_DIR/scripts/visual-cards-translations.json"
 
