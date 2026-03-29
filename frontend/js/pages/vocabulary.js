@@ -42,7 +42,7 @@ export function loadVocabularyData(showLoading, hideLoading) {
                     <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="vocab-topic-suggestions"' : ''} />
                     ${isDemoMode ? `
                         <datalist id="vocab-topic-suggestions">
-                            ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                            ${demoMode.buildTopicDatalistOptions()}
                         </datalist>
                     ` : ''}
                 </div>
@@ -74,7 +74,7 @@ export function loadVocabularyData(showLoading, hideLoading) {
                 <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" ${isDemoMode ? 'list="flashcard-topic-suggestions"' : ''} />
                 ${isDemoMode ? `
                     <datalist id="flashcard-topic-suggestions">
-                        ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                        ${demoMode.buildTopicDatalistOptions()}
                     </datalist>
                 ` : ''}
             </div>
@@ -276,92 +276,33 @@ function escapeHtml(text) {
 // ============ Demo Mode Topic Selection Helpers ============
 
 /**
- * Get available vocabulary topics from demo data.
- * @returns {string[]} Array of topic names (lowercase)
- */
-function getAvailableTopics() {
-    // These match the files in frontend/demo-data/content/vocabulary/
-    return [
-        'greetings', 'food', 'travel', 'family', 'shopping',
-        'home', 'weather', 'work', 'health', 'hobbies',
-        'animals', 'colors', 'clothing', 'technology', 'time'
-    ];
-}
-
-/**
- * Format topic name for display (use German translation if available).
- * @param {string} topic - Topic name (English key)
- * @returns {string} Translated topic name
- */
-function formatTopic(topic) {
-    if (!topic) return '';
-    // Use demo mode translations for German display
-    return demoMode.getTranslatedTopic(topic.toLowerCase());
-}
-
-/**
- * Get an emoji for a topic.
- * @param {string} topic - Topic name
- * @returns {string} Emoji for the topic
- */
-function getTopicEmoji(topic) {
-    const emojiMap = {
-        'greetings': '👋',
-        'food': '🍕',
-        'travel': '✈️',
-        'family': '👨‍👩‍👧‍👦',
-        'shopping': '🛒',
-        'home': '🏠',
-        'weather': '🌤️',
-        'work': '💼',
-        'health': '🏥',
-        'hobbies': '🎨',
-        'animals': '🐾',
-        'colors': '🎨',
-        'clothing': '👕',
-        'technology': '💻',
-        'time': '⏰'
-    };
-    return emojiMap[topic.toLowerCase()] || '📝';
-}
-
-/**
  * Build topic grid HTML for demo mode.
+ * Uses centralized buildTopicGrid from demo-mode.js.
  * @param {string} section - 'vocab' or 'flashcard'
  * @returns {string} HTML string
  */
 function buildTopicGrid(section) {
-    const topics = getAvailableTopics();
     const clickHandler = section === 'vocab' ? 'selectVocabTopic' : 'selectFlashcardTopic';
     
-    return `
-        <div class="topic-divider">
-            <span>${t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
-        </div>
-        
-        <div class="topic-grid" id="${section}-topic-grid">
-            ${topics.map(topic => `
-                <button class="topic-btn" data-topic="${topic}" onclick="window.${clickHandler}('${topic}')">
-                    ${getTopicEmoji(topic)} ${formatTopic(topic)}
-                </button>
-            `).join('')}
-        </div>
-        
-        <p class="demo-mode-hint">
-            📴 ${t('vocabulary.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
-        </p>
-    `;
+    return demoMode.buildTopicGrid({
+        onSelectFn: clickHandler,
+        gridId: `${section}-topic-grid`,
+        dividerText: t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('vocabulary.demoModeHint') || t('exercises.demoModeHint'),
+        t
+    });
 }
 
 /**
  * Handle topic button click for vocabulary section.
- * @param {string} topic - Selected topic
+ * @param {string} topic - Selected topic (English key)
  */
 export function selectVocabTopic(topic) {
     const topicInput = document.getElementById('vocab-topic');
     if (topicInput) {
-        topicInput.value = formatTopic(topic);
-        cache.save(PAGE, TOPIC, formatTopic(topic));
+        const translatedTopic = demoMode.getTranslatedTopic(topic);
+        topicInput.value = translatedTopic;
+        cache.save(PAGE, TOPIC, translatedTopic);
         // Trigger generation
         window.generateVocabulary();
     }
@@ -369,13 +310,14 @@ export function selectVocabTopic(topic) {
 
 /**
  * Handle topic button click for flashcards section.
- * @param {string} topic - Selected topic
+ * @param {string} topic - Selected topic (English key)
  */
 export function selectFlashcardTopic(topic) {
     const topicInput = document.getElementById('flashcard-topic');
     if (topicInput) {
-        topicInput.value = formatTopic(topic);
-        cache.save(PAGE, FLASHCARD_TOPIC, formatTopic(topic));
+        const translatedTopic = demoMode.getTranslatedTopic(topic);
+        topicInput.value = translatedTopic;
+        cache.save(PAGE, FLASHCARD_TOPIC, translatedTopic);
         // Trigger generation
         window.generateFlashcards();
     }

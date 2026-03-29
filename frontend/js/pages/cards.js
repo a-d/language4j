@@ -550,55 +550,37 @@ function escapeHtml(text) {
 }
 
 // ============ Demo Mode Topic Selection Helpers ============
+// Note: Most demo mode helpers are now centralized in demo-mode.js
+// These local functions are kept only for backwards compatibility or specific cards functionality.
 
 /**
  * Get available visual card topics from demo data.
+ * Uses centralized topic list from demo-mode.js.
  * @returns {string[]} Array of topic names (lowercase, English keys)
  */
 function getAvailableTopics() {
-    // These match the files in frontend/demo-data/content/visual-cards/
-    return [
-        'greetings', 'food', 'travel', 'family', 'shopping',
-        'home', 'weather', 'work', 'health', 'hobbies',
-        'animals', 'colors', 'clothing', 'technology', 'time'
-    ];
+    return demoMode.getTopics();
 }
 
 /**
  * Format topic name for display (use German translation if available).
+ * Uses centralized translation from demo-mode.js.
  * @param {string} topic - Topic name (English key)
  * @returns {string} Translated topic name
  */
 function formatTopic(topic) {
     if (!topic) return '';
-    // Use demo mode translations for German display
     return demoMode.getTranslatedTopic(topic.toLowerCase());
 }
 
 /**
  * Get an emoji for a topic.
+ * Uses centralized emoji map from demo-mode.js.
  * @param {string} topic - Topic name
  * @returns {string} Emoji for the topic
  */
 function getTopicEmoji(topic) {
-    const emojiMap = {
-        'greetings': '👋',
-        'food': '🍕',
-        'travel': '✈️',
-        'family': '👨‍👩‍👧‍👦',
-        'shopping': '🛒',
-        'home': '🏠',
-        'weather': '🌤️',
-        'work': '💼',
-        'health': '🏥',
-        'hobbies': '🎨',
-        'animals': '🐾',
-        'colors': '🎨',
-        'clothing': '👕',
-        'technology': '💻',
-        'time': '⏰'
-    };
-    return emojiMap[topic.toLowerCase()] || '📝';
+    return demoMode.getTopicEmoji(topic);
 }
 
 /**

@@ -1081,136 +1081,24 @@ function escapeHtml(text) {
 
 /**
  * Show topic selector UI for demo mode instead of free text input.
- * Similar to the Visual Cards page - shows topic grid for selection.
+ * Uses the centralized showDemoTopicSelector from demo-mode.js.
  * @param {HTMLElement} exerciseArea - The exercise area container
  * @param {string} type - Exercise type
  * @returns {Promise<string|null>} Selected topic or null if cancelled
  */
 function showDemoTopicSelector(exerciseArea, type) {
-    return new Promise((resolve) => {
-        // Get available topics for this exercise type from demo mode index
-        const backendType = EXERCISE_TYPE_MAP[type];
-        const frontendType = type.replace(/_/g, '-');
-        
-        // Get topics from demo index categories
-        let topics = demoMode.getTopics();
-        
-        // For exercises, check if there's a specific category
-        if (demoMode.index?.categories?.exercises?.[frontendType]) {
-            topics = demoMode.index.categories.exercises[frontendType];
-        }
-        
-        const exerciseTitles = {
-            'text-completion': t('exercises.fillBlanks'),
-            'drag-drop': t('exercises.wordOrder'),
-            'translation': t('exercises.translation')
-        };
-        
-        // Use German translations for topic names
-        const formatTopic = (topic) => demoMode.getTranslatedTopic(topic.toLowerCase());
-        
-        exerciseArea.innerHTML = `
-            <div class="exercise-container">
-                <div class="exercise-header">
-                    <h3>${exerciseTitles[type] || type}</h3>
-                    <button class="btn btn-sm btn-secondary" id="demo-topic-cancel">${t('misc.cancel') || 'Cancel'}</button>
-                </div>
-                <div class="demo-topic-selector">
-                    <p class="selector-instruction">${t('exercises.selectTopic')}</p>
-                    
-                    <!-- Topic input with autocomplete like Visual Cards -->
-                    <div class="topic-input-row">
-                        <input type="text" 
-                               id="demo-topic-input" 
-                               class="form-input topic-search-input" 
-                               placeholder="${t('lessons.topicPlaceholder')}"
-                               list="topic-suggestions" />
-                        <datalist id="topic-suggestions">
-                            ${topics.map(topic => `<option value="${formatTopic(topic)}">`).join('')}
-                        </datalist>
-                        <button class="btn btn-primary" id="demo-topic-submit">
-                            🎯 ${t('exercises.start') || 'Start'}
-                        </button>
-                    </div>
-                    
-                    <div class="topic-divider">
-                        <span>${t('exercises.orSelectBelow') || 'or select a topic below'}</span>
-                    </div>
-                    
-                    <div class="topic-grid">
-                        ${topics.map(topic => `
-                            <button class="topic-btn" data-topic="${topic}">
-                                ${getTopicEmoji(topic)} ${formatTopic(topic)}
-                            </button>
-                        `).join('')}
-                    </div>
-                    
-                    <p class="demo-mode-hint">
-                        📴 ${t('exercises.demoModeHint')}
-                    </p>
-                </div>
-            </div>
-        `;
-        
-        const topicInput = document.getElementById('demo-topic-input');
-        const submitBtn = document.getElementById('demo-topic-submit');
-        
-        // Add event listeners
-        document.getElementById('demo-topic-cancel')?.addEventListener('click', () => resolve(null));
-        
-        // Handle submit button
-        submitBtn?.addEventListener('click', () => {
-            const inputTopic = topicInput?.value.trim().toLowerCase();
-            if (inputTopic) {
-                // Find matching topic or use normalized version
-                const matchedTopic = topics.find(t => t.toLowerCase() === inputTopic) || 
-                                    demoMode.normalizeTopic(inputTopic);
-                resolve(matchedTopic);
-            }
-        });
-        
-        // Handle Enter key in input
-        topicInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitBtn?.click();
-            }
-        });
-        
-        // Handle topic button clicks
-        exerciseArea.querySelectorAll('.topic-btn').forEach(btn => {
-            btn.addEventListener('click', () => resolve(btn.dataset.topic));
-        });
-        
-        // Focus the input
-        topicInput?.focus();
-    });
-}
-
-/**
- * Get emoji for a topic.
- * @param {string} topic - Topic name
- * @returns {string} Emoji
- */
-function getTopicEmoji(topic) {
-    const emojiMap = {
-        'greetings': '👋',
-        'food': '🍕',
-        'travel': '✈️',
-        'family': '👨‍👩‍👧‍👦',
-        'shopping': '🛒',
-        'weather': '🌤️',
-        'work': '💼',
-        'hobbies': '🎨',
-        'health': '🏥',
-        'home': '🏠',
-        'time': '⏰',
-        'colors': '🎨',
-        'animals': '🐕',
-        'clothing': '👕',
-        'technology': '💻'
+    const exerciseTitles = {
+        'text-completion': t('exercises.fillBlanks'),
+        'drag-drop': t('exercises.wordOrder'),
+        'translation': t('exercises.translation')
     };
-    return emojiMap[topic] || '📚';
+    
+    return demoMode.showDemoTopicSelector(exerciseArea, {
+        title: exerciseTitles[type] || type,
+        t,
+        inputPlaceholder: t('lessons.topicPlaceholder'),
+        submitButtonText: t('exercises.start') || 'Start'
+    });
 }
 
 /**

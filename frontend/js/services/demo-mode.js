@@ -37,6 +37,27 @@ const TOPIC_TRANSLATIONS = {
 };
 
 /**
+ * Topic emoji map for visual representation
+ */
+const TOPIC_EMOJIS = {
+    'greetings': '👋',
+    'food': '🍕',
+    'travel': '✈️',
+    'family': '👨‍👩‍👧‍👦',
+    'shopping': '🛒',
+    'home': '🏠',
+    'weather': '🌤️',
+    'work': '💼',
+    'health': '🏥',
+    'hobbies': '🎨',
+    'animals': '🐾',
+    'colors': '🎨',
+    'clothing': '👕',
+    'technology': '💻',
+    'time': '⏰'
+};
+
+/**
  * Demo Mode Service class
  */
 class DemoModeService {
@@ -658,6 +679,182 @@ class DemoModeService {
     getRandomTopic() {
         const topics = this.getTopics();
         return topics[Math.floor(Math.random() * topics.length)] || 'greetings';
+    }
+
+    /**
+     * Get emoji for a topic
+     * @param {string} topic - Topic name (English key)
+     * @returns {string} Emoji for the topic
+     */
+    getTopicEmoji(topic) {
+        if (!topic) return '📚';
+        return TOPIC_EMOJIS[topic.toLowerCase()] || '📚';
+    }
+
+    /**
+     * Build a topic selection grid for demo mode.
+     * This renders a grid of topic buttons that can be used across different pages.
+     * 
+     * @param {Object} options - Configuration options
+     * @param {string} options.onSelectFn - Name of the global function to call when a topic is selected
+     * @param {string} [options.gridId] - ID for the grid element
+     * @param {string} [options.dividerText] - Text for the divider (defaults to i18n key or fallback)
+     * @param {string} [options.hintText] - Text for the demo mode hint
+     * @param {Function} [options.t] - Translation function (optional)
+     * @returns {string} HTML string for the topic grid
+     */
+    buildTopicGrid(options = {}) {
+        const { 
+            onSelectFn, 
+            gridId = 'topic-grid',
+            dividerText,
+            hintText,
+            t = (key) => key  // Fallback translation function
+        } = options;
+        
+        const topics = this.getTopics();
+        
+        if (topics.length === 0) {
+            return '';
+        }
+        
+        const divider = dividerText || t('exercises.orSelectBelow') || 'or select a topic below';
+        const hint = hintText || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available';
+        
+        return `
+            <div class="topic-divider">
+                <span>${divider}</span>
+            </div>
+            
+            <div class="topic-grid" id="${gridId}">
+                ${topics.map(topic => `
+                    <button class="topic-btn" data-topic="${topic}" onclick="window.${onSelectFn}('${topic}')">
+                        ${this.getTopicEmoji(topic)} ${this.getTranslatedTopic(topic)}
+                    </button>
+                `).join('')}
+            </div>
+            
+            <p class="demo-mode-hint">
+                📴 ${hint}
+            </p>
+        `;
+    }
+
+    /**
+     * Build datalist options for topic autocomplete.
+     * @returns {string} HTML string of option elements
+     */
+    buildTopicDatalistOptions() {
+        return this.getTopics()
+            .map(topic => `<option value="${this.getTranslatedTopic(topic)}">`)
+            .join('');
+    }
+
+    /**
+     * Show a topic selector UI with Promise-based resolution.
+     * Used primarily by the exercises page for demo mode topic selection.
+     * 
+     * @param {HTMLElement} container - Container element to render the selector
+     * @param {Object} options - Configuration options
+     * @param {string} options.title - Title to display
+     * @param {Function} options.t - Translation function
+     * @param {string} [options.inputPlaceholder] - Placeholder for the input field
+     * @param {string} [options.submitButtonText] - Text for the submit button
+     * @param {Function} [options.onCancel] - Callback when cancelled
+     * @returns {Promise<string|null>} Selected topic key or null if cancelled
+     */
+    showDemoTopicSelector(container, options = {}) {
+        const {
+            title,
+            t = (key) => key,
+            inputPlaceholder = t('lessons.topicPlaceholder') || 'Enter topic...',
+            submitButtonText = t('exercises.start') || 'Start',
+            onCancel
+        } = options;
+        
+        return new Promise((resolve) => {
+            const topics = this.getTopics();
+            
+            container.innerHTML = `
+                <div class="exercise-container">
+                    <div class="exercise-header">
+                        <h3>${title}</h3>
+                        <button class="btn btn-sm btn-secondary" id="demo-topic-cancel">${t('misc.cancel') || 'Cancel'}</button>
+                    </div>
+                    <div class="demo-topic-selector">
+                        <p class="selector-instruction">${t('exercises.selectTopic') || 'Select a topic to practice'}</p>
+                        
+                        <!-- Topic input with autocomplete -->
+                        <div class="topic-input-row">
+                            <input type="text" 
+                                   id="demo-topic-input" 
+                                   class="form-input topic-search-input" 
+                                   placeholder="${inputPlaceholder}"
+                                   list="demo-topic-suggestions" />
+                            <datalist id="demo-topic-suggestions">
+                                ${topics.map(topic => `<option value="${this.getTranslatedTopic(topic)}">`).join('')}
+                            </datalist>
+                            <button class="btn btn-primary" id="demo-topic-submit">
+                                🎯 ${submitButtonText}
+                            </button>
+                        </div>
+                        
+                        <div class="topic-divider">
+                            <span>${t('exercises.orSelectBelow') || 'or select a topic below'}</span>
+                        </div>
+                        
+                        <div class="topic-grid">
+                            ${topics.map(topic => `
+                                <button class="topic-btn" data-topic="${topic}">
+                                    ${this.getTopicEmoji(topic)} ${this.getTranslatedTopic(topic)}
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <p class="demo-mode-hint">
+                            📴 ${t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            const topicInput = document.getElementById('demo-topic-input');
+            const submitBtn = document.getElementById('demo-topic-submit');
+            const cancelBtn = document.getElementById('demo-topic-cancel');
+            
+            // Handle cancel
+            cancelBtn?.addEventListener('click', () => {
+                if (onCancel) onCancel();
+                resolve(null);
+            });
+            
+            // Handle submit button
+            submitBtn?.addEventListener('click', () => {
+                const inputTopic = topicInput?.value.trim().toLowerCase();
+                if (inputTopic) {
+                    // Find matching topic or use normalized version
+                    const matchedTopic = topics.find(t => t.toLowerCase() === inputTopic) || 
+                                        this.normalizeTopic(inputTopic);
+                    resolve(matchedTopic);
+                }
+            });
+            
+            // Handle Enter key in input
+            topicInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitBtn?.click();
+                }
+            });
+            
+            // Handle topic button clicks
+            container.querySelectorAll('.topic-btn').forEach(btn => {
+                btn.addEventListener('click', () => resolve(btn.dataset.topic));
+            });
+            
+            // Focus the input
+            topicInput?.focus();
+        });
     }
 }
 

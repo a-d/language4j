@@ -73,39 +73,10 @@ async function init() {
     
     // Apply demo mode UI restrictions if enabled
     if (demoMode.isEnabled()) {
-        applyDemoModeRestrictions();
+        demoMode.applyUIRestrictions();
     }
     
     console.log('Application initialized');
-}
-
-/**
- * Apply UI restrictions for demo mode.
- * Hides features that require backend AI services.
- */
-function applyDemoModeRestrictions() {
-    // Add demo-hide class to audio-dependent exercises (always hidden - requires audio/speech services)
-    document.querySelectorAll('[data-type="listening"], [data-type="speaking"], [data-type="listening-comprehension"]').forEach(el => {
-        el.setAttribute('data-demo-hide', 'true');
-    });
-    
-    // Check if visual cards are available in demo data
-    const visualCardsEnabled = demoMode.index?.features?.visualCards === true;
-    
-    // Conditionally hide visual cards feature based on demo data availability
-    const cardsNavLink = document.querySelector('[data-page="cards"]');
-    if (cardsNavLink) {
-        if (visualCardsEnabled) {
-            // Visual cards are available in demo data - show the nav link
-            cardsNavLink.removeAttribute('data-demo-hide');
-            console.log('Visual cards enabled in demo mode');
-        } else {
-            // Visual cards not available - hide nav link
-            cardsNavLink.setAttribute('data-demo-hide', 'true');
-        }
-    }
-    
-    console.log('Demo mode UI restrictions applied (visualCards:', visualCardsEnabled, ')');
 }
 
 /**
@@ -608,7 +579,7 @@ window.toggleDemoMode = () => {
     const enabled = demoMode.toggle();
     if (enabled) {
         toast.info(t('settings.demoModeEnabled') || 'Demo mode enabled');
-        applyDemoModeRestrictions();
+        demoMode.applyUIRestrictions();
     } else {
         toast.info(t('settings.demoModeDisabled') || 'Demo mode disabled');
         window.location.reload(); // Reload to restore full functionality

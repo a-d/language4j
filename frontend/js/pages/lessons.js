@@ -35,7 +35,7 @@ export function loadLessonsData(showLoading, hideLoading) {
                 <input type="text" id="lesson-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="lesson-topic-suggestions"' : ''} />
                 ${isDemoMode ? `
                     <datalist id="lesson-topic-suggestions">
-                        ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
+                        ${demoMode.buildTopicDatalistOptions()}
                     </datalist>
                 ` : ''}
             </div>
@@ -173,90 +173,30 @@ function escapeHtml(text) {
 // ============ Demo Mode Topic Selection Helpers ============
 
 /**
- * Get available lesson topics from demo data.
- * @returns {string[]} Array of topic names (lowercase)
- */
-function getAvailableTopics() {
-    // These match the files in frontend/demo-data/content/lessons/
-    return [
-        'greetings', 'food', 'travel', 'family', 'shopping',
-        'home', 'weather', 'work', 'health', 'hobbies',
-        'animals', 'colors', 'clothing', 'technology', 'time'
-    ];
-}
-
-/**
- * Format topic name for display (use German translation if available).
- * @param {string} topic - Topic name (English key)
- * @returns {string} Translated topic name
- */
-function formatTopic(topic) {
-    if (!topic) return '';
-    // Use demo mode translations for German display
-    return demoMode.getTranslatedTopic(topic.toLowerCase());
-}
-
-/**
- * Get an emoji for a topic.
- * @param {string} topic - Topic name
- * @returns {string} Emoji for the topic
- */
-function getTopicEmoji(topic) {
-    const emojiMap = {
-        'greetings': '👋',
-        'food': '🍕',
-        'travel': '✈️',
-        'family': '👨‍👩‍👧‍👦',
-        'shopping': '🛒',
-        'home': '🏠',
-        'weather': '🌤️',
-        'work': '💼',
-        'health': '🏥',
-        'hobbies': '🎨',
-        'animals': '🐾',
-        'colors': '🎨',
-        'clothing': '👕',
-        'technology': '💻',
-        'time': '⏰'
-    };
-    return emojiMap[topic.toLowerCase()] || '📚';
-}
-
-/**
  * Build topic grid HTML for demo mode.
+ * Uses centralized buildTopicGrid from demo-mode.js.
  * @returns {string} HTML string
  */
 function buildTopicGrid() {
-    const topics = getAvailableTopics();
-    
-    return `
-        <div class="topic-divider">
-            <span>${t('lessons.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
-        </div>
-        
-        <div class="topic-grid" id="lesson-topic-grid">
-            ${topics.map(topic => `
-                <button class="topic-btn" data-topic="${topic}" onclick="window.selectLessonTopic('${topic}')">
-                    ${getTopicEmoji(topic)} ${formatTopic(topic)}
-                </button>
-            `).join('')}
-        </div>
-        
-        <p class="demo-mode-hint">
-            📴 ${t('lessons.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
-        </p>
-    `;
+    return demoMode.buildTopicGrid({
+        onSelectFn: 'selectLessonTopic',
+        gridId: 'lesson-topic-grid',
+        dividerText: t('lessons.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('lessons.demoModeHint') || t('exercises.demoModeHint'),
+        t
+    });
 }
 
 /**
  * Handle topic button click for lessons.
- * @param {string} topic - Selected topic
+ * @param {string} topic - Selected topic (English key)
  */
 export function selectLessonTopic(topic) {
     const topicInput = document.getElementById('lesson-topic');
     if (topicInput) {
-        topicInput.value = formatTopic(topic);
-        cache.save(PAGE, TOPIC, formatTopic(topic));
+        const translatedTopic = demoMode.getTranslatedTopic(topic);
+        topicInput.value = translatedTopic;
+        cache.save(PAGE, TOPIC, translatedTopic);
         // Trigger generation
         window.generateLesson();
     }
