@@ -7,6 +7,7 @@ import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
+import { topicsService } from '../services/topics.js';
 import { demoMode } from '../services/demo-mode.js';
 
 /** Exercise type mapping for backend */
@@ -90,18 +91,13 @@ export async function startExercise(type, showLoading, hideLoading) {
     
     exerciseArea.classList.remove('hidden');
     
-    // In demo mode, show topic selector instead of free text input
-    if (demoMode.isEnabled()) {
-        const topic = await showDemoTopicSelector(exerciseArea, type);
-        if (!topic) {
-            // User cancelled
-            closeExercise();
-            return;
-        }
-        return generateExerciseWithTopic(type, topic, showLoading, hideLoading);
+    // Always show topic selector for better UX (with LLM-powered suggestions)
+    const topic = await showTopicSelector(exerciseArea, type);
+    if (!topic) {
+        // User cancelled
+        closeExercise();
+        return;
     }
-    
-    const topic = prompt(t('lessons.topicPlaceholder')) || 'basic vocabulary';
     
     const exerciseTitles = {
         'text-completion': t('exercises.fillBlanks'),
@@ -1077,24 +1073,39 @@ function escapeHtml(text) {
     return str.replace(/[&<>"']/g, m => map[m]);
 }
 
-// ==================== Demo Mode Functions ====================
+// ==================== Topic Selection ====================
 
 /**
- * Show topic selector UI for demo mode instead of free text input.
- * Uses the centralized showDemoTopicSelector from demo-mode.js.
+ * Show topic selector UI with LLM-powered suggestions.
+ * Uses the centralized topicsService for dynamic topic suggestions.
  * @param {HTMLElement} exerciseArea - The exercise area container
  * @param {string} type - Exercise type
  * @returns {Promise<string|null>} Selected topic or null if cancelled
  */
-function showDemoTopicSelector(exerciseArea, type) {
+function showTopicSelector(exerciseArea, type) {
     const exerciseTitles = {
         'text-completion': t('exercises.fillBlanks'),
         'drag-drop': t('exercises.wordOrder'),
-        'translation': t('exercises.translation')
+        'translation': t('exercises.translation'),
+        'listening': t('exercises.listening'),
+        'listening-comprehension': t('exercises.listeningComprehension') || '🎧 Listening Comprehension',
+        'speaking': t('exercises.speakingExercise')
     };
     
-    return demoMode.showDemoTopicSelector(exerciseArea, {
+    // In demo mode, use the demo mode selector (uses static topics)
+    if (demoMode.isEnabled()) {
+        return demoMode.showDemoTopicSelector(exerciseArea, {
+            title: exerciseTitles[type] || type,
+            t,
+            inputPlaceholder: t('lessons.topicPlaceholder'),
+            submitButtonText: t('exercises.start') || 'Start'
+        });
+    }
+    
+    // In production mode, use the topics service with LLM suggestions
+    return topicsService.showTopicSelector(exerciseArea, {
         title: exerciseTitles[type] || type,
+        category: 'exercise',
         t,
         inputPlaceholder: t('lessons.topicPlaceholder'),
         submitButtonText: t('exercises.start') || 'Start'

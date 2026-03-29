@@ -8,9 +8,12 @@ import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
 import { cache, CacheKeys } from '../services/cache.js';
-import { demoMode } from '../services/demo-mode.js';
+import { topicsService } from '../services/topics.js';
 
 const { PAGE, CONTENT, TOPIC } = CacheKeys.LESSONS;
+
+/** Grid ID constant for topic suggestions */
+const TOPIC_GRID_ID = 'lesson-topic-grid';
 
 /**
  * Initialize lessons page UI with cached content restoration.
@@ -24,20 +27,22 @@ export function loadLessonsData(showLoading, hideLoading) {
     const cachedTopic = cache.get(PAGE, TOPIC) || '';
     const cachedContent = cache.get(PAGE, CONTENT);
     
-    const isDemoMode = demoMode.isEnabled();
-    const topicGridHtml = isDemoMode ? buildTopicGrid() : '';
+    // Build topic grid placeholder (will be populated async)
+    const topicGridHtml = topicsService.buildTopicGridPlaceholder({
+        category: 'lesson',
+        onSelectFn: 'selectLessonTopic',
+        gridId: TOPIC_GRID_ID,
+        dividerText: t('lessons.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('topics.aiSuggestionsHint'),
+        t
+    });
     
     container.innerHTML = `
         <div class="lesson-generator">
             <h3>${t('lessons.generateTitle')}</h3>
             <div class="form-group">
                 <label for="lesson-topic">${t('lessons.topic')}</label>
-                <input type="text" id="lesson-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="lesson-topic-suggestions"' : ''} />
-                ${isDemoMode ? `
-                    <datalist id="lesson-topic-suggestions">
-                        ${demoMode.buildTopicDatalistOptions()}
-                    </datalist>
-                ` : ''}
+                <input type="text" id="lesson-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" />
             </div>
             <div class="button-row">
                 <button class="btn btn-primary" onclick="window.generateLesson()">
@@ -61,6 +66,9 @@ export function loadLessonsData(showLoading, hideLoading) {
     topicInput?.addEventListener('input', (e) => {
         cache.save(PAGE, TOPIC, e.target.value);
     });
+    
+    // Initialize topic grid asynchronously
+    topicsService.initTopicGrid(TOPIC_GRID_ID, 'lesson', 'selectLessonTopic', t);
     
     hideLoading();
 }
@@ -170,33 +178,17 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ============ Demo Mode Topic Selection Helpers ============
-
-/**
- * Build topic grid HTML for demo mode.
- * Uses centralized buildTopicGrid from demo-mode.js.
- * @returns {string} HTML string
- */
-function buildTopicGrid() {
-    return demoMode.buildTopicGrid({
-        onSelectFn: 'selectLessonTopic',
-        gridId: 'lesson-topic-grid',
-        dividerText: t('lessons.orSelectBelow') || t('exercises.orSelectBelow'),
-        hintText: t('lessons.demoModeHint') || t('exercises.demoModeHint'),
-        t
-    });
-}
+// ============ Topic Selection Helpers ============
 
 /**
  * Handle topic button click for lessons.
- * @param {string} topic - Selected topic (English key)
+ * @param {string} topic - Selected topic
  */
 export function selectLessonTopic(topic) {
     const topicInput = document.getElementById('lesson-topic');
     if (topicInput) {
-        const translatedTopic = demoMode.getTranslatedTopic(topic);
-        topicInput.value = translatedTopic;
-        cache.save(PAGE, TOPIC, translatedTopic);
+        topicInput.value = topic;
+        cache.save(PAGE, TOPIC, topic);
         // Trigger generation
         window.generateLesson();
     }

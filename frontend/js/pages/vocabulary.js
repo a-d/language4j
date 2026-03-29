@@ -8,9 +8,13 @@ import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { renderContent, ContentType } from '../services/content-renderer.js';
 import { cache, CacheKeys } from '../services/cache.js';
-import { demoMode } from '../services/demo-mode.js';
+import { topicsService } from '../services/topics.js';
 
 const { PAGE, CONTENT, FLASHCARDS, TOPIC, COUNT, FLASHCARD_TOPIC } = CacheKeys.VOCABULARY;
+
+/** Grid ID constants for topic suggestions */
+const VOCAB_TOPIC_GRID_ID = 'vocab-topic-grid';
+const FLASHCARD_TOPIC_GRID_ID = 'flashcard-topic-grid';
 
 /**
  * Initialize vocabulary page UI with cached content restoration.
@@ -29,9 +33,24 @@ export function loadVocabularyData(showLoading, hideLoading) {
     
     const hasAnyCache = cachedContent || cachedFlashcards;
     
-    const isDemoMode = demoMode.isEnabled();
-    const topicGridHtml = isDemoMode ? buildTopicGrid('vocab') : '';
-    const flashcardTopicGridHtml = isDemoMode ? buildTopicGrid('flashcard') : '';
+    // Build topic grid placeholders (will be populated async)
+    const topicGridHtml = topicsService.buildTopicGridPlaceholder({
+        category: 'vocabulary',
+        onSelectFn: 'selectVocabTopic',
+        gridId: VOCAB_TOPIC_GRID_ID,
+        dividerText: t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('topics.aiSuggestionsHint'),
+        t
+    });
+    
+    const flashcardTopicGridHtml = topicsService.buildTopicGridPlaceholder({
+        category: 'vocabulary',
+        onSelectFn: 'selectFlashcardTopic',
+        gridId: FLASHCARD_TOPIC_GRID_ID,
+        dividerText: t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('topics.aiSuggestionsHint'),
+        t
+    });
     
     container.innerHTML = `
         <div class="vocab-generator">
@@ -39,12 +58,7 @@ export function loadVocabularyData(showLoading, hideLoading) {
             <div class="form-row">
                 <div class="form-group">
                     <label for="vocab-topic">${t('lessons.topic')}</label>
-                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" ${isDemoMode ? 'list="vocab-topic-suggestions"' : ''} />
-                    ${isDemoMode ? `
-                        <datalist id="vocab-topic-suggestions">
-                            ${demoMode.buildTopicDatalistOptions()}
-                        </datalist>
-                    ` : ''}
+                    <input type="text" id="vocab-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedTopic)}" />
                 </div>
                 <div class="form-group">
                     <label for="vocab-count">${t('vocabulary.words')}</label>
@@ -71,12 +85,7 @@ export function loadVocabularyData(showLoading, hideLoading) {
             <h3>${t('vocabulary.flashcardsTitle')}</h3>
             <div class="form-group">
                 <label for="flashcard-topic">${t('lessons.topic')}</label>
-                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" ${isDemoMode ? 'list="flashcard-topic-suggestions"' : ''} />
-                ${isDemoMode ? `
-                    <datalist id="flashcard-topic-suggestions">
-                        ${demoMode.buildTopicDatalistOptions()}
-                    </datalist>
-                ` : ''}
+                <input type="text" id="flashcard-topic" placeholder="${t('lessons.topicPlaceholder')}" class="form-input" value="${escapeHtml(cachedFlashcardTopic)}" />
             </div>
             <button class="btn btn-secondary" onclick="window.generateFlashcards()">
                 ${t('vocabulary.generateFlashcards')}
@@ -90,6 +99,10 @@ export function loadVocabularyData(showLoading, hideLoading) {
     
     // Save form values on input change
     setupInputListeners();
+    
+    // Initialize topic grids asynchronously
+    topicsService.initTopicGrid(VOCAB_TOPIC_GRID_ID, 'vocabulary', 'selectVocabTopic', t);
+    topicsService.initTopicGrid(FLASHCARD_TOPIC_GRID_ID, 'vocabulary', 'selectFlashcardTopic', t);
     
     hideLoading();
 }
@@ -273,36 +286,17 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ============ Demo Mode Topic Selection Helpers ============
-
-/**
- * Build topic grid HTML for demo mode.
- * Uses centralized buildTopicGrid from demo-mode.js.
- * @param {string} section - 'vocab' or 'flashcard'
- * @returns {string} HTML string
- */
-function buildTopicGrid(section) {
-    const clickHandler = section === 'vocab' ? 'selectVocabTopic' : 'selectFlashcardTopic';
-    
-    return demoMode.buildTopicGrid({
-        onSelectFn: clickHandler,
-        gridId: `${section}-topic-grid`,
-        dividerText: t('vocabulary.orSelectBelow') || t('exercises.orSelectBelow'),
-        hintText: t('vocabulary.demoModeHint') || t('exercises.demoModeHint'),
-        t
-    });
-}
+// ============ Topic Selection Helpers ============
 
 /**
  * Handle topic button click for vocabulary section.
- * @param {string} topic - Selected topic (English key)
+ * @param {string} topic - Selected topic
  */
 export function selectVocabTopic(topic) {
     const topicInput = document.getElementById('vocab-topic');
     if (topicInput) {
-        const translatedTopic = demoMode.getTranslatedTopic(topic);
-        topicInput.value = translatedTopic;
-        cache.save(PAGE, TOPIC, translatedTopic);
+        topicInput.value = topic;
+        cache.save(PAGE, TOPIC, topic);
         // Trigger generation
         window.generateVocabulary();
     }
@@ -310,14 +304,13 @@ export function selectVocabTopic(topic) {
 
 /**
  * Handle topic button click for flashcards section.
- * @param {string} topic - Selected topic (English key)
+ * @param {string} topic - Selected topic
  */
 export function selectFlashcardTopic(topic) {
     const topicInput = document.getElementById('flashcard-topic');
     if (topicInput) {
-        const translatedTopic = demoMode.getTranslatedTopic(topic);
-        topicInput.value = translatedTopic;
-        cache.save(PAGE, FLASHCARD_TOPIC, translatedTopic);
+        topicInput.value = topic;
+        cache.save(PAGE, FLASHCARD_TOPIC, topic);
         // Trigger generation
         window.generateFlashcards();
     }

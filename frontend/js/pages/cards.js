@@ -15,9 +15,13 @@ import { api } from '../api/client.js';
 import { toast } from '../services/toast.js';
 import { t } from '../services/i18n.js';
 import { cache, CacheKeys } from '../services/cache.js';
+import { topicsService } from '../services/topics.js';
 import { demoMode } from '../services/demo-mode.js';
 
 const { PAGE, CURRENT_INDEX } = CacheKeys.CARDS;
+
+/** Grid ID constant for topic suggestions */
+const TOPIC_GRID_ID = 'cards-topic-grid';
 
 // State for visual cards - in-memory only (not cached due to large image sizes)
 let visualCards = [];
@@ -36,6 +40,16 @@ export function loadCardsData() {
     
     const hasCards = visualCards.length > 0;
     
+    // Build topic grid placeholder (will be populated async)
+    const topicGridHtml = topicsService.buildTopicGridPlaceholder({
+        category: 'vocabulary',
+        onSelectFn: 'selectCardsTopic',
+        gridId: TOPIC_GRID_ID,
+        dividerText: t('cards.orSelectBelow') || t('exercises.orSelectBelow'),
+        hintText: t('topics.aiSuggestionsHint'),
+        t
+    });
+    
     container.innerHTML = `
         <div class="visual-cards-container">
             <!-- Topic-Based Generator (Primary) -->
@@ -45,12 +59,7 @@ export function loadCardsData() {
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
                         <label for="topic-input">${t('cards.topicLabel')}</label>
-                        <input type="text" id="topic-input" placeholder="${t('cards.topicPlaceholder')}" class="form-input" ${demoMode.isEnabled() ? 'list="cards-topic-suggestions"' : ''} />
-                        ${demoMode.isEnabled() ? `
-                            <datalist id="cards-topic-suggestions">
-                                ${getAvailableTopics().map(topic => `<option value="${formatTopic(topic)}">`).join('')}
-                            </datalist>
-                        ` : ''}
+                        <input type="text" id="topic-input" placeholder="${t('cards.topicPlaceholder')}" class="form-input" />
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="card-count">${t('cards.cardCount')}</label>
@@ -73,23 +82,7 @@ export function loadCardsData() {
                     ` : ''}
                 </div>
                 
-                ${demoMode.isEnabled() ? `
-                    <div class="topic-divider">
-                        <span>${t('cards.orSelectBelow') || t('exercises.orSelectBelow') || 'or select a topic below'}</span>
-                    </div>
-                    
-                    <div class="topic-grid" id="cards-topic-grid">
-                        ${getAvailableTopics().map(topic => `
-                            <button class="topic-btn" data-topic="${topic}" onclick="window.selectCardsTopic('${topic}')">
-                                ${getTopicEmoji(topic)} ${formatTopic(topic)}
-                            </button>
-                        `).join('')}
-                    </div>
-                    
-                    <p class="demo-mode-hint">
-                        📴 ${t('cards.demoModeHint') || t('exercises.demoModeHint') || 'Demo mode: Only pre-generated topics are available'}
-                    </p>
-                ` : ''}
+                ${topicGridHtml}
                 
                 <div id="generation-progress" class="generation-progress hidden">
                     <div class="generation-progress-spinner"></div>
@@ -156,6 +149,9 @@ export function loadCardsData() {
         updateCardDisplay();
         updateCardsGrid();
     }
+    
+    // Initialize topic grid asynchronously
+    topicsService.initTopicGrid(TOPIC_GRID_ID, 'vocabulary', 'selectCardsTopic', t);
 }
 
 /**
@@ -549,52 +545,19 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ============ Demo Mode Topic Selection Helpers ============
-// Note: Most demo mode helpers are now centralized in demo-mode.js
-// These local functions are kept only for backwards compatibility or specific cards functionality.
+// ============ Topic Selection Helpers ============
 
 /**
- * Get available visual card topics from demo data.
- * Uses centralized topic list from demo-mode.js.
- * @returns {string[]} Array of topic names (lowercase, English keys)
- */
-function getAvailableTopics() {
-    return demoMode.getTopics();
-}
-
-/**
- * Format topic name for display (use German translation if available).
- * Uses centralized translation from demo-mode.js.
- * @param {string} topic - Topic name (English key)
- * @returns {string} Translated topic name
- */
-function formatTopic(topic) {
-    if (!topic) return '';
-    return demoMode.getTranslatedTopic(topic.toLowerCase());
-}
-
-/**
- * Get an emoji for a topic.
- * Uses centralized emoji map from demo-mode.js.
- * @param {string} topic - Topic name
- * @returns {string} Emoji for the topic
- */
-function getTopicEmoji(topic) {
-    return demoMode.getTopicEmoji(topic);
-}
-
-/**
- * Handle topic button click in demo mode.
- * Sets the topic input and triggers generation with the English key.
- * @param {string} topic - Selected topic (English key)
+ * Handle topic button click.
+ * Sets the topic input and triggers generation.
+ * @param {string} topic - Selected topic
  */
 export function selectCardsTopic(topic) {
     const topicInput = document.getElementById('topic-input');
     if (topicInput) {
-        // Show German label in input for user feedback
-        topicInput.value = formatTopic(topic);
-        // Trigger generation with the English key directly (bypasses normalization)
-        generateVisualCardsFromTopicKey(topic);
+        topicInput.value = topic;
+        // Trigger generation
+        generateVisualCardsFromTopic();
     }
 }
 

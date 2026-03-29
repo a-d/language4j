@@ -360,5 +360,9 @@
   "exercises.tryOtherExercises": "Try Fill-in-the-Blanks, Word Order, or Translation exercises instead.",
   "exercises.start": "Start",
   "exercises.orSelectBelow": "or select a topic below",
-  "toast.featureDisabledInDemo": "This feature is not available in demo mode"
+  "toast.featureDisabledInDemo": "This feature is not available in demo mode",
+  "topics.loadingSuggestions": "Loading suggestions...",
+  "topics.aiSuggestionsHint": "AI-powered topic suggestions based on your learning goals",
+  "topics.loadFailed": "Failed to load suggestions",
+  "misc.retry": "Retry"
 }
