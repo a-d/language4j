@@ -242,12 +242,15 @@ The platform supports **15 activity types** across different learning modalities
 
 ---
 
-### 9. PAIR_MATCHING ⭐ NEW
+### 9. PAIR_MATCHING 🚧
+**Status**: Not Yet Implemented  
+**Feasibility**: ⭐⭐⭐⭐ Easy
+
 **Description**: Two-column matching exercise. Connect words with their translations.
 
-**Access Methods**:
-- ✅ Chat: "Matching game about [topic]"
-- ✅ Navigation: Exercises page
+**Proposed Access Methods**:
+- Chat: "Matching game about [topic]"
+- Navigation: Exercises page
 
 **Trigger Phrases** (Chat):
 - "Matching"
@@ -257,7 +260,7 @@ The platform supports **15 activity types** across different learning modalities
 
 **Data Format**: Uses same format as VOCABULARY
 
-**UI Features**:
+**Proposed UI Features**:
 - Two columns: native language (left), target language (right)
 - Click one word from each column to match
 - Correct matches highlighted in green
@@ -266,12 +269,15 @@ The platform supports **15 activity types** across different learning modalities
 
 ---
 
-### 10. MEMORY_GAME ⭐ NEW
+### 10. MEMORY_GAME 🚧
+**Status**: Not Yet Implemented  
+**Feasibility**: ⭐⭐⭐⭐ Easy
+
 **Description**: Card-flipping memory game to find word-translation pairs.
 
-**Access Methods**:
-- ✅ Chat: "Memory game about [topic]"
-- ✅ Navigation: Exercises page
+**Proposed Access Methods**:
+- Chat: "Memory game about [topic]"
+- Navigation: Exercises page
 
 **Trigger Phrases** (Chat):
 - "Memory game"
@@ -280,7 +286,7 @@ The platform supports **15 activity types** across different learning modalities
 
 **Data Format**: Uses same format as VOCABULARY
 
-**UI Features**:
+**Proposed UI Features**:
 - Grid of face-down cards (4x4 for 8 pairs)
 - Flip animation on click
 - Match detection (same pair, different types)
@@ -425,14 +431,16 @@ The chat moderator recognizes natural language requests and automatically genera
 | Request | Activity Generated |
 |---------|-------------------|
 | "I want to practice vocabulary about food" | VOCABULARY |
-| "Let's play a matching game" | PAIR_MATCHING |
-| "Can we do a memory game with colors?" | MEMORY_GAME |
+| "Let's play a matching game" | PAIR_MATCHING 🚧 |
+| "Can we do a memory game with colors?" | MEMORY_GAME 🚧 |
 | "I want to practice speaking" | SPEAKING |
 | "Let's try some translation exercises" | TRANSLATION |
 | "Teach me about past tense" | LESSON |
 | "Let's roleplay ordering at a restaurant" | SCENARIO |
 | "Listening comprehension about travel" | LISTENING_COMPREHENSION |
 | "Story listening practice" | LISTENING_COMPREHENSION |
+
+> **Note**: 🚧 indicates the activity is not yet implemented.
 
 ### Activity Tag Format
 
@@ -459,8 +467,10 @@ Examples:
 | **Lessons** | LESSON, SCENARIO |
 | **Vocabulary** | VOCABULARY |
 | **Cards** | FLASHCARDS, VISUAL_CARDS |
-| **Exercises** | TEXT_COMPLETION, DRAG_DROP, TRANSLATION, PAIR_MATCHING, MEMORY_GAME, LISTENING, LISTENING_COMPREHENSION, SPEAKING |
+| **Exercises** | TEXT_COMPLETION, DRAG_DROP, TRANSLATION, LISTENING, LISTENING_COMPREHENSION, SPEAKING |
 | **Progress** | Statistics and history |
+
+> **Coming Soon**: PAIR_MATCHING, MEMORY_GAME
 
 ---
 

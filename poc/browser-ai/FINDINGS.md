@@ -1,12 +1,16 @@
 # Browser AI POC - Findings & Benchmarks
 
+> ⚠️ **TEMPLATE DOCUMENT - RESULTS PENDING**
+> 
+> This document is a template for recording POC test results. The benchmark tables and checklists are placeholders to be filled in during actual testing.
+
 ## Overview
 
 This document records the findings from the Browser AI proof-of-concept testing. Results are gathered using the test pages in this directory.
 
-**Test Date**: _______________  
-**Tester**: _______________  
-**Test Environment**: _______________
+**Test Date**: _______________ *(fill in when testing)*  
+**Tester**: _______________ *(fill in when testing)*  
+**Test Environment**: _______________ *(fill in when testing)*
 
 ---
 

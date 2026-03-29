@@ -43,7 +43,7 @@ let loadPromise = null;
  */
 const STORAGE_PREFIX = 'i18n_';
 const STORAGE_VERSION_KEY = 'i18n_version';
-const CACHE_VERSION = '1.7.0'; // Increment when translation keys change - bumped for topics.* keys
+const CACHE_VERSION = '1.8.0'; // Increment when translation keys change - bumped for cache invalidation 20260329
 
 /**
  * Load translations for a language from backend or cache

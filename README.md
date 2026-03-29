@@ -257,9 +257,7 @@ To regenerate the spec file after API changes:
 | POST | `/api/v1/content/vocabulary/generate` | Generate vocabulary |
 | POST | `/api/v1/content/flashcards/generate` | Generate flashcards |
 | POST | `/api/v1/content/scenarios/generate` | Generate roleplay scenario |
-| POST | `/api/v1/exercises/text-completion` | Generate fill-in-blank exercises |
-| POST | `/api/v1/exercises/drag-drop` | Generate word-order exercises |
-| POST | `/api/v1/exercises/translation` | Generate translation exercises |
+| POST | `/api/v1/exercises/generate` | Generate exercises (unified API with `type` parameter) |
 | POST | `/api/v1/exercises/evaluate` | Evaluate user response |
 
 See full API documentation at Swagger UI when running.
