@@ -451,11 +451,11 @@ function showActivitySelection() {
 }
 
 /**
- * Get demo mode topics with emojis
+ * Get demo mode topics with emojis and German translations
  * @returns {Array} Topic suggestions for demo mode
  */
 function getDemoTopics() {
-    const topics = demoMode.getTopics();
+    const topicsWithTranslations = demoMode.getTopicsWithTranslations();
     const emojiMap = {
         'greetings': '👋',
         'food': '🍕',
@@ -474,9 +474,10 @@ function getDemoTopics() {
         'time': '⏰'
     };
     
-    return topics.map(topic => ({
-        topic: topic.charAt(0).toUpperCase() + topic.slice(1),
-        emoji: emojiMap[topic] || '📚',
+    return topicsWithTranslations.map(({ key, label }) => ({
+        topic: label,  // German translated label for display
+        topicKey: key, // English key for file lookup
+        emoji: emojiMap[key] || '📚',
         description: '',
         alignsWithGoals: false
     }));

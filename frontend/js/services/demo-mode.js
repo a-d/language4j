@@ -15,6 +15,28 @@ const DEMO_MODE_KEY = 'llp_demo_mode';
 const DEMO_DATA_BASE = './demo-data';
 
 /**
+ * Topic name translations (English to German)
+ * Used to display topic names in the user's native language
+ */
+const TOPIC_TRANSLATIONS = {
+    'greetings': 'Begrüßungen',
+    'food': 'Essen & Trinken',
+    'travel': 'Reisen',
+    'family': 'Familie',
+    'shopping': 'Einkaufen',
+    'home': 'Zuhause',
+    'weather': 'Wetter',
+    'work': 'Arbeit',
+    'health': 'Gesundheit',
+    'hobbies': 'Hobbys',
+    'animals': 'Tiere',
+    'colors': 'Farben',
+    'clothing': 'Kleidung',
+    'technology': 'Technologie',
+    'time': 'Zeit'
+};
+
+/**
  * Demo Mode Service class
  */
 class DemoModeService {
@@ -200,10 +222,31 @@ class DemoModeService {
     }
 
     /**
-     * Get available topics
+     * Get available topics (English keys for file lookup)
      */
     getTopics() {
         return this.index?.topics || [];
+    }
+    
+    /**
+     * Get translated topic name (for display)
+     * @param {string} topicKey - English topic key
+     * @returns {string} Translated topic name
+     */
+    getTranslatedTopic(topicKey) {
+        return TOPIC_TRANSLATIONS[topicKey] || topicKey;
+    }
+    
+    /**
+     * Get all topics with translations (for display in UI)
+     * @returns {Array<{key: string, label: string}>} Topics with keys and translated labels
+     */
+    getTopicsWithTranslations() {
+        const topics = this.getTopics();
+        return topics.map(key => ({
+            key,
+            label: TOPIC_TRANSLATIONS[key] || key
+        }));
     }
 
     /**
@@ -529,12 +572,13 @@ class DemoModeService {
         // Check for activity requests (English and German keywords)
         // Vocabulary: vocabulary, words, vokabeln
         if (content.includes('vocabulary') || content.includes('words') || content.includes('vokabeln')) {
-            const topic = this.extractTopic(content) || this.getRandomTopic();
-            const vocabulary = await this.loadData(`content/vocabulary/${topic}.json`);
+            const topicKey = this.extractTopic(content) || this.getRandomTopic();
+            const topicLabel = this.getTranslatedTopic(topicKey);
+            const vocabulary = await this.loadData(`content/vocabulary/${topicKey}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Hier sind Vokabeln zum Thema **${topic}**! Lerne diese Wörter und ihre Bedeutungen.`,
+                content: `Hier sind Vokabeln zum Thema **${topicLabel}**! Lerne diese Wörter und ihre Bedeutungen.`,
                 embeddedActivityType: 'VOCABULARY',
                 embeddedActivityContent: vocabulary?.content,
                 createdAt: new Date().toISOString()
@@ -543,12 +587,13 @@ class DemoModeService {
 
         // Exercise: exercise, practice, übung
         if (content.includes('exercise') || content.includes('practice') || content.includes('übung')) {
-            const topic = this.extractTopic(content) || this.getRandomTopic();
-            const exercises = await this.loadData(`exercises/text-completion/${topic}.json`);
+            const topicKey = this.extractTopic(content) || this.getRandomTopic();
+            const topicLabel = this.getTranslatedTopic(topicKey);
+            const exercises = await this.loadData(`exercises/text-completion/${topicKey}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Lass uns **${topic}** üben! Fülle die Lücken mit den richtigen Wörtern aus.`,
+                content: `Lass uns **${topicLabel}** üben! Fülle die Lücken mit den richtigen Wörtern aus.`,
                 embeddedActivityType: 'TEXT_COMPLETION',
                 embeddedActivityContent: exercises?.content,
                 createdAt: new Date().toISOString()
@@ -557,12 +602,13 @@ class DemoModeService {
 
         // Lesson: lesson, learn, lektion, lernen
         if (content.includes('lesson') || content.includes('learn') || content.includes('lektion') || content.includes('lernen')) {
-            const topic = this.extractTopic(content) || this.getRandomTopic();
-            const lesson = await this.loadData(`content/lessons/${topic}.json`);
+            const topicKey = this.extractTopic(content) || this.getRandomTopic();
+            const topicLabel = this.getTranslatedTopic(topicKey);
+            const lesson = await this.loadData(`content/lessons/${topicKey}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Hier ist eine Lektion zum Thema **${topic}**!`,
+                content: `Hier ist eine Lektion zum Thema **${topicLabel}**!`,
                 embeddedActivityType: 'LESSON',
                 embeddedActivityContent: lesson?.content,
                 createdAt: new Date().toISOString()
@@ -571,12 +617,13 @@ class DemoModeService {
 
         // Scenario: scenario, roleplay, rollenspiel, szenario
         if (content.includes('scenario') || content.includes('roleplay') || content.includes('rollenspiel') || content.includes('szenario')) {
-            const topic = this.extractTopic(content) || 'greetings';
-            const scenario = await this.loadData(`content/scenarios/${topic}.json`);
+            const topicKey = this.extractTopic(content) || 'greetings';
+            const topicLabel = this.getTranslatedTopic(topicKey);
+            const scenario = await this.loadData(`content/scenarios/${topicKey}.json`);
             return {
                 id: 'demo-msg-' + Date.now(),
                 role: 'ASSISTANT',
-                content: `Lass uns ein Rollenspiel zum Thema **${topic}** üben!`,
+                content: `Lass uns ein Rollenspiel zum Thema **${topicLabel}** üben!`,
                 embeddedActivityType: 'SCENARIO',
                 embeddedActivityContent: scenario?.content,
                 createdAt: new Date().toISOString()

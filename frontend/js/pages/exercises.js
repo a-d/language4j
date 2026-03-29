@@ -1106,8 +1106,8 @@ function showDemoTopicSelector(exerciseArea, type) {
             'translation': t('exercises.translation')
         };
         
-        // Capitalize topic names for display
-        const formatTopic = (topic) => topic.charAt(0).toUpperCase() + topic.slice(1);
+        // Use German translations for topic names
+        const formatTopic = (topic) => demoMode.getTranslatedTopic(topic.toLowerCase());
         
         exerciseArea.innerHTML = `
             <div class="exercise-container">

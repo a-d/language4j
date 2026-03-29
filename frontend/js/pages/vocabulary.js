@@ -289,13 +289,14 @@ function getAvailableTopics() {
 }
 
 /**
- * Format topic name for display (capitalize first letter).
- * @param {string} topic - Topic name
- * @returns {string} Formatted topic name
+ * Format topic name for display (use German translation if available).
+ * @param {string} topic - Topic name (English key)
+ * @returns {string} Translated topic name
  */
 function formatTopic(topic) {
     if (!topic) return '';
-    return topic.charAt(0).toUpperCase() + topic.slice(1);
+    // Use demo mode translations for German display
+    return demoMode.getTranslatedTopic(topic.toLowerCase());
 }
 
 /**
